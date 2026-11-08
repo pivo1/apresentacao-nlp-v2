@@ -368,7 +368,7 @@
     É uma classificação com $N$ classes: ``qual das $N$ palavras do vocabulário é a vizinha?''
 \end{frame}
 
-\begin{frame}{Como o modelo aprende: da probabilidade à perda}
+\begin{frame}{Função de Perda}
     \small
     \begin{itemize}\setlength{\itemsep}{0pt}
         \item O modelo ajusta os vetores $\vv_i$ e $\uu_i$ de \textbf{todas} as palavras do vocabulário.
@@ -579,10 +579,10 @@
     \end{exampleblock}
 \end{frame}
 
-\begin{frame}{Treinando o CBOW: a mesma perda, um termo por posição}
+\begin{frame}{Treinando o CBOW}
     \small
     \begin{itemize}\setlength{\itemsep}{1pt}
-        \item A mesma receita de antes: \destaque{máxima verossimilhança}, $\log$ e sinal de menos.
+        \item O mesmo método de antes: \destaque{máxima verossimilhança}.
         \item O que muda é \textbf{quantos termos} cada posição do texto gera.
     \end{itemize}
 
@@ -607,10 +607,10 @@
     \end{columns}
 
     \vspace{0.15cm}
-    \begin{exampleblock}{O que se ganha e o que se perde}
+    \begin{exampleblock}{Vantagens e Desvantagens}
         \footnotesize
-        \textbf{Ganha}: menos termos por posição $\Rightarrow$ treino mais rápido. \quad
-        \textbf{Perde}: a média ignora a ordem das palavras --- é o preço do ``saco de palavras''.
+        \textbf{Vantagens}: menos termos por posição $\Rightarrow$ treino mais rápido. \quad
+        \textbf{Desvantagens}: a média ignora a ordem das palavras --- é o preço do ``saco de palavras''.
     \end{exampleblock}
 \end{frame}
 
