@@ -1,0 +1,94 @@
+%========================================================================================
+%  Backup -- slides que saíram do fluxo principal (detalhe de implementação)
+%  Ficam depois do "obrigado", para usar só se perguntarem ou se sobrar tempo.
+%========================================================================================
+
+% Células coloridas da tabela do minibatch (contexto em verde, ruído em vermelho)
+\newcommand{\ctxcell}[1]{\colorbox{dexpiGreenLight}{\color{dexpiGreenDark}\textbf{#1}}}
+\newcommand{\ruidocell}[1]{\colorbox{dexpiRedLight}{\color{dexpiRedDark}\textbf{#1}}}
+
+\section{Backup}
+
+\begin{frame}{O minibatch: quatro tensores}
+    \small
+    \begin{itemize}
+        \item Cada exemplo tem um número diferente de contextos e ruídos. Para formar um tensor, completamos com \textbf{zeros} (\textit{padding}).
+        \item Exemplo do livro: centro 1, contextos {\color{dexpiGreenDark}\textbf{2}}, ruídos {\color{dexpiRedDark}\textbf{3}}.
+    \end{itemize}
+    \vspace{0.1cm}
+    \centering
+    \begin{tabular}{l|cccccc|l}
+        \toprule
+        \texttt{centers} & \multicolumn{6}{c|}{\texttt{contexts\_negatives}} & \\
+        \midrule
+        1 & \ctxcell{2} & \ctxcell{2} & \ruidocell{3} & \ruidocell{3} & \ruidocell{3} & \ruidocell{3} & exemplo 1 \\
+        1 & \ctxcell{2} & \ctxcell{2} & \ctxcell{2} & \ruidocell{3} & \ruidocell{3} & 0 & exemplo 2 \\
+        \midrule
+        \texttt{labels} & 1 & 1 & 0 & 0 & 0 & 0 & \\
+                        & 1 & 1 & 1 & 0 & 0 & 0 & \\
+        \midrule
+        \texttt{masks}  & 1 & 1 & 1 & 1 & 1 & 1 & \\
+                        & 1 & 1 & 1 & 1 & 1 & {\color{dexpiRedDark}\textbf{0}} & $\leftarrow$ padding \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.2cm}
+    \raggedright
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \footnotesize
+            \begin{itemize}
+                \item \texttt{labels}: \textbf{1} = contexto (positivo), \textbf{0} = ruído ou padding.
+                \item \texttt{masks}: \textbf{0} marca o padding, que a perda deve ignorar.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \footnotesize
+            \textbf{Formatos no PTB} (lote de 512):\\
+            \texttt{centers}: $512 \times 1$\\
+            os outros três: $512 \times 60$
+        \end{column}
+    \end{columns}
+
+    \note{
+        Como os exemplos entram no modelo? Em minibatches de quatro tensores. O problema é que cada centro tem um número diferente de palavras de contexto, porque a janela é sorteada, e portanto um número diferente de ruídos. Para empilhar os exemplos num tensor retangular, completamos as linhas mais curtas com zeros: é o padding.
+        Este é o exemplo do próprio livro. Os dois exemplos têm centro 1. O primeiro tem 2 contextos e 4 ruídos; o segundo tem 3 contextos e 2 ruídos, então ganha um zero no final.
+        \texttt{contexts\_negatives} junta, na mesma linha, os contextos, em verde, e depois os ruídos, em vermelho. \texttt{labels} diz qual é qual: 1 para contexto, 0 para ruído. \texttt{masks} diz o que é real e o que é padding: o zero no final do exemplo 2 é padding e não pode entrar na perda.
+        No PTB, com lotes de 512 exemplos, \texttt{centers} tem formato 512 por 1, e os outros três têm 512 por 60: 60 é o comprimento da linha mais longa do lote.
+    }
+\end{frame}
+
+\begin{frame}[fragile]{O laço de treino}
+\vspace{-0.2cm}
+\begin{lstlisting}[basicstyle=\ttfamily\fontsize{6.2}{7.0}\selectfont]
+embed_size = 100
+net = nn.Sequential(nn.Embedding(len(vocab), embed_size),   # net[0]: vetores de centro v
+                    nn.Embedding(len(vocab), embed_size))   # net[1]: vetores de contexto u
+
+def train(net, data_iter, lr, num_epochs, device):
+    net.apply(init_weights)                                 # inicializacao Xavier
+    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+    for epoch in range(num_epochs):
+        for center, context_negative, mask, label in data_iter:
+            pred = skip_gram(center, context_negative, net[0], net[1])   # (B, 1, 60)
+            l = (loss(pred.reshape(label.shape).float(), label.float(), mask)
+                 / mask.sum(axis=1) * mask.shape[1])                     # ignora o padding
+            optimizer.zero_grad()
+            l.sum().backward()
+            optimizer.step()
+
+lr, num_epochs = 0.002, 5
+train(net, data_iter, lr, num_epochs)
+\end{lstlisting}
+\vspace{-0.2cm}
+\footnotesize
+\textbf{Hiperparâmetros}: lote 512, janela máx. 5, $K = 5$, $d = 100$, Adam com $\text{lr} = 0{,}002$, 5 épocas.\\
+\textbf{Saída do livro}: {\color{dexpiGreenDark}\texttt{loss 0.410}}, cerca de 223 mil \textit{tokens}/s numa GPU.
+
+\note{
+    Este é o laço de treino, com o código do livro levemente resumido.
+    O modelo são as duas tabelas de embeddings de dimensão 100. Antes de treinar, os pesos são inicializados com Xavier, e o otimizador é o Adam.
+    Para cada minibatch: calculamos os escores com o skip-gram, que dá o formato B por 1 por 60. Achatamos para o formato dos rótulos e calculamos a perda binária com a máscara. A divisão por \texttt{mask.sum} e a multiplicação por \texttt{mask.shape[1]} fazem a média só sobre as entradas reais, ignorando o padding. Depois vem o passo de sempre: zerar os gradientes, retropropagar e atualizar os pesos.
+    Com taxa de aprendizado 0,002 e 5 épocas, a perda final no livro é 0,410, processando cerca de 223 mil tokens por segundo numa GPU. Para comparação, um classificador que chuta 50\% em cada par teria perda $\log 2 \approx 0{,}69$.
+}
+\end{frame}

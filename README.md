@@ -16,9 +16,19 @@ slides sem conflito com a versão que já está pronta.
 | 16 | Só a fórmula e dois blocos de leitura | O bloco da direita virou "mesma fórmula, notação trocada", com o aviso de que no CBOW `v` é contexto |
 | 17 | Produtória → `-\log` em um `align` grande, repetindo o slide 12 | Comparação lado a lado "skip-gram: `2m` termos" × "CBOW: 1 termo", com o que se ganha e o que se perde |
 | 18 | Log do CBOW + outra fórmula (repetia o slide 14) | Um só gradiente com o fator `1/(2m)` e a corrente "média → derivada → ajuste repartido" |
-| 20 | 24 linhas de código em 6,5 pt | 14 linhas em 7 pt, ao lado dos 4 passos do slide 10 e do aviso do custo `N` |
+| 19 | 24 linhas de código em 6,5 pt | 14 linhas em 7 pt, ao lado dos 4 passos do slide 10 e do aviso do custo `N` |
 
-O total caiu de 77 para **76 slides de conteúdo** (a seção 01 tem 17 frames).
+Na seção de pré-treino (15.3–15.4), o bloco deixou de ter 9 slides:
+
+- o dataset (PTB) virou uma linha dentro do **mapa do caminho**;
+- o **minibatch** (quatro tensores) e o **laço de treino** foram para o *Backup*,
+  que fica depois do "obrigado";
+- o **modelo** perdeu os formatos dos tensores e ficou com o argumento que importa:
+  "não há softmax, o custo não depende de |V|";
+- a **subamostragem** ganhou a régua numérica (f = 10⁻² ⇒ 90% de descarte) e os
+  **exemplos** ganharam a escala (≈ 9 milhões de exemplos por época).
+
+O total caiu de 77 para **73 slides de conteúdo** (+2 no *backup*).
 
 ## Compilar no Overleaf
 
@@ -48,24 +58,28 @@ o passo intermediário de `git subtree pull/push` no `Mestrado_`.
 
 ## Plano para 60 minutos
 
-São 76 slides de conteúdo. Roteiro sugerido (numeração do PDF):
+São **73 slides de conteúdo**, mais 2 de *backup* (depois do "obrigado"). Roteiro
+sugerido (numeração do PDF):
 
 | Slides | Bloco | Tempo |
 |---|---|---|
 | 1–2 | Abertura e roteiro | 1,5 min |
 | 3–19 | Motivação, skip-gram e CBOW | 14 min |
 | 20–28 | Treinamento aproximado (15.2) | 7 min |
-| 29–37 | Pré-treino na prática (15.3–15.4) | 7 min |
-| 38–48 | GloVe (15.5) | 8 min |
-| 49–54 | Subword: fastText e BPE (15.6) | 4,5 min |
-| 55–56 | Similaridade e analogia (15.7) | 2,5 min |
-| 57–69 | BERT (15.8) | 9 min |
-| 70–76 | Análise de sentimento (16.2) | 5 min |
-| | **Total** | **~58,5 min** |
+| 29–34 | Pré-treino na prática (15.3–15.4) | 5 min |
+| 35–45 | GloVe (15.5) | 8 min |
+| 46–51 | Subword: fastText e BPE (15.6) | 4,5 min |
+| 52–53 | Similaridade e analogia (15.7) | 2,5 min |
+| 54–66 | BERT (15.8) | 10 min |
+| 67–73 | Análise de sentimento (16.2) | 5 min |
+| | **Total** | **~57,5 min** |
 
 Se o tempo apertar, os candidatos naturais a "passar rápido" são o slide 19
-(código), o 48 (passo do GloVe com números) e o 66 (MLM no código): os três são
+(código), o 44 (o passo do GloVe com números) e o 62 (MLM no código): os três são
 de apoio, e a mensagem de cada um já aparece no slide vizinho.
+
+Os dois slides de *backup* (minibatch e laço de treino) ficam depois do
+"obrigado" e só entram se alguém perguntar de implementação.
 
 ## Atenção
 

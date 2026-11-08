@@ -4,9 +4,6 @@
 %  https://d2l.ai/chapter_natural-language-processing-pretraining/word-embedding-dataset.html
 %========================================================================================
 
-% Células coloridas da tabela do minibatch (contexto em verde, ruído em vermelho)
-\newcommand{\ctxcell}[1]{\colorbox{dexpiGreenLight}{\color{dexpiGreenDark}\textbf{#1}}}
-\newcommand{\ruidocell}[1]{\colorbox{dexpiRedLight}{\color{dexpiRedDark}\textbf{#1}}}
 
 %------------------------------------------------
 \section{Pré-treinando o word2vec na prática}
@@ -43,8 +40,12 @@
 
     \vspace{0.3cm}
     \raggedright
+    {\footnotesize
+    \textbf{Corpus:} PTB \cite{marcus1993building} --- 42.069 frases do \textit{Wall Street Journal}; vocabulário de 6.719 palavras (só as que aparecem $\ge 10$ vezes; o resto vira \texttt{<unk>}). É pequeno de propósito: treina em minutos e já mostra o efeito; em produção usam-se bilhões de palavras.\par}
+
+    \vspace{0.1cm}
     \begin{exampleblock}{O que já sabemos (Seções 15.1 e 15.2)}
-        \small
+        \footnotesize
         A matemática do skip-gram e da amostragem negativa. Agora vamos ver \textbf{como preparar os dados} e \textbf{como o treino roda} no código.
     \end{exampleblock}
 
@@ -55,36 +56,6 @@
     }
 \end{frame}
 
-\begin{frame}{O dataset: Penn Tree Bank (PTB)}
-    \begin{columns}[c]
-        \begin{column}{0.55\textwidth}
-            \small
-            \begin{itemize}
-                \item Corpus pequeno e clássico: frases de artigos do \textbf{Wall Street Journal} \cite{marcus1993building}.
-                \item Cada linha é uma frase; cada palavra é um \textit{token}.
-                \item \textbf{42.069} frases no conjunto de treino.
-                \item Vocabulário: palavras que aparecem \textbf{pelo menos 10 vezes}. As demais viram \texttt{<unk>} (desconhecida).
-                \item Resultado: \textbf{6.719} palavras no vocabulário.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.42\textwidth}
-            \begin{block}{Uma frase (ilustrativa)}
-                \footnotesize\ttfamily
-                the company said it expects to report a loss for the quarter
-            \end{block}
-            \begin{exampleblock}{Por que um corpus pequeno?}
-                \footnotesize
-                Treina em minutos numa GPU e já mostra o efeito do word2vec. Na prática, usa-se Wikipédia ou notícias com bilhões de palavras.
-            \end{exampleblock}
-        \end{column}
-    \end{columns}
-
-    \note{
-        O livro usa o Penn Tree Bank, ou PTB: um corpus pequeno e muito usado em PLN, montado a partir de artigos do jornal Wall Street Journal. Cada linha do arquivo é uma frase e cada palavra separada por espaço é um token.
-        O conjunto de treino tem 42.069 frases. Para montar o vocabulário, o livro só mantém as palavras que aparecem pelo menos 10 vezes; as mais raras são trocadas pelo símbolo \texttt{<unk>}, de ``unknown''. Isso deixa 6.719 palavras.
-        Por que um corpus tão pequeno? Porque ele treina em poucos minutos e já é suficiente para ver o efeito do word2vec. Os vetores usados em produção são treinados em bilhões de palavras.
-    }
-\end{frame}
 
 \begin{frame}{Subamostragem: menos ``the'', mais significado}
     \begin{itemize}
@@ -95,9 +66,9 @@
         P(\text{descartar } w_i) = \max\left(1 - \sqrt{\frac{t}{f(w_i)}},\; 0\right), \qquad t = 10^{-4}
     \end{equation*}
     \small
-    \begin{itemize}
+    \begin{itemize}\setlength{\itemsep}{1pt}
         \item $f(w_i)$: frequência relativa da palavra no corpus. Quanto \textbf{mais frequente}, mais é descartada.
-        \item Palavras raras ($f(w_i) < t$) \textbf{nunca} são descartadas.
+        \item A raiz é a régua: $f = 10^{-2}$ (1 em 100) $\Rightarrow$ \textbf{90\%} de descarte; $f \le 10^{-4}$ $\Rightarrow$ \textbf{nunca} descarta.
     \end{itemize}
     \centering
     \begin{tabular}{lcc}
@@ -125,6 +96,7 @@
                     \item Para cada posição, sorteia o tamanho da janela entre \textbf{1 e 5}.
                     \item As palavras dentro da janela viram o \textbf{contexto} do centro.
                     \item No PTB: cerca de \textbf{1,5 milhão} de pares centro-contexto.
+                    \item Com $K = 5$ ruídos por contexto, cada par vira 6 exemplos: \textbf{$\approx$ 9 milhões} por época.
                 \end{itemize}
             \end{block}
         \end{column}
@@ -166,79 +138,26 @@
     }
 \end{frame}
 
-\begin{frame}{O minibatch: quatro tensores}
-    \small
-    \begin{itemize}
-        \item Cada exemplo tem um número diferente de contextos e ruídos. Para formar um tensor, completamos com \textbf{zeros} (\textit{padding}).
-        \item Exemplo do livro: centro 1, contextos {\color{dexpiGreenDark}\textbf{2}}, ruídos {\color{dexpiRedDark}\textbf{3}}.
-    \end{itemize}
-    \vspace{0.1cm}
-    \centering
-    \begin{tabular}{l|cccccc|l}
-        \toprule
-        \texttt{centers} & \multicolumn{6}{c|}{\texttt{contexts\_negatives}} & \\
-        \midrule
-        1 & \ctxcell{2} & \ctxcell{2} & \ruidocell{3} & \ruidocell{3} & \ruidocell{3} & \ruidocell{3} & exemplo 1 \\
-        1 & \ctxcell{2} & \ctxcell{2} & \ctxcell{2} & \ruidocell{3} & \ruidocell{3} & 0 & exemplo 2 \\
-        \midrule
-        \texttt{labels} & 1 & 1 & 0 & 0 & 0 & 0 & \\
-                        & 1 & 1 & 1 & 0 & 0 & 0 & \\
-        \midrule
-        \texttt{masks}  & 1 & 1 & 1 & 1 & 1 & 1 & \\
-                        & 1 & 1 & 1 & 1 & 1 & {\color{dexpiRedDark}\textbf{0}} & $\leftarrow$ padding \\
-        \bottomrule
-    \end{tabular}
-
-    \vspace{0.2cm}
-    \raggedright
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \footnotesize
-            \begin{itemize}
-                \item \texttt{labels}: \textbf{1} = contexto (positivo), \textbf{0} = ruído ou padding.
-                \item \texttt{masks}: \textbf{0} marca o padding, que a perda deve ignorar.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \footnotesize
-            \textbf{Formatos no PTB} (lote de 512):\\
-            \texttt{centers}: $512 \times 1$\\
-            os outros três: $512 \times 60$
-        \end{column}
-    \end{columns}
-
-    \note{
-        Como os exemplos entram no modelo? Em minibatches de quatro tensores. O problema é que cada centro tem um número diferente de palavras de contexto, porque a janela é sorteada, e portanto um número diferente de ruídos. Para empilhar os exemplos num tensor retangular, completamos as linhas mais curtas com zeros: é o padding.
-        Este é o exemplo do próprio livro. Os dois exemplos têm centro 1. O primeiro tem 2 contextos e 4 ruídos; o segundo tem 3 contextos e 2 ruídos, então ganha um zero no final.
-        \texttt{contexts\_negatives} junta, na mesma linha, os contextos, em verde, e depois os ruídos, em vermelho. \texttt{labels} diz qual é qual: 1 para contexto, 0 para ruído. \texttt{masks} diz o que é real e o que é padding: o zero no final do exemplo 2 é padding e não pode entrar na perda.
-        No PTB, com lotes de 512 exemplos, \texttt{centers} tem formato 512 por 1, e os outros três têm 512 por 60: 60 é o comprimento da linha mais longa do lote.
-    }
-\end{frame}
-
 \begin{frame}{O modelo: duas tabelas e um produto em lote}
     \begin{columns}[c]
         \begin{column}{0.50\textwidth}
             \small
-            \begin{itemize}
-                \item Duas camadas \texttt{nn.Embedding}, cada uma $6.719 \times 100$:
-                \begin{itemize}
-                    \item \texttt{net[0]}: vetores de \textbf{centro} $\vv$;
-                    \item \texttt{net[1]}: vetores de \textbf{contexto} $\uu$.
-                \end{itemize}
-                \item Para cada exemplo, um único produto calcula os escores $\uu^\top \vv_c$ de \textbf{todos} os contextos e ruídos de uma vez.
-                \item \texttt{torch.bmm}: multiplicação de matrizes \textbf{em lote}.
+            \begin{itemize}\setlength{\itemsep}{2pt}
+                \item Duas camadas \texttt{nn.Embedding} de $6.719 \times 100$: \texttt{net[0]} guarda os vetores de \textbf{centro} $\vv$, \texttt{net[1]} os de \textbf{contexto} $\uu$.
+                \item Um único produto em lote (\texttt{torch.bmm}) calcula os escores $\uu^\top \vv_c$ de \textbf{todos} os contextos e ruídos do lote de uma vez.
+                \item \destaque{Não há softmax}: nunca comparamos com o vocabulário inteiro --- o custo não depende mais de $|\V|$.
             \end{itemize}
         \end{column}
         \begin{column}{0.48\textwidth}
             \centering
             \begin{tikzpicture}[
-                t/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm, minimum width=2.4cm},
+                t/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm, minimum width=2.2cm},
                 arr/.style={-{Stealth}, thick, dexpiBlue}]
-                \node[t] (c) at (0,0) {\texttt{center}\\$(512, 1)$};
-                \node[t] (x) at (3.0,0) {\texttt{contexts\_neg.}\\$(512, 60)$};
-                \node[t, fill=dexpiGreenLight, draw=dexpiGreenDark] (v) at (0,-1.4) {$\vv$\\$(512, 1, 100)$};
-                \node[t, fill=dexpiGreenLight, draw=dexpiGreenDark] (u) at (3.0,-1.4) {$\uu^\top$\\$(512, 100, 60)$};
-                \node[t, fill=dexpiLightBlue, very thick] (p) at (1.5,-2.9) {escores $\uu^\top \vv_c$\\$(512, 1, 60)$};
+                \node[t] (c) at (0,0) {\texttt{center}};
+                \node[t] (x) at (3.0,0) {\texttt{contexts\_neg.}};
+                \node[t, fill=dexpiGreenLight, draw=dexpiGreenDark] (v) at (0,-1.4) {$\vv$};
+                \node[t, fill=dexpiGreenLight, draw=dexpiGreenDark] (u) at (3.0,-1.4) {$\uu^\top$};
+                \node[t, fill=dexpiLightBlue, very thick] (p) at (1.5,-2.9) {escores $\uu^\top \vv_c$\\{\scriptsize $(B, 1, 60)$}};
                 \draw[arr] (c) -- node[left, font=\tiny] {net[0]} (v);
                 \draw[arr] (x) -- node[right, font=\tiny] {net[1]} (u);
                 \draw[arr] (v) -- (p);
@@ -256,7 +175,7 @@
     }
 \end{frame}
 
-\begin{frame}{A perda: entropia cruzada binária com máscara}
+\begin{frame}{A perda: a mesma da amostragem negativa}
     \small
     \begin{itemize}
         \item Cada escore $x$ vira uma classificação binária com rótulo $y \in \{0, 1\}$:
@@ -284,41 +203,6 @@
         No PyTorch, isso é a função \texttt{binary\_cross\_entropy\_with\_logits}, que recebe os escores crus, ``logits'', e aplica a sigmoide internamente de forma numericamente estável. O argumento \texttt{weight} recebe a máscara, o que zera a contribuição do padding. Depois dividimos pelo número de entradas reais de cada linha, para que exemplos com mais padding não fiquem com perda menor.
         No exemplo do livro, o escore 3,3 é de uma palavra de ruído: o modelo está dizendo ``sim'' para um par falso. É o termo que mais pesa na perda, cerca de 3,34.
     }
-\end{frame}
-
-\begin{frame}[fragile]{O laço de treino}
-\vspace{-0.2cm}
-\begin{lstlisting}[basicstyle=\ttfamily\fontsize{6.2}{7.0}\selectfont]
-embed_size = 100
-net = nn.Sequential(nn.Embedding(len(vocab), embed_size),   # net[0]: vetores de centro v
-                    nn.Embedding(len(vocab), embed_size))   # net[1]: vetores de contexto u
-
-def train(net, data_iter, lr, num_epochs, device):
-    net.apply(init_weights)                                 # inicializacao Xavier
-    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
-    for epoch in range(num_epochs):
-        for center, context_negative, mask, label in data_iter:
-            pred = skip_gram(center, context_negative, net[0], net[1])   # (B, 1, 60)
-            l = (loss(pred.reshape(label.shape).float(), label.float(), mask)
-                 / mask.sum(axis=1) * mask.shape[1])                     # ignora o padding
-            optimizer.zero_grad()
-            l.sum().backward()
-            optimizer.step()
-
-lr, num_epochs = 0.002, 5
-train(net, data_iter, lr, num_epochs)
-\end{lstlisting}
-\vspace{-0.2cm}
-\footnotesize
-\textbf{Hiperparâmetros}: lote 512, janela máx. 5, $K = 5$, $d = 100$, Adam com $\text{lr} = 0{,}002$, 5 épocas.\\
-\textbf{Saída do livro}: {\color{dexpiGreenDark}\texttt{loss 0.410}}, cerca de 223 mil \textit{tokens}/s numa GPU.
-
-\note{
-    Este é o laço de treino, com o código do livro levemente resumido.
-    O modelo são as duas tabelas de embeddings de dimensão 100. Antes de treinar, os pesos são inicializados com Xavier, e o otimizador é o Adam.
-    Para cada minibatch: calculamos os escores com o skip-gram, que dá o formato B por 1 por 60. Achatamos para o formato dos rótulos e calculamos a perda binária com a máscara. A divisão por \texttt{mask.sum} e a multiplicação por \texttt{mask.shape[1]} fazem a média só sobre as entradas reais, ignorando o padding. Depois vem o passo de sempre: zerar os gradientes, retropropagar e atualizar os pesos.
-    Com taxa de aprendizado 0,002 e 5 épocas, a perda final no livro é 0,410, processando cerca de 223 mil tokens por segundo numa GPU. Para comparação, um classificador que chuta 50\% em cada par teria perda $\log 2 \approx 0{,}69$.
-}
 \end{frame}
 
 \begin{frame}{O resultado: palavras parecidas com ``chip''}
