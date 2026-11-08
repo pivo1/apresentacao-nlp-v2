@@ -89,7 +89,10 @@
             {\small\textbf{Este par aparece junto de verdade?}\par}
             \vspace{0.05cm}
             \begin{equation*}
-                P(D = 1 \mid w_c, w_o) = \sigma\left(\uu_o^\top \vv_c\right)
+                \begin{aligned}
+                    P(D = 1 \mid w_c, w_o) &= \sigma\left(\uu_o^\top \vv_c\right)\\[2pt]
+                    \sigma(x) &= \frac{1}{1+\exp(-x)}
+                \end{aligned}
             \end{equation*}
             \footnotesize
             \begin{itemize}\setlength{\itemsep}{1pt}
@@ -100,11 +103,9 @@
         \end{column}
         \begin{column}{0.43\textwidth}
             \centering
-            {\small$\sigma(x) = \dfrac{1}{1+\exp(-x)}$}\par
-            \vspace{0.1cm}
             \begin{tikzpicture}
                 \begin{axis}[
-                    width=5.2cm, height=3.5cm,
+                    width=5.4cm, height=4.0cm,
                     xmin=-5.5, xmax=5.5, ymin=-0.03, ymax=1.12,
                     axis lines=middle,
                     xtick={-2.2,0,2.2}, xticklabels={$-2{,}2$,$0$,$2{,}2$},
