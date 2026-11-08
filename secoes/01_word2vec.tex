@@ -409,44 +409,45 @@
 
 \begin{frame}{Otimizando com SGD: um par de palavras por vez}
     \small
-    \begin{itemize}\setlength{\itemsep}{1pt}
-        \item O slide anterior mede o erro. Para corrigir, falta saber \destaque{para que lado} empurrar cada vetor: é o \textbf{gradiente}.
-        \item Com bilhões de palavras, ninguém calcula a perda do texto inteiro a cada passo: usamos um \textbf{trecho curto} (\destaque{gradiente estocástico}).
-    \end{itemize}
+    A perda mede o erro; falta saber \destaque{para que lado} empurrar cada vetor (o \textbf{gradiente}). Com bilhões de palavras, cada passo usa um \textbf{trecho curto}: \destaque{SGD}.
 
-    \vspace{0.1cm}
+    \vspace{0.15cm}
     {\centering
     \begin{tikzpicture}[
         carta/.style={draw=#1, fill=#1!8, line width=0.8pt, rounded corners=4pt,
-                      text width=0.28\textwidth, minimum height=1.85cm, align=center, inner sep=4pt},
+                      text width=0.27\textwidth, minimum height=1.55cm, align=center, inner sep=3pt},
         seta/.style={-{Stealth[length=2.5mm]}, line width=1pt, dexpiBlueDark}]
         \node[carta=dexpiBlue] (c1) {%
-            {\color{dexpiBlue}\large\textbf{1}}\;\; \small\textbf{só um trecho}\\[1pt]
-            \footnotesize O texto é enorme: cada passo\\olha um \textbf{lote} de pares.\\[1pt]
+            {\color{dexpiBlue}\large\textbf{1}}\;\; \small\textbf{um trecho}\\[1pt]
+            {\footnotesize cada passo olha}\\[0pt]
+            {\footnotesize um \textbf{lote} pequeno}\\[1pt]
             {\color{dexpiBlue}\scriptsize estocástico $=$ sorteado}};
         \node[carta=dexpiGreenDark, right=0.45cm of c1] (c2) {%
-            {\color{dexpiGreenDark}\large\textbf{2}}\;\; \small\textbf{só um par}\\[1pt]
-            \footnotesize Basta derivar o termo de\\um \textbf{centro} e um \textbf{vizinho}.\\[1pt]
+            {\color{dexpiGreenDark}\large\textbf{2}}\;\; \small\textbf{um par}\\[1pt]
+            {\footnotesize bastam \textbf{dois} vetores:}\\[0pt]
+            {\footnotesize centro e vizinho}\\[1pt]
             {\color{dexpiGreenDark}\scriptsize $\log P(w_o \mid w_c)$}};
         \node[carta=dexpiRedDark, right=0.45cm of c2] (c3) {%
             {\color{dexpiRedDark}\large\textbf{3}}\;\; \small\textbf{um passo}\\[1pt]
-            \footnotesize Anda um pouco no sentido\\que \textbf{diminui} a perda.\\[1pt]
+            {\footnotesize anda no sentido}\\[0pt]
+            {\footnotesize que \textbf{diminui} a perda}\\[1pt]
             {\color{dexpiRedDark}\scriptsize $\vv \leftarrow \vv - \eta\,\nabla$}};
         \draw[seta] (c1) -- (c2);
         \draw[seta] (c2) -- (c3);
     \end{tikzpicture}\par}
 
+    \vspace{0.2cm}
+    {\centering
+    $\log P(w_o \mid w_c) =
+     \underbrace{{\color{dexpiBlue}\uu_o^\top \vv_c}}_{\text{nota do vizinho real}}
+     \;-\;
+     \underbrace{{\color{dexpiRedDark}\log\Big(\sum_{i \in \V} \exp(\uu_i^\top \vv_c)\Big)}}_{\text{soma sobre o vocabulário}}$
+    \par}
+
     \vspace{0.15cm}
-    \begin{equation*}
-        \log P(w_o \mid w_c) =
-        \underbrace{{\color{dexpiBlue}\uu_o^\top \vv_c}}_{\text{nota do vizinho real}}
-        \;-\;
-        \underbrace{{\color{dexpiRedDark}\log\Big(\sum_{i \in \V} \exp(\uu_i^\top \vv_c)\Big)}}_{\text{log da soma sobre o vocabulário}}
-    \end{equation*}
-    \vspace{-0.25cm}
-    \begin{exampleblock}{As duas metades puxam em sentidos opostos}
+    \begin{exampleblock}{Uma metade premia, a outra pune}
         \footnotesize
-        A {\color{dexpiBlue}nota do vizinho real} quer \textbf{subir}; o {\color{dexpiRedDark}log da soma} pune qualquer nota alta, inclusive a das palavras erradas.
+        A {\color{dexpiBlue}nota do vizinho real} quer subir; a {\color{dexpiRedDark}soma} pune qualquer nota alta, inclusive a das palavras erradas.
     \end{exampleblock}
 \end{frame}
 
