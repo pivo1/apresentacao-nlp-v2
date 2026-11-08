@@ -283,68 +283,69 @@
 
 \begin{frame}{Softmax hierárquica: a probabilidade é o caminho}
     \small
-    \begin{itemize}
-        \item \textbf{Exemplo} ($w_3$: esquerda, direita, esquerda):
-    \end{itemize}
-    \vspace{-0.2cm}
-    \begin{equation*}
-        P(w_3 \mid w_c) =
-        \underbrace{\sigma\left(\uu_{n(w_3,1)}^\top \vv_c\right)}_{\text{esquerda: } +}
-        \cdot \underbrace{\sigma\left({\color{dexpiRedDark}-}\uu_{n(w_3,2)}^\top \vv_c\right)}_{\text{direita: } -}
-        \cdot \underbrace{\sigma\left(\uu_{n(w_3,3)}^\top \vv_c\right)}_{\text{esquerda: } +}
-    \end{equation*}
-    \begin{itemize}
-        \item Passos para a \textbf{esquerda} mantêm o sinal positivo; para a \textbf{direita}, ganham o sinal de menos.
-        \item \textbf{Fórmula geral}: uma produtória ao longo dos nós do caminho:
-    \end{itemize}
-    \vspace{-0.2cm}
-    \begin{equation*}
-        P(w_o \mid w_c) = \prod_{j=1}^{L(w_o)-1} \sigma\Big( [\![\, n(w_o, j+1) = \text{esq}(n(w_o, j)) \,]\!] \cdot \uu_{n(w_o, j)}^\top \vv_c \Big)
-    \end{equation*}
-    \begin{itemize}
-        \item $[\![\,\cdot\,]\!]$: função indicadora; vale $+1$ se o próximo nó é o filho à \textbf{esquerda} e $-1$ se é o filho à \textbf{direita}. Ela controla o sinal dentro da sigmoide.
-    \end{itemize}
+    Descer a árvore é fazer \textbf{uma aposta por nó}: a probabilidade da palavra é o \textbf{produto} das apostas.
+
+    \vspace{0.1cm}
+    {\centering
+    $P(w_3 \mid w_c) =
+     \underbrace{0{,}90}_{\text{esquerda}} \times
+     \underbrace{0{,}40}_{\text{direita}} \times
+     \underbrace{0{,}80}_{\text{esquerda}} = \mathbf{0{,}29}$
+    \par}
+
+    \vspace{0.15cm}
+    \begin{exampleblock}{Por que a ida à direita troca o sinal}
+        \footnotesize
+        Cada fator é $\sigma$ do escore do nó. À esquerda usa-se $\sigma(x)$; à direita, $1-\sigma(x)$, que é exatamente $\sigma(-x)$ --- a mesma sigmoide com o escore trocado.
+    \end{exampleblock}
+
+    \vspace{0.1cm}
+    \begin{block}{A mesma ideia, para qualquer palavra ($L-1$ decisões)}
+        \scriptsize
+        $P(w_o \mid w_c) = \prod_{j=1}^{L(w_o)-1} \sigma\Big( [\![\, n(w_o, j+1) = \text{esq}(n(w_o, j)) \,]\!] \cdot \uu_{n(w_o, j)}^\top \vv_c \Big)$\\[2pt]
+        $[\![\cdot]\!] = +1$ se a próxima decisão é à esquerda e $-1$ se é à direita: é ela que coloca o sinal.
+    \end{block}
 
     \note{
-        Como calculamos a probabilidade de uma palavra? Multiplicando as probabilidades de cada decisão ao longo do caminho.
-        No exemplo de $w_3$: no primeiro nó, a raiz, vamos para a esquerda, e a probabilidade é a sigmoide do produto escalar entre o vetor desse nó e o vetor da palavra central. No segundo nó vamos para a direita, e a probabilidade é a sigmoide do produto escalar com o sinal trocado, ou seja, 1 menos a chance de ir para a esquerda. No terceiro nó, esquerda de novo, sinal positivo.
-        A regra é simples: esquerda mantém o sinal positivo, direita ganha o sinal de menos.
-        A fórmula geral só escreve isso para qualquer palavra: é uma produtória sobre os nós do caminho, de $j = 1$ até $L(w_o) - 1$, porque a folha não toma decisão. A função indicadora entre colchetes duplos vale $+1$ se o próximo nó é o filho da esquerda e $-1$ se é o da direita, e é ela que coloca o sinal certo dentro da sigmoide.
+        Como calculamos a probabilidade de uma palavra? Multiplicando as chances de cada decisão ao longo do caminho. Descer a árvore é fazer uma aposta por nó.
+        No exemplo de $w_3$, o caminho é esquerda, direita, esquerda. As chances são 90\%, 40\% e 80\%, e o produto dá 29\%.
+        Sobre o sinal: à esquerda usamos a sigmoide do escore do nó; à direita, a chance é o complemento, $1$ menos a sigmoide, que é o mesmo que a sigmoide do escore com o sinal trocado. É por isso que o segundo fator aparece com o sinal de menos: é a chance de ir à direita, não à esquerda.
+        A fórmula geral só escreve a mesma coisa para qualquer palavra: o produto vai de $j=1$ até $L(w_o)-1$, porque a folha não toma decisão, e a função indicadora entre colchetes duplos vale $+1$ ou $-1$ conforme o lado.
     }
 \end{frame}
 
 \begin{frame}{Softmax hierárquica: vantagens}
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{exampleblock}{Custo: $O(\log_2 |\V|)$}
-                \footnotesize
-                O número de decisões é a \textbf{altura} da árvore. Com $|\V| = 1.000.000$: cerca de \textbf{20 operações} ($\log_2 10^6 \approx 20$).
-            \end{exampleblock}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Continua sendo uma distribuição}
-                \footnotesize
-                Como $\sigma(x) + \sigma(-x) = 1$, cada nó divide a probabilidade entre os dois filhos: $\sum_{w \in \V} P(w \mid w_c) = 1$.
-            \end{block}
-        \end{column}
-    \end{columns}
-
-    \vspace{0.3cm}
-    \centering
     \small
-    \begin{tabular}{llll}
-        \toprule
-        & \textbf{Softmax completa} & \textbf{Amostragem negativa} & \textbf{Softmax hierárquica} \\
-        \midrule
-        Ideia & 1 classe entre $|\V|$ & 1 positivo $+$ $K$ negativos & caminho na árvore \\
-        Cálculos ($|\V| = 10^6$) & 1.000.000 & $K + 1 = 6$ & $\approx 20$ \\
-        Custo por par & $O(|\V|)$ & $O(K)$ & $O(\log_2 |\V|)$ \\
-        \bottomrule
-    \end{tabular}
+    Cálculos \textbf{por par}, com $|\V| = 10^6$ e $K = 5$:
+
+    \vspace{0.1cm}
+    {\centering
+    \begin{tikzpicture}[
+        cartao/.style={draw=#1, fill=#1!8, line width=0.8pt, rounded corners=4pt,
+                       text width=0.27\textwidth, minimum height=2.4cm, align=center, inner sep=4pt}]
+        \node[cartao=dexpiRedDark] (c1) {%
+            {\color{dexpiRedDark}\Large\textbf{1.000.000}}\\[2pt]
+            {\small\textbf{softmax completa}}\\[3pt]
+            {\scriptsize $O(|\V|)$: olha o dicionário inteiro}};
+        \node[cartao=dexpiBlue, right=0.45cm of c1] (c2) {%
+            {\color{dexpiBlue}\Large\textbf{6}}\\[2pt]
+            {\small\textbf{amostragem negativa}}\\[3pt]
+            {\scriptsize $O(K)$: 1 positivo $+$ 5 negativos}};
+        \node[cartao=dexpiGreenDark, right=0.45cm of c2] (c3) {%
+            {\color{dexpiGreenDark}\Large\textbf{$\approx$ 20}}\\[2pt]
+            {\small\textbf{softmax hierárquica}}\\[3pt]
+            {\scriptsize $O(\log_2|\V|)$: a altura da árvore}};
+    \end{tikzpicture}\par}
+
+    \vspace{0.2cm}
+    \begin{exampleblock}{Mesma pergunta, custos muito diferentes}
+        \footnotesize
+        As três estimam a mesma coisa --- a chance de um par --- e a diferença é só o custo. A hierárquica ainda tem um bônus: continua sendo uma distribuição \textbf{exata} (as folhas somam 1), enquanto a amostragem negativa é uma \textbf{aproximação}.
+    \end{exampleblock}
 
     \note{
         Por que isso é vantajoso? Primeiro, o custo. O número de decisões para chegar a uma palavra é a altura da árvore, que numa árvore balanceada é o logaritmo na base 2 do tamanho do vocabulário. Com 1 milhão de palavras, isso dá cerca de 20 operações, em vez de 1 milhão.
         Segundo, diferente da amostragem negativa, a softmax hierárquica continua sendo uma distribuição de probabilidade exata. Como $\sigma(x) + \sigma(-x) = 1$, em cada nó a probabilidade se divide entre os dois filhos sem sobrar nem faltar nada. Somando a probabilidade de todas as folhas, o resultado é exatamente 1.
-        A tabela resume as três abordagens: a softmax completa faz 1 milhão de cálculos por par; a amostragem negativa, com $K = 5$, faz 6; e a softmax hierárquica faz cerca de 20. As duas aproximações valem tanto para o skip-gram quanto para o CBOW.
+        Os três números são a mesma conta vista de três formas: 1 milhão de cálculos por par na softmax completa; 6 na amostragem negativa com $K = 5$; cerca de 20 na hierárquica. As duas aproximações valem tanto para o skip-gram quanto para o CBOW.
     }
 \end{frame}
