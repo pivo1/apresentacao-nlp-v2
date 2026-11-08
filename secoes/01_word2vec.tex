@@ -546,22 +546,20 @@
 
 
 \begin{frame}{A fórmula do CBOW}
-    {\centering
-    $\displaystyle
+    \begin{equation*}
         P(\text{centro} \mid \text{contexto}) =
         \frac{\exp\left({\color{dexpiBlue}\uu_c}^\top {\color{dexpiGreenDark}\bar{\vv}_o}\right)}
              {{\color{dexpiRedDark}\sum_{i \in \V}} \exp\left(\uu_i^\top {\color{dexpiGreenDark}\bar{\vv}_o}\right)}
-        \qquad \text{com} \quad {\color{dexpiGreenDark}\bar{\vv}_o} = \frac{\vv_{o_1} + \cdots + \vv_{o_{2m}}}{2m}$
-    \par}
+        \qquad \text{com} \quad {\color{dexpiGreenDark}\bar{\vv}_o} = \frac{\vv_{o_1} + \cdots + \vv_{o_{2m}}}{2m}
+    \end{equation*}
 
-    \vspace{0.15cm}
     \begin{columns}[t]
         \begin{column}{0.48\textwidth}
             \begin{block}{Lendo a fórmula}
-                \footnotesize
-                \begin{itemize}\setlength{\itemsep}{0pt}
+                \small
+                \begin{itemize}
                     \item {\color{dexpiGreenDark}$\bar{\vv}_o$}: o resumo do contexto (passo 2).
-                    \item {\color{dexpiBlue}$\uu_c$}: a candidata; o produto dá o escore (passo 3).
+                    \item {\color{dexpiBlue}$\uu_c$}: o vetor da candidata; o produto dá o escore (passo 3).
                     \item {\color{dexpiRedDark}$\sum$}: soma sobre todas as palavras = softmax (passo 4).
                 \end{itemize}
             \end{block}
@@ -569,8 +567,7 @@
         \begin{column}{0.48\textwidth}
             \begin{block}{Mesma fórmula, notação trocada}
                 \footnotesize
-                No CBOW o D2L \textbf{inverte as letras}: $\vv$ são as palavras de \textbf{contexto} (a entrada) e $\uu_c$ é o \textbf{centro} previsto. Regra: $\vv$ é sempre quem \textbf{entra} no modelo.\\[2pt]
-                Fora isso, é a mesma fórmula do skip-gram: só entra a \textbf{média} no lugar do vetor do centro.
+                No CBOW, $\vv$ são as palavras de \textbf{contexto} (a entrada) e $\uu_c$ é o \textbf{centro} previsto: o D2L \textbf{inverte as letras}.
             \end{block}
         \end{column}
     \end{columns}
