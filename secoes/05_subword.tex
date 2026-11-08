@@ -1,0 +1,271 @@
+%========================================================================================
+%  Seção 15.6 do D2L -- Subword Embedding
+%  https://d2l.ai/chapter_natural-language-processing-pretraining/subword-embedding.html
+%========================================================================================
+
+%------------------------------------------------
+\section{Subword embedding}
+%------------------------------------------------
+
+\begin{frame}{Subword Embedding (cada palavra possui uma estrutura)}
+    \begin{columns}[c]
+        \begin{column}{0.50\textwidth}
+            \small
+            \begin{itemize}
+                \item ``help'', ``helps'', ``helped'', ``helping'': \textbf{formas} da mesma palavra.
+                \item A relação se repete:
+            \end{itemize}
+            \vspace{0.1cm}
+            \centering
+            \footnotesize
+            \begin{tabular}{ccc}
+                dog $\to$ dogs & $\approx$ & cat $\to$ cats \\
+                boy $\to$ boyfriend & $\approx$ & girl $\to$ girlfriend \\
+                gato $\to$ gatinho & $\approx$ & cão $\to$ cãozinho \\
+            \end{tabular}
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \begin{alertblock}{word2vec e GloVe ignoram isso}
+                \footnotesize
+                Cada palavra recebe um vetor \textbf{independente}. ``gato'' e ``gatos'' não compartilham \textbf{nenhum} parâmetro.
+            \end{alertblock}
+            \begin{alertblock}{Consequência}
+                \footnotesize
+                Palavras raras têm vetores ruins, e palavras \textbf{fora do vocabulário} (ex.: ``gatinhos'') nem têm vetor.
+            \end{alertblock}
+        \end{column}
+    \end{columns}
+    \vspace{0.3cm}
+    \begin{exampleblock}{Ideia da seção}
+        \small
+        Representar palavras por \textbf{pedaços} (subpalavras), que são compartilhados entre palavras parecidas.
+    \end{exampleblock}
+
+    \note{
+        Os modelos que vimos até agora, word2vec e GloVe, tratam cada palavra como um bloco indivisível. Mas as palavras têm estrutura interna. Em inglês, ``help'', ``helps'', ``helped'' e ``helping'' são formas da mesma palavra. E a relação entre ``dog'' e ``dogs'' é a mesma que entre ``cat'' e ``cats''; entre ``boy'' e ``boyfriend'', a mesma que entre ``girl'' e ``girlfriend''. Em português é igual: ``gato'' e ``gatinho'', ``cão'' e ``cãozinho''.
+        No word2vec e no GloVe, cada palavra tem um vetor independente. ``gato'' e ``gatos'' não compartilham nenhum parâmetro: o modelo precisa aprender os dois do zero, cada um com as suas próprias ocorrências.
+        A consequência: palavras raras ficam com vetores ruins, porque aparecem pouco. E uma palavra que não estava no vocabulário de treino, como ``gatinhos'', simplesmente não tem vetor.
+        A ideia desta seção é representar as palavras por pedaços menores, as subpalavras, que são compartilhados entre palavras parecidas. Vamos ver duas formas: o fastText e o Byte Pair Encoding.
+    }
+\end{frame}
+
+\begin{frame}{fastText: a palavra como um saco de n-gramas}
+    \small
+    \begin{itemize}
+        \item fastText \cite{bojanowski2017enriching}: marca o início e o fim com \texttt{<} e \texttt{>} e quebra a palavra em \textbf{n-gramas de caracteres}.
+    \end{itemize}
+    \vspace{0.1cm}
+    \centering
+    \begin{tikzpicture}[
+        ch/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.6cm, minimum height=0.6cm, font=\small\ttfamily, inner sep=0pt},
+        ng/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\footnotesize\ttfamily, minimum height=0.55cm, inner sep=3pt}]
+        \foreach \c [count=\k] in {<,w,h,e,r,e,>} {
+            \node[ch] (c\k) at (0.6*\k,0) {\c};
+        }
+        \draw[decorate, decoration={brace, amplitude=4pt, mirror}, thick, dexpiGreenDark] ($(c1.south west)+(0.03,-0.08)$) -- ($(c3.south east)+(-0.03,-0.08)$);
+        \draw[decorate, decoration={brace, amplitude=4pt}, thick, dexpiRedDark] ($(c2.north west)+(0.03,0.08)$) -- ($(c4.north east)+(-0.03,0.08)$);
+        \node[font=\tiny, text=dexpiGreenDark] at ($(c2.south)+(0,-0.45)$) {janela de 3};
+        \node[font=\tiny, text=dexpiRedDark] at ($(c3.north)+(0,0.45)$) {desliza 1 casa};
+
+        \node[ng] (g1) at (6.6,0.55) {<wh};
+        \node[ng, right=0.15cm of g1] (g2) {whe};
+        \node[ng, right=0.15cm of g2] (g3) {her};
+        \node[ng, right=0.15cm of g3] (g4) {ere};
+        \node[ng, right=0.15cm of g4] (g5) {re>};
+        \node[ng, fill=dexpiLightBlue, draw=dexpiBlue, below=0.35cm of g3] (g6) {<where>};
+        \node[font=\tiny, anchor=west] at (g6.east) {\;+ a palavra inteira};
+        \draw[-{Stealth}, thick, dexpiBlue] (4.6,0) -- (5.9,0.4);
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    \raggedright
+    \begin{itemize}
+        \item Os marcadores separam prefixos e sufixos: o n-grama \texttt{her} (dentro de ``where'') é \textbf{diferente} da palavra \texttt{<her>}.
+        \item Na prática, usam-se todos os n-gramas com $3 \le n \le 6$.
+    \end{itemize}
+    \begin{exampleblock}{Por que ajuda}
+        \footnotesize
+        ``gato'' e ``gatos'' compartilham \texttt{<ga}, \texttt{gat}, \texttt{ato}: os dois vetores passam a ter \textbf{partes em comum}.
+    \end{exampleblock}
+
+    \note{
+        O fastText, de Bojanowski e colegas, de 2017, é a primeira solução. Ele trata cada palavra como um conjunto de pedaços de caracteres, os n-gramas.
+        Primeiro, colocamos um marcador de início, o sinal de menor, e um de fim, o sinal de maior. Depois, deslizamos uma janela de tamanho 3 pela palavra. Para ``where'', saem os n-gramas: menor-w-h, w-h-e, h-e-r, e-r-e e r-e-maior. Também incluímos a palavra inteira, com os marcadores, como um item especial.
+        Os marcadores importam: o n-grama ``her'', que aparece no meio de ``where'', é diferente da palavra ``her'' sozinha, que vira menor-h-e-r-maior. Assim o modelo distingue prefixos, sufixos e o meio da palavra.
+        Na prática, não usamos só n-gramas de tamanho 3: usamos todos os tamanhos de 3 a 6.
+        E por que isso ajuda? Porque ``gato'' e ``gatos'' compartilham vários n-gramas, como menor-g-a, g-a-t e a-t-o. Então os vetores das duas palavras passam a ter partes em comum.
+    }
+\end{frame}
+
+\begin{frame}{fastText: o vetor da palavra é a soma dos pedaços}
+    \small
+    \begin{itemize}
+        \item Cada subpalavra $g$ tem seu próprio vetor $\mathbf{z}_g$. Com $\mathcal{G}_w$ = subpalavras de $w$:
+    \end{itemize}
+    \begin{equation*}
+        \boxed{\;\vv_w = \sum_{g \in \mathcal{G}_w} \mathbf{z}_g\;}
+        \qquad
+        \text{ex.: } \vv_{\text{where}} = \mathbf{z}_{\texttt{<wh}} + \mathbf{z}_{\texttt{whe}} + \cdots + \mathbf{z}_{\texttt{<where>}}
+    \end{equation*}
+    \begin{itemize}
+        \item O resto é o \textbf{skip-gram} de sempre: só trocamos $\vv_w$ por essa soma.
+        \item O gradiente chega em cada $\mathbf{z}_g$: treinar ``gatos'' também melhora ``gato''.
+    \end{itemize}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{Ganho}
+                \footnotesize
+                Palavra \textbf{nova} (``gatinhos''): somamos os vetores dos n-gramas dela, que já foram treinados em outras palavras.
+            \end{exampleblock}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{Custo}
+                \footnotesize
+                Há \textbf{muito mais} subpalavras que palavras: mais parâmetros e mais conta por palavra.
+            \end{alertblock}
+        \end{column}
+    \end{columns}
+
+    \note{
+        Como o fastText usa esses pedaços? Cada subpalavra $g$ ganha o seu próprio vetor, $\mathbf{z}_g$. O vetor de uma palavra deixa de ser um parâmetro independente: ele passa a ser a soma dos vetores das suas subpalavras. Por exemplo, o vetor de ``where'' é o vetor de menor-w-h, mais o de w-h-e, e assim por diante, mais o da palavra inteira.
+        O resto do modelo é o skip-gram que já conhecemos. Só trocamos o vetor da palavra central por essa soma.
+        Como o vetor é uma soma, o gradiente chega em cada pedaço. Então, quando o modelo treina com ``gatos'', ele também ajusta os pedaços que ``gatos'' divide com ``gato''. As palavras parecidas aprendem juntas.
+        O ganho principal: uma palavra que nunca apareceu no treino, como ``gatinhos'', ainda ganha um vetor, somando os vetores dos seus n-gramas, que já foram treinados em outras palavras.
+        O custo: existem muito mais subpalavras do que palavras. O modelo tem mais parâmetros, e calcular o vetor de cada palavra exige somar vários pedaços.
+    }
+\end{frame}
+
+\begin{frame}{Byte Pair Encoding (BPE)}
+    \small
+    \begin{itemize}
+        \item No fastText, os pedaços têm tamanho \textbf{fixo} ($3$ a $6$) e todos entram no vocabulário.
+        \item BPE \cite{sennrich2016neural}: deixa os \textbf{dados} decidirem quais pedaços valem a pena, com tamanhos \textbf{variáveis}.
+    \end{itemize}
+    \begin{block}{O algoritmo}
+        \footnotesize
+        \begin{enumerate}
+            \item Comece com o vocabulário de \textbf{caracteres} (mais \texttt{\_} para o fim da palavra).
+            \item Conte, no corpus, cada \textbf{par de símbolos vizinhos}.
+            \item \textbf{Junte} o par mais frequente num símbolo novo.
+            \item Repita os passos 2 e 3 um número fixo de vezes.
+        \end{enumerate}
+    \end{block}
+    \begin{exampleblock}{Resultado}
+        \footnotesize
+        Pedaços frequentes viram símbolos; palavras raras se quebram em pedaços menores. Usado no GPT-2 e no RoBERTa.
+    \end{exampleblock}
+
+    \note{
+        O fastText usa pedaços de tamanho fixo, de 3 a 6 caracteres, e todos eles entram no vocabulário, o que deixa o vocabulário enorme. O Byte Pair Encoding, ou BPE, de Sennrich e colegas, faz diferente: deixa os dados decidirem quais pedaços valem a pena, e os pedaços podem ter qualquer tamanho.
+        O algoritmo é simples. Começamos com um vocabulário de caracteres, mais um símbolo especial, o sublinhado, que marca o fim da palavra. Contamos, no corpus inteiro, quantas vezes cada par de símbolos aparece um ao lado do outro. Juntamos o par mais frequente num símbolo novo. E repetimos isso um número fixo de vezes.
+        O resultado: os pedaços que aparecem muito viram símbolos próprios, e as palavras raras se quebram em pedaços menores. É o método usado em modelos de linguagem pré-treinados como o GPT-2 e o RoBERTa.
+    }
+\end{frame}
+
+\begin{frame}{BPE com números: as primeiras junções}
+    \begin{columns}[c]
+        \begin{column}{0.42\textwidth}
+            \small
+            \textbf{Corpus} (palavra: frequência):
+            \vspace{0.1cm}
+
+            \centering
+            \footnotesize
+            \begin{tabular}{lc}
+                \toprule
+                símbolos & freq. \\
+                \midrule
+                \texttt{f a s t \_} & 4 \\
+                \texttt{f a s t e r \_} & 3 \\
+                \texttt{t a l l \_} & 5 \\
+                \texttt{t a l l e r \_} & 4 \\
+                \bottomrule
+            \end{tabular}
+
+            \vspace{0.2cm}
+            \raggedright
+            Contagem do par (\texttt{t}, \texttt{a}): aparece em ``tall'' e ``taller'':
+            $5 + 4 = \textbf{9}$.
+        \end{column}
+        \begin{column}{0.54\textwidth}
+            \centering
+            \footnotesize
+            \begin{tabular}{clcl}
+                \toprule
+                junção & par & freq. & novo símbolo \\
+                \midrule
+                1 & (\texttt{t}, \texttt{a}) & 9 & \nz{\texttt{ta}} \\
+                2 & (\texttt{ta}, \texttt{l}) & 9 & \nz{\texttt{tal}} \\
+                3 & (\texttt{tal}, \texttt{l}) & 9 & \nz{\texttt{tall}} \\
+                4 & (\texttt{f}, \texttt{a}) & 7 & \nz{\texttt{fa}} \\
+                5 & (\texttt{fa}, \texttt{s}) & 7 & \nz{\texttt{fas}} \\
+                6 & (\texttt{fas}, \texttt{t}) & 7 & \nz{\texttt{fast}} \\
+                7 & (\texttt{e}, \texttt{r}) & 7 & \nz{\texttt{er}} \\
+                8 & (\texttt{er}, \texttt{\_}) & 7 & \nz{\texttt{er\_}} \\
+                9 & (\texttt{tall}, \texttt{\_}) & 5 & \nz{\texttt{tall\_}} \\
+                10 & (\texttt{fast}, \texttt{\_}) & 4 & \nz{\texttt{fast\_}} \\
+                \bottomrule
+            \end{tabular}
+        \end{column}
+    \end{columns}
+    \vspace{0.3cm}
+    \begin{exampleblock}{Depois de 10 junções}
+        \small
+        \texttt{fast\_} \quad \texttt{fast er\_} \quad \texttt{tall\_} \quad \texttt{tall er\_}
+        \hfill {\footnotesize o sufixo \texttt{er\_} virou um símbolo próprio}
+    \end{exampleblock}
+
+    \note{
+        Vamos rodar o BPE num exemplo do livro. O corpus tem quatro palavras: ``fast'' aparece 4 vezes, ``faster'' 3, ``tall'' 5 e ``taller'' 4. Cada palavra começa quebrada em caracteres, com o sublinhado no fim.
+        Contamos os pares vizinhos, levando em conta a frequência das palavras. O par t-a aparece em ``tall'' e em ``taller'', então a contagem é 5 mais 4, 9. É o par mais frequente, e vira o símbolo ``ta''.
+        Recontamos e repetimos. Na tabela, as dez junções em ordem: primeiro se forma ``tall'', com frequência 9; depois ``fast'', com 7; depois o sufixo ``er'' e ``er'' com o fim de palavra, também com 7; e por fim ``tall'' e ``fast'' com o fim de palavra.
+        Depois das dez junções, as palavras ficam assim: ``fast'' vira um símbolo só, ``faster'' vira ``fast'' mais ``er'', ``tall'' vira um símbolo só, e ``taller'' vira ``tall'' mais ``er''. Repare que o sufixo ``er'' virou um símbolo próprio: o algoritmo descobriu sozinho um pedaço com significado.
+    }
+\end{frame}
+
+\begin{frame}{BPE: segmentando palavras que nunca vimos}
+    \small
+    \begin{itemize}
+        \item Para uma palavra nova, pegamos sempre o \textbf{maior pedaço conhecido} a partir do início (busca gulosa).
+    \end{itemize}
+    \vspace{0.2cm}
+    \centering
+    \begin{tikzpicture}[
+        tok/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, font=\small\ttfamily, minimum height=0.6cm, inner sep=4pt},
+        kn/.style={tok, draw=dexpiGreenDark, fill=dexpiGreenLight},
+        lab/.style={font=\small, anchor=east}]
+        \node[lab] at (-0.3,0) {tallest\_ $\;\Rightarrow$};
+        \node[kn, anchor=west] (a1) at (0,0) {tall};
+        \node[tok, right=0.1cm of a1] (a2) {e};
+        \node[tok, right=0.1cm of a2] (a3) {s};
+        \node[tok, right=0.1cm of a3] (a4) {t};
+        \node[tok, right=0.1cm of a4] (a5) {\_};
+
+        \node[lab] at (-0.3,-1) {fatter\_ $\;\Rightarrow$};
+        \node[kn, anchor=west] (b1) at (0,-1) {fa};
+        \node[tok, right=0.1cm of b1] (b2) {t};
+        \node[tok, right=0.1cm of b2] (b3) {t};
+        \node[kn, right=0.1cm of b3] (b4) {er\_};
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    \raggedright
+    \begin{itemize}
+        \item Em verde, símbolos aprendidos nas junções; em azul, caracteres soltos.
+        \item ``tallest'' reaproveita \texttt{tall}; ``fatter'' reaproveita o sufixo \texttt{er\_}.
+        \item Nenhuma palavra fica sem representação: no pior caso, ela se quebra em \textbf{caracteres}.
+    \end{itemize}
+    \begin{exampleblock}{Na prática}
+        \footnotesize
+        Os vetores (ou o modelo de linguagem) são treinados sobre esses símbolos, e não sobre palavras inteiras.
+    \end{exampleblock}
+
+    \note{
+        Com o vocabulário de símbolos aprendido, como quebramos uma palavra que nunca vimos? Com uma busca gulosa: a partir do início da palavra, pegamos sempre o maior pedaço que está no vocabulário, e continuamos do ponto onde ele termina.
+        ``tallest'' não estava no corpus. O maior pedaço conhecido no começo é ``tall''. O que sobra, e-s-t e o fim de palavra, não forma nenhum símbolo aprendido, então fica em caracteres.
+        ``fatter'' também é nova. Ela começa com ``fa'', porque ``fat'' não é um símbolo; depois vêm dois t soltos; e termina com o sufixo ``er'' com fim de palavra, que o algoritmo aprendeu.
+        Repare que as duas palavras novas reaproveitam pedaços aprendidos de outras palavras. E nenhuma palavra fica sem representação: no pior caso, ela se quebra até os caracteres.
+        Na prática, os vetores ou o modelo de linguagem são treinados sobre esses símbolos, e não sobre as palavras inteiras.
+    }
+\end{frame}
+

@@ -1,0 +1,113 @@
+%========================================================================================
+%  Seção 15.7 do D2L -- Word Similarity and Analogy
+%  https://d2l.ai/chapter_natural-language-processing-pretraining/similarity-analogy.html
+%========================================================================================
+
+%------------------------------------------------
+\section{Similaridade e analogia}
+%------------------------------------------------
+
+\begin{frame}{Usando vetores pré-treinados: similaridade}
+    \begin{columns}[c]
+        \begin{column}{0.50\textwidth}
+            \footnotesize
+            \begin{itemize}
+                \item Sem treinar: baixamos vetores \textbf{pré-treinados} (GloVe ou fastText).
+                \item O D2L usa o \textbf{GloVe 6B}: 6 bilhões de \textit{tokens} da Wikipédia, 400 mil palavras, $d = 50$.
+                \item Palavras parecidas com $w$: as $k$ de \textbf{maior cosseno} com $\xx_w$ (vizinhos mais próximos).
+            \end{itemize}
+            \begin{equation*}
+                \cos(\xx_a, \xx_b) = \frac{\xx_a^\top \xx_b}{\|\xx_a\|\,\|\xx_b\|}
+            \end{equation*}
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \centering
+            \footnotesize
+            \begin{tabular}{lll}
+                \toprule
+                \textbf{chip} & \textbf{baby} & \textbf{beautiful} \\
+                \midrule
+                chips {\scriptsize 0,856} & babies {\scriptsize 0,839} & lovely {\scriptsize 0,921} \\
+                intel {\scriptsize 0,749} & boy {\scriptsize 0,800} & gorgeous {\scriptsize 0,893} \\
+                electronics {\scriptsize 0,749} & girl {\scriptsize 0,792} & wonderful {\scriptsize 0,830} \\
+                \bottomrule
+            \end{tabular}
+
+            \vspace{0.1cm}
+            {\scriptsize As 3 palavras mais parecidas (cosseno), no GloVe 6B com $d = 50$.}
+        \end{column}
+    \end{columns}
+    \vspace{0.2cm}
+    \begin{exampleblock}{O que isso mostra}
+        \footnotesize
+        Os vizinhos fazem sentido: \textbf{plural} (chips, babies), \textbf{tema} (intel, electronics), \textbf{sinônimos} (lovely, gorgeous). No word2vec do PTB, ``chip'' dava microprocessor, mips e intel.
+    \end{exampleblock}
+
+    \note{
+        A Seção 15.7 mostra como usar os vetores depois de prontos. E a primeira observação é prática: na maioria das vezes, não precisamos treinar nada. Existem vetores pré-treinados, de GloVe e de fastText, disponíveis para download.
+        O livro usa o GloVe 6B, treinado em 6 bilhões de tokens da Wikipédia, com um vocabulário de 400 mil palavras. Ele usa a versão com vetores de dimensão 50.
+        A primeira aplicação é a similaridade: dada uma palavra, encontrar as mais parecidas. É uma busca de vizinhos mais próximos: calculamos o cosseno entre o vetor da palavra e o de todas as outras 400 mil, e ficamos com as maiores.
+        Os resultados do livro, na tabela: para ``chip'', as mais parecidas são ``chips'', ``intel'' e ``electronics''. Para ``baby'', ``babies'', ``boy'' e ``girl''. Para ``beautiful'', ``lovely'', ``gorgeous'' e ``wonderful''.
+        Reparem nos tipos de relação que aparecem: o plural da própria palavra, palavras do mesmo tema e sinônimos. E comparem com o word2vec que treinamos no PTB: lá, ``chip'' dava microprocessor, mips e intel. Com um corpus muito maior, os vizinhos ficam mais gerais e mais limpos.
+    }
+\end{frame}
+
+\begin{frame}{Analogias: aritmética de vetores}
+    \begin{columns}[c]
+        \begin{column}{0.56\textwidth}
+            \footnotesize
+            \begin{itemize}
+                \item ``$a$ está para $b$ assim como $c$ está para $d$'': dados $a$, $b$, $c$, achar $d$.
+                \item A \textbf{diferença} $\xx_b - \xx_a$ codifica a relação. Basta aplicá-la a $c$:
+            \end{itemize}
+            \vspace{-0.15cm}
+            \begin{equation*}
+                \boxed{\;\xx_d \approx \xx_c + \xx_b - \xx_a\;}
+            \end{equation*}
+            \vspace{-0.25cm}
+            \begin{itemize}
+                \item $d$ é a palavra com \textbf{maior cosseno} com esse vetor.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.42\textwidth}
+            \centering
+            \begin{tikzpicture}[scale=0.8,
+                pt/.style={circle, fill=dexpiBlue, inner sep=1.6pt},
+                lab/.style={font=\scriptsize}]
+                \node[pt] (a) at (0,0) {};
+                \node[pt] (b) at (2.2,0.7) {};
+                \node[pt] (c) at (0.4,1.8) {};
+                \node[pt, fill=dexpiGreenDark] (d) at (2.6,2.5) {};
+                \node[lab, below left] at (a) {man};
+                \node[lab, below right] at (b) {woman};
+                \node[lab, above left] at (c) {son};
+                \node[lab, above right, text=dexpiGreenDark] at (d) {\textbf{daughter}};
+                \draw[-{Stealth}, thick, dexpiRedDark] (a) -- (b);
+                \draw[-{Stealth}, thick, dexpiRedDark, dashed] (c) -- (d);
+                \node[font=\tiny, text=dexpiRedDark] at (1.25,0.05) {$\xx_b - \xx_a$};
+                \node[font=\tiny, text=dexpiRedDark] at (1.35,2.5) {mesma seta};
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+    \vspace{0.05cm}
+    \centering
+    \footnotesize
+    \begin{tabular}{llll}
+        \toprule
+        \textbf{Relação} & $a : b$ & $c : \;?$ & \textbf{resposta (D2L, GloVe 6B, $d = 50$)} \\
+        \midrule
+        gênero & man : woman & son : ? & {\color{dexpiGreenDark}\textbf{daughter}} \\
+        capital--país & beijing : china & tokyo : ? & {\color{dexpiGreenDark}\textbf{japan}} \\
+        superlativo & bad : worst & big : ? & {\color{dexpiGreenDark}\textbf{biggest}} \\
+        passado & do : did & go : ? & {\color{dexpiGreenDark}\textbf{went}} \\
+        \bottomrule
+    \end{tabular}
+
+    \note{
+        A segunda aplicação são as analogias. Uma analogia tem a forma ``a está para b assim como c está para d'': homem está para mulher assim como filho está para quê? Dadas as três primeiras palavras, queremos achar a quarta.
+        A ideia é que a diferença entre dois vetores codifica a relação entre as palavras. O vetor de ``woman'' menos o de ``man'' é uma seta que representa ``trocar masculino por feminino''. Se aplicarmos essa mesma seta a ``son'', devemos chegar perto de ``daughter''. A fórmula diz exatamente isso: o vetor de d é aproximadamente o de c, mais o de b, menos o de a. Depois procuramos a palavra cujo vetor tem o maior cosseno com esse resultado.
+        No desenho, a seta vermelha de man para woman é a mesma seta que leva de son para daughter. As quatro palavras formam um paralelogramo.
+        A tabela mostra os exemplos do livro, todos com resposta certa. Gênero: man está para woman como son está para daughter. Capital e país: beijing está para china como tokyo está para japan. Superlativo: bad está para worst como big está para biggest. E tempo verbal: do está para did como go está para went, que é um verbo irregular.
+        O ponto importante é que ninguém ensinou essas relações ao modelo. Elas aparecem como direções no espaço, só porque o modelo aprendeu a partir de quais palavras aparecem perto de quais.
+    }
+\end{frame}

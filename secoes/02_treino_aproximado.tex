@@ -1,0 +1,334 @@
+%========================================================================================
+%  Seção 15.2 do D2L -- Approximate Training
+%  https://d2l.ai/chapter_natural-language-processing-pretraining/approx-training.html
+%========================================================================================
+
+%------------------------------------------------
+\section{Treinamento aproximado}
+%------------------------------------------------
+
+\begin{frame}{Negative Sampling e Hierarchical Softmax}
+    \small
+    \begin{itemize}
+        \item São estratégias  para resolver o mesmo problema de lentidão no treinamento de word embeddings:
+    \end{itemize}
+    \vspace{-0.1cm}
+
+
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Amostragem negativa}
+                \footnotesize
+                Compara a palavra certa (exemplo positivo) com apenas um pequeno grupo de palavras erradas sorteadas ao acaso (exemplos negativos), em vez de olhar o dicionário inteiro.
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Softmax hierárquica}
+                \footnotesize
+                Organiza todo o dicionário dentro de uma árvore binária, transformando o problema em uma sequência de escolhas de "sim ou não".
+            \end{block}
+        \end{column}
+    \end{columns}
+
+    \note{
+        Até aqui, o skip-gram e o CBOW usaram a softmax completa. Vamos olhar o custo dela com um exemplo: na janela ``o gato miou'', a palavra central é ``gato'' e as vizinhas são ``o'' e ``miou''.
+        Para calcular a probabilidade de ``miou'' dado ``gato'', o numerador é barato: um único produto escalar. O problema é o denominador, que soma a exponencial do escore de \textit{todas} as palavras do dicionário. Com um vocabulário de 100 mil a 1 milhão de palavras, isso significa 100 mil a 1 milhão de produtos escalares para um único par.
+        E isso se repete para cada vizinho de cada posição do corpus, que tem bilhões de palavras. É inviável.
+        A Seção 15.2 do livro apresenta duas formas de aproximar esse cálculo: a amostragem negativa, que compara a palavra certa só com algumas palavras sorteadas, e a softmax hierárquica, que organiza o dicionário numa árvore. Vamos ver as duas.
+    }
+\end{frame}
+
+\begin{frame}{Amostragem negativa}
+    \small
+    \begin{itemize}
+        \item O modelo aprende a distinguir a palavra correta de $K$ \textbf{palavras de ruído} sorteadas ao acaso.
+    \end{itemize}
+    \centering
+    \begin{tikzpicture}[
+        w/.style={draw=dexpiBlue, rounded corners=2pt, minimum width=1.6cm, minimum height=0.6cm, font=\small},
+        real/.style={w, fill=dexpiGreenLight, draw=dexpiGreenDark},
+        neg/.style={w, fill=dexpiRedLight, draw=dexpiRedDark},
+        cen/.style={w, fill=dexpiBlue, text=white, font=\small\bfseries}]
+        \node[real] (p) at (0,0) {miou};
+        \node[cen] (c) at (3.2,0) {gato};
+        \node[neg] (n1) at (6.4,0) {avião};
+        \node[neg] (n2) at (8.6,0) {cloreto};
+        \draw[-{Stealth}, thick, dexpiGreenDark] (c) -- node[above, font=\scriptsize] {$D = 1$} (p);
+        \draw[-{Stealth}, thick, dexpiRedDark, dashed] (c) -- node[above, font=\scriptsize] {$D = 0$} (n1);
+        \draw[-{Stealth}, thick, dexpiRedDark, dashed] (c.south) to[bend right=18] node[below, font=\scriptsize] {$D = 0$} (n2.south);
+    \end{tikzpicture}
+
+    \vspace{0.1cm}
+    \raggedright
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{1 exemplo positivo ($D = 1$)}
+                \footnotesize
+                A palavra \textbf{real} do contexto. Ex.: (gato, miou).
+            \end{exampleblock}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{$K$ exemplos negativos ($D = 0$)}
+                \footnotesize
+                Ruído que \textbf{não} está no contexto. Ex.: (gato, avião), (gato, cloreto). Em geral, $2 \le K \le 20$.
+            \end{alertblock}
+        \end{column}
+    \end{columns}
+
+    \note{
+        A ideia da amostragem negativa é mudar a pergunta. Em vez de perguntar ``qual das 1 milhão de palavras é a vizinha de gato?'', que é um problema com 1 milhão de classes, perguntamos ``este par de palavras aparece junto de verdade, ou é ruído?''. É uma classificação binária: sim ou não.
+        Para cada par real do texto, como (gato, miou), temos um exemplo positivo, que marcamos com $D = 1$.
+        Além dele, sorteamos ao acaso $K$ palavras de ruído, que não estão no contexto, como ``avião'' e ``cloreto''. Os pares (gato, avião) e (gato, cloreto) são exemplos negativos, marcados com $D = 0$.
+        O modelo aprende a dizer ``sim'' para o par real e ``não'' para os pares de ruído. Na prática, $K$ fica entre 2 e 20: muito menos que o tamanho do dicionário.
+    }
+\end{frame}
+
+\begin{frame}{A probabilidade do evento positivo}
+    \begin{columns}[c]
+        \begin{column}{0.56\textwidth}
+            \begin{equation*}
+                P(D = 1 \mid w_c, w_o) = \sigma\left(\uu_o^\top \vv_c\right)
+            \end{equation*}
+            \small
+            \begin{itemize}
+                \item $\vv_c$: vetor da palavra \textbf{central}.
+                \item $\uu_o$: vetor da palavra de \textbf{contexto}.
+                \item $\uu_o^\top \vv_c$: produto escalar; mede a \textbf{proximidade} geométrica das duas palavras.
+                \item $\sigma$: função \destaque{sigmoide}.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.42\textwidth}
+            \centering
+            \begin{equation*}
+                \sigma(x) = \frac{1}{1 + \exp(-x)}
+            \end{equation*}
+            \begin{tikzpicture}
+                \begin{axis}[
+                    width=5.4cm, height=3.4cm,
+                    xmin=-6, xmax=6, ymin=-0.05, ymax=1.15,
+                    axis lines=middle, xtick={-4,0,4}, ytick={0.5,1},
+                    tick label style={font=\tiny},
+                    xlabel={\scriptsize $x$}, xlabel style={anchor=north west}]
+                    \addplot[very thick, dexpiBlue, domain=-6:6, samples=60] {1/(1+exp(-x))};
+                \end{axis}
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+    \vspace{0.2cm}
+    \begin{block}{A sigmoide transforma o escore em probabilidade}
+        \small
+        Esmaga qualquer número real para o intervalo $(0, 1)$:
+        \quad $x \to +\infty \Rightarrow \sigma(x) \to 1$
+        \quad e \quad $x \to -\infty \Rightarrow \sigma(x) \to 0$.
+    \end{block}
+
+    \note{
+        Como calculamos a chance de um par ser real? Com esta fórmula: a probabilidade de $D = 1$, dado o centro $w_c$ e a palavra de contexto $w_o$, é a sigmoide do produto escalar entre os dois vetores.
+        $\vv_c$ é o vetor da palavra central, por exemplo ``gato''. $\uu_o$ é o vetor da palavra de contexto, por exemplo ``miou''. O produto escalar $\uu_o^\top \vv_c$ mede o quanto os dois vetores apontam na mesma direção: quanto maior, mais ``próximas'' as palavras estão no espaço.
+        O produto escalar pode ser qualquer número real, e uma probabilidade precisa estar entre 0 e 1. É isso que a sigmoide faz: ela esmaga a reta inteira para o intervalo entre 0 e 1. Se o escore vai para mais infinito, a probabilidade tende a 1; se vai para menos infinito, tende a 0; e escore zero dá exatamente 0,5.
+        Repare que é a mesma ideia da regressão logística: uma classificação binária.
+    }
+\end{frame}
+
+\begin{frame}{Por que não basta usar só os exemplos positivos?}
+    \begin{itemize}
+        \item A probabilidade de \textbf{todo o texto} estar correto seria o produto sobre todas as posições $t$ e todos os vizinhos $j$:
+    \end{itemize}
+    \begin{equation*}
+        \prod_{t=1}^{T} \prod_{\substack{-m \le j \le m \\ j \neq 0}} P\left(D = 1 \mid w^{(t)}, w^{(t+j)}\right)
+    \end{equation*}
+    \begin{itemize}
+        \item Maximizar isso só exige que \textbf{todo} $\sigma(\uu_o^\top \vv_c)$ chegue perto de 1.
+        \item O jeito mais fácil: fazer todos os produtos escalares \textbf{enormes}.
+    \end{itemize}
+    \begin{alertblock}{Os vetores explodem}
+        \small
+        Sem termos negativos, os vetores crescem até o infinito e ficam todos parecidos: o modelo diz ``sim'' para qualquer par e se torna \textbf{inútil}.
+    \end{alertblock}
+
+    \note{
+        Uma primeira tentativa seria usar só os pares reais. A probabilidade de todo o texto estar correto é o produto, sobre cada posição $t$ do texto e cada vizinho $j$ da janela, da probabilidade de $D = 1$.
+        O problema é que maximizar esse produto é fácil demais. Basta que cada sigmoide fique perto de 1, e para isso basta que todos os produtos escalares sejam muito grandes. O modelo pode simplesmente fazer todos os vetores crescerem até o infinito, todos apontando na mesma direção.
+        Nesse caso, qualquer par de palavras recebe probabilidade 1, inclusive (gato, cloreto). O modelo não distingue nada e os vetores não servem para nada. Por isso precisamos dos exemplos negativos.
+    }
+\end{frame}
+
+\begin{frame}{A aproximação com amostragem negativa}
+    \begin{itemize}
+        \item Para cada par positivo, sorteamos $K$ palavras de ruído $w_k$ e multiplicamos:
+    \end{itemize}
+    \begin{equation*}
+        P\left(w^{(t+j)} \mid w^{(t)}\right) =
+        {\color{dexpiGreenDark}\underbrace{P\left(D = 1 \mid w^{(t)}, w^{(t+j)}\right)}_{\text{o positivo é real}}}
+        \;\prod_{k=1}^{K}
+        {\color{dexpiRedDark}\underbrace{P\left(D = 0 \mid w^{(t)}, w_k\right)}_{\text{cada negativo é falso}}}
+    \end{equation*}
+    \begin{itemize}
+        \item Para essa probabilidade ser alta, o modelo precisa acertar \textbf{as duas coisas}:
+        \begin{itemize}
+            \item dizer ``sim'' para (gato, miou);
+            \item dizer ``não'' para (gato, avião) e (gato, cloreto).
+        \end{itemize}
+        \item Agora fazer todos os vetores enormes \textbf{não funciona mais}: os negativos seriam penalizados.
+    \end{itemize}
+
+    \note{
+        A correção é esta: para cada par positivo, sorteamos $K$ palavras de ruído $w_k$, e a probabilidade do vizinho passa a ser o produto de duas partes.
+        A primeira parte, em verde, é a chance de o par positivo ser reconhecido como real, $D = 1$. A segunda, em vermelho, é o produto, para cada uma das $K$ palavras de ruído, da chance de o par ser reconhecido como falso, $D = 0$.
+        Para esse produto ser alto, o modelo precisa acertar as duas coisas ao mesmo tempo: dizer ``sim'' para (gato, miou) e ``não'' para (gato, avião) e (gato, cloreto).
+        Com isso, aquela solução trivial de fazer todos os vetores enormes deixa de funcionar, porque ela faria o modelo dizer ``sim'' também para os pares de ruído, e esses termos seriam penalizados.
+    }
+\end{frame}
+
+\begin{frame}{Interpretando os dois termos e a vantagem}
+    \vspace{-0.2cm}
+    \begin{equation*}
+        \mathcal{L} =
+        {\color{dexpiGreenDark}\underbrace{-\log \sigma\left(\uu_{i_{t+j}}^\top \vv_{i_t}\right)}_{\text{primeiro termo}}}
+        \; + \; {\color{dexpiRedDark}\underbrace{\sum_{k=1}^{K} -\log \sigma\left(-\uu_{h_k}^\top \vv_{i_t}\right)}_{\text{segundo termo}}}
+    \end{equation*}
+    \footnotesize
+    \begin{itemize}
+        \item {\color{dexpiGreenDark}\textbf{Primeiro termo}} ($-\log \sigma$): tenta \textbf{aproximar} ao máximo os vetores das palavras que realmente aparecem juntas no texto (\destaque{exemplo positivo}). Fica pequeno quando o produto escalar é grande.
+        \item {\color{dexpiRedDark}\textbf{Segundo termo}} ($\sum -\log \sigma(-x)$): tenta \textbf{afastar} ao máximo o vetor da palavra central das $K$ palavras de ruído sorteadas (\destaque{exemplos negativos}). Fica pequeno quando cada produto escalar é bem negativo.
+    \end{itemize}
+    \begin{exampleblock}{Vantagem: o custo deixa de depender do dicionário}
+        \small
+        $|\V| = 1.000.000$ e $K = 5$: \textbf{6 cálculos} por etapa (1 $+$ 5) em vez de \textbf{1.000.000}.
+    \end{exampleblock}
+
+    \note{
+        Vamos ler a perda final termo a termo.
+        O primeiro termo, em verde, é menos log da sigmoide do produto escalar entre a palavra central e a vizinha real. Ele só fica pequeno quando a sigmoide está perto de 1, ou seja, quando o produto escalar é grande. Por isso ele puxa os vetores de ``gato'' e ``miou'' um para o outro: aproxima as palavras que aparecem juntas no texto.
+        O segundo termo, em vermelho, soma $K$ parcelas, uma para cada palavra de ruído. Cada uma é menos log da sigmoide do produto escalar com o sinal trocado. Ela só fica pequena quando o produto escalar original é bem negativo. Por isso ele empurra o vetor de ``gato'' para longe de ``avião'' e ``cloreto''.
+        E a grande vantagem: o custo não depende mais do tamanho do dicionário. Com 1 milhão de palavras e $K = 5$, cada etapa faz 6 cálculos, 1 positivo e 5 negativos, em vez de 1 milhão.
+    }
+\end{frame}
+
+\begin{frame}{Softmax hierárquica: o dicionário vira uma árvore}
+    \begin{columns}[c]
+        \begin{column}{0.48\textwidth}
+            \small
+            \begin{itemize}
+                \item Proposta por Morin e Bengio \cite{morin2005hierarchical}.
+                \item Todo o dicionário vira as \textbf{folhas} de uma \destaque{árvore binária}.
+                \item Cada \textbf{nó interno} $n$ tem um vetor $\uu_n$.
+                \item Chegar a uma palavra é um \textbf{caminho} de decisões simples: \textbf{esquerda ou direita}?
+                \item $L(w)$: número de nós no caminho da raiz até $w$; $n(w, j)$ é o $j$-ésimo nó.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.50\textwidth}
+            \centering
+            \begin{tikzpicture}[
+                inner/.style={circle, draw=dexpiBlue, fill=dexpiBlueLight, minimum size=0.42cm, inner sep=0pt},
+                onpath/.style={inner, fill=dexpiBlue},
+                leaf/.style={rectangle, rounded corners=1pt, draw=dexpiGreenDark, fill=dexpiGreenLight, minimum size=0.42cm, inner sep=1pt, font=\scriptsize},
+                target/.style={leaf, fill=dexpiGreenDark, text=white, font=\scriptsize\bfseries},
+                level 1/.style={sibling distance=3.0cm, level distance=0.95cm},
+                level 2/.style={sibling distance=1.5cm, level distance=0.95cm},
+                level 3/.style={sibling distance=0.75cm, level distance=0.95cm},
+                edge from parent/.style={draw=gray, thick}]
+                \node[onpath] (r) {}
+                    child { node[onpath] (a) {}
+                        child { node[inner] {}
+                            child { node[leaf] {$w_1$} }
+                            child { node[leaf] {$w_2$} } }
+                        child { node[onpath] (b) {}
+                            child { node[target] (t) {$w_3$} }
+                            child { node[leaf] {$w_4$} } } }
+                    child { node[inner] {}
+                        child { node[inner] {}
+                            child { node[leaf] {$w_5$} }
+                            child { node[leaf] {$w_6$} } }
+                        child { node[inner] {}
+                            child { node[leaf] {$w_7$} }
+                            child { node[leaf] {$w_8$} } } };
+                \draw[very thick, dexpiBlue] (r) -- (a) -- (b) -- (t);
+                \node[font=\tiny, left=0.05cm of r] {$n(w_3,1)$};
+                \node[font=\tiny, left=0.05cm of a] {$n(w_3,2)$};
+                \node[font=\tiny, right=0.05cm of b] {$n(w_3,3)$};
+                \node[font=\tiny, text=dexpiBlue] at ($(r)!0.5!(a)+(-0.35,0.05)$) {esq.};
+                \node[font=\tiny, text=dexpiBlue] at ($(a)!0.5!(b)+(0.3,0.1)$) {dir.};
+                \node[font=\tiny, text=dexpiBlue] at ($(b)!0.5!(t)+(-0.3,0)$) {esq.};
+            \end{tikzpicture}
+
+            \vspace{0.1cm}
+            {\scriptsize Caminho até $w_3$: esquerda, direita, esquerda ($L(w_3) = 4$).}
+        \end{column}
+    \end{columns}
+
+    \note{
+        A segunda aproximação é a softmax hierárquica. Aqui a ideia é outra: organizamos todo o dicionário como as folhas de uma árvore binária. No desenho, o vocabulário tem 8 palavras, de $w_1$ a $w_8$, e cada uma é uma folha.
+        Os nós internos, os círculos, não são palavras: cada um tem o seu próprio vetor $\uu_n$, que é aprendido no treino.
+        Para chegar a uma palavra, saímos da raiz e, em cada nó, tomamos uma decisão simples de sim ou não: ir para a esquerda ou para a direita. Para chegar a $w_3$, o caminho destacado é: esquerda, direita, esquerda.
+        A notação: $L(w)$ é o número de nós no caminho da raiz até a folha $w$, contando a raiz e a própria folha. Para $w_3$, $L = 4$. E $n(w, j)$ é o $j$-ésimo nó desse caminho; a raiz é $n(w_3, 1)$.
+    }
+\end{frame}
+
+\begin{frame}{Softmax hierárquica: a probabilidade é o caminho}
+    \small
+    \begin{itemize}
+        \item \textbf{Exemplo} ($w_3$: esquerda, direita, esquerda):
+    \end{itemize}
+    \vspace{-0.2cm}
+    \begin{equation*}
+        P(w_3 \mid w_c) =
+        \underbrace{\sigma\left(\uu_{n(w_3,1)}^\top \vv_c\right)}_{\text{esquerda: } +}
+        \cdot \underbrace{\sigma\left({\color{dexpiRedDark}-}\uu_{n(w_3,2)}^\top \vv_c\right)}_{\text{direita: } -}
+        \cdot \underbrace{\sigma\left(\uu_{n(w_3,3)}^\top \vv_c\right)}_{\text{esquerda: } +}
+    \end{equation*}
+    \begin{itemize}
+        \item Passos para a \textbf{esquerda} mantêm o sinal positivo; para a \textbf{direita}, ganham o sinal de menos.
+        \item \textbf{Fórmula geral}: uma produtória ao longo dos nós do caminho:
+    \end{itemize}
+    \vspace{-0.2cm}
+    \begin{equation*}
+        P(w_o \mid w_c) = \prod_{j=1}^{L(w_o)-1} \sigma\Big( [\![\, n(w_o, j+1) = \text{esq}(n(w_o, j)) \,]\!] \cdot \uu_{n(w_o, j)}^\top \vv_c \Big)
+    \end{equation*}
+    \begin{itemize}
+        \item $[\![\,\cdot\,]\!]$: função indicadora; vale $+1$ se o próximo nó é o filho à \textbf{esquerda} e $-1$ se é o filho à \textbf{direita}. Ela controla o sinal dentro da sigmoide.
+    \end{itemize}
+
+    \note{
+        Como calculamos a probabilidade de uma palavra? Multiplicando as probabilidades de cada decisão ao longo do caminho.
+        No exemplo de $w_3$: no primeiro nó, a raiz, vamos para a esquerda, e a probabilidade é a sigmoide do produto escalar entre o vetor desse nó e o vetor da palavra central. No segundo nó vamos para a direita, e a probabilidade é a sigmoide do produto escalar com o sinal trocado, ou seja, 1 menos a chance de ir para a esquerda. No terceiro nó, esquerda de novo, sinal positivo.
+        A regra é simples: esquerda mantém o sinal positivo, direita ganha o sinal de menos.
+        A fórmula geral só escreve isso para qualquer palavra: é uma produtória sobre os nós do caminho, de $j = 1$ até $L(w_o) - 1$, porque a folha não toma decisão. A função indicadora entre colchetes duplos vale $+1$ se o próximo nó é o filho da esquerda e $-1$ se é o da direita, e é ela que coloca o sinal certo dentro da sigmoide.
+    }
+\end{frame}
+
+\begin{frame}{Softmax hierárquica: vantagens}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{Custo: $O(\log_2 |\V|)$}
+                \footnotesize
+                O número de decisões é a \textbf{altura} da árvore. Com $|\V| = 1.000.000$: cerca de \textbf{20 operações} ($\log_2 10^6 \approx 20$).
+            \end{exampleblock}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Continua sendo uma distribuição}
+                \footnotesize
+                Como $\sigma(x) + \sigma(-x) = 1$, cada nó divide a probabilidade entre os dois filhos: $\sum_{w \in \V} P(w \mid w_c) = 1$.
+            \end{block}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.3cm}
+    \centering
+    \small
+    \begin{tabular}{llll}
+        \toprule
+        & \textbf{Softmax completa} & \textbf{Amostragem negativa} & \textbf{Softmax hierárquica} \\
+        \midrule
+        Ideia & 1 classe entre $|\V|$ & 1 positivo $+$ $K$ negativos & caminho na árvore \\
+        Cálculos ($|\V| = 10^6$) & 1.000.000 & $K + 1 = 6$ & $\approx 20$ \\
+        Custo por par & $O(|\V|)$ & $O(K)$ & $O(\log_2 |\V|)$ \\
+        \bottomrule
+    \end{tabular}
+
+    \note{
+        Por que isso é vantajoso? Primeiro, o custo. O número de decisões para chegar a uma palavra é a altura da árvore, que numa árvore balanceada é o logaritmo na base 2 do tamanho do vocabulário. Com 1 milhão de palavras, isso dá cerca de 20 operações, em vez de 1 milhão.
+        Segundo, diferente da amostragem negativa, a softmax hierárquica continua sendo uma distribuição de probabilidade exata. Como $\sigma(x) + \sigma(-x) = 1$, em cada nó a probabilidade se divide entre os dois filhos sem sobrar nem faltar nada. Somando a probabilidade de todas as folhas, o resultado é exatamente 1.
+        A tabela resume as três abordagens: a softmax completa faz 1 milhão de cálculos por par; a amostragem negativa, com $K = 5$, faz 6; e a softmax hierárquica faz cerca de 20. As duas aproximações valem tanto para o skip-gram quanto para o CBOW.
+    }
+\end{frame}

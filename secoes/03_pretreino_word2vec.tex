@@ -1,0 +1,369 @@
+%========================================================================================
+%  Seção 15.4 do D2L -- Pretraining word2vec (com o dataset da Seção 15.3)
+%  https://d2l.ai/chapter_natural-language-processing-pretraining/word2vec-pretraining.html
+%  https://d2l.ai/chapter_natural-language-processing-pretraining/word-embedding-dataset.html
+%========================================================================================
+
+% Células coloridas da tabela do minibatch (contexto em verde, ruído em vermelho)
+\newcommand{\ctxcell}[1]{\colorbox{dexpiGreenLight}{\color{dexpiGreenDark}\textbf{#1}}}
+\newcommand{\ruidocell}[1]{\colorbox{dexpiRedLight}{\color{dexpiRedDark}\textbf{#1}}}
+
+%------------------------------------------------
+\section{Pré-treinando o word2vec na prática}
+%------------------------------------------------
+
+\begin{frame}{Do texto bruto aos vetores: o caminho completo}
+    \small
+    \begin{itemize}
+        \item O D2L \cite{zhang2023dive} treina um \textbf{skip-gram com amostragem negativa} de ponta a ponta. São duas etapas:
+    \end{itemize}
+    \vspace{0.1cm}
+    \centering
+    \begin{tikzpicture}[scale=0.82, transform shape,
+        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.9cm, minimum width=1.9cm},
+        mod/.style={box, fill=dexpiGreenLight, draw=dexpiGreenDark},
+        res/.style={box, fill=dexpiLightBlue, very thick},
+        arr/.style={-{Stealth}, thick, dexpiBlue}]
+        \node[box] (a) at (0,0) {texto PTB\\42.069 frases};
+        \node[box] (b) at (2.3,0) {vocabulário\\6.719 palavras};
+        \node[box] (c) at (4.6,0) {subamostragem};
+        \node[box] (d) at (6.9,0) {pares centro\\$\to$ contexto};
+        \node[box] (e) at (9.2,0) {$+$ $K$ palavras\\de ruído};
+        \node[box] (f) at (11.5,0) {minibatches\\de 512};
+        \node[mod] (g) at (4.6,-1.7) {modelo:\\2 embeddings};
+        \node[mod] (h) at (6.9,-1.7) {perda\\binária (BCE)};
+        \node[mod] (i) at (9.2,-1.7) {Adam,\\5 épocas};
+        \node[res] (j) at (11.5,-1.7) {\textbf{vetores}\\$\Rightarrow$ similares};
+        \draw[arr] (a) -- (b); \draw[arr] (b) -- (c); \draw[arr] (c) -- (d); \draw[arr] (d) -- (e); \draw[arr] (e) -- (f);
+        \draw[arr] (f.south) |- ++(0,-0.45) -| (g.north);
+        \draw[arr] (g) -- (h); \draw[arr] (h) -- (i); \draw[arr] (i) -- (j);
+        \node[font=\scriptsize\bfseries, text=dexpiBlue, anchor=east] at (-1.1,0) {Dados (15.3)};
+        \node[font=\scriptsize\bfseries, text=dexpiGreenDark, anchor=east] at (3.5,-1.7) {Treino (15.4)};
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    \raggedright
+    \begin{exampleblock}{O que já sabemos (Seções 15.1 e 15.2)}
+        \small
+        A matemática do skip-gram e da amostragem negativa. Agora vamos ver \textbf{como preparar os dados} e \textbf{como o treino roda} no código.
+    \end{exampleblock}
+
+    \note{
+        Até aqui vimos a teoria: o skip-gram na Seção 15.1 e a amostragem negativa na 15.2. Agora o livro junta tudo e treina um modelo de verdade. Este slide é o mapa do que vamos ver.
+        A primeira linha é a preparação dos dados, que o livro explica na Seção 15.3: partimos de um texto bruto, montamos o vocabulário, jogamos fora parte das palavras muito frequentes, extraímos os pares centro-contexto, sorteamos as palavras de ruído e agrupamos tudo em minibatches de 512 exemplos.
+        A segunda linha é o treino, na Seção 15.4: um modelo com duas tabelas de embeddings, uma perda de classificação binária, o otimizador Adam por 5 épocas. No final, usamos os vetores aprendidos para encontrar palavras parecidas.
+    }
+\end{frame}
+
+\begin{frame}{O dataset: Penn Tree Bank (PTB)}
+    \begin{columns}[c]
+        \begin{column}{0.55\textwidth}
+            \small
+            \begin{itemize}
+                \item Corpus pequeno e clássico: frases de artigos do \textbf{Wall Street Journal} \cite{marcus1993building}.
+                \item Cada linha é uma frase; cada palavra é um \textit{token}.
+                \item \textbf{42.069} frases no conjunto de treino.
+                \item Vocabulário: palavras que aparecem \textbf{pelo menos 10 vezes}. As demais viram \texttt{<unk>} (desconhecida).
+                \item Resultado: \textbf{6.719} palavras no vocabulário.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.42\textwidth}
+            \begin{block}{Uma frase (ilustrativa)}
+                \footnotesize\ttfamily
+                the company said it expects to report a loss for the quarter
+            \end{block}
+            \begin{exampleblock}{Por que um corpus pequeno?}
+                \footnotesize
+                Treina em minutos numa GPU e já mostra o efeito do word2vec. Na prática, usa-se Wikipédia ou notícias com bilhões de palavras.
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+
+    \note{
+        O livro usa o Penn Tree Bank, ou PTB: um corpus pequeno e muito usado em PLN, montado a partir de artigos do jornal Wall Street Journal. Cada linha do arquivo é uma frase e cada palavra separada por espaço é um token.
+        O conjunto de treino tem 42.069 frases. Para montar o vocabulário, o livro só mantém as palavras que aparecem pelo menos 10 vezes; as mais raras são trocadas pelo símbolo \texttt{<unk>}, de ``unknown''. Isso deixa 6.719 palavras.
+        Por que um corpus tão pequeno? Porque ele treina em poucos minutos e já é suficiente para ver o efeito do word2vec. Os vetores usados em produção são treinados em bilhões de palavras.
+    }
+\end{frame}
+
+\begin{frame}{Subamostragem: menos ``the'', mais significado}
+    \begin{itemize}
+        \item Palavras muito frequentes (``the'', ``a'', ``in'') aparecem perto de \textbf{tudo}: ensinam pouco e tomam muito tempo de treino.
+        \item Cada ocorrência da palavra $w_i$ é \textbf{descartada} com probabilidade:
+    \end{itemize}
+    \begin{equation*}
+        P(\text{descartar } w_i) = \max\left(1 - \sqrt{\frac{t}{f(w_i)}},\; 0\right), \qquad t = 10^{-4}
+    \end{equation*}
+    \small
+    \begin{itemize}
+        \item $f(w_i)$: frequência relativa da palavra no corpus. Quanto \textbf{mais frequente}, mais é descartada.
+        \item Palavras raras ($f(w_i) < t$) \textbf{nunca} são descartadas.
+    \end{itemize}
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        Palavra & antes & depois \\
+        \midrule
+        the  & 50.770 & 2.010 \;{\color{dexpiRedDark}($\approx 1/25$)} \\
+        join & 45     & 45 \;{\color{dexpiGreenDark}(intacta)} \\
+        \bottomrule
+    \end{tabular}
+
+    \note{
+        Antes de montar os exemplos, o livro faz a subamostragem. A ideia: palavras como ``the'', ``a'' e ``in'' aparecem perto de praticamente qualquer palavra. O par (chip, the) não ensina nada sobre o significado de ``chip'', e essas palavras geram uma quantidade enorme de pares.
+        Então cada ocorrência de uma palavra é descartada com a probabilidade da fórmula. $f(w_i)$ é a frequência relativa da palavra, e $t$ é um limiar, aqui $10^{-4}$. Se a palavra é muito frequente, a raiz fica pequena e a chance de descartar fica perto de 1. Se a palavra é rara, com frequência abaixo de $t$, o máximo com zero garante que ela nunca é descartada.
+        O efeito no PTB: ``the'' cai de 50.770 ocorrências para cerca de 2.010, menos de 1 em cada 20. Já ``join'', que é rara, continua com as mesmas 45 ocorrências.
+    }
+\end{frame}
+
+\begin{frame}{Montando os exemplos: contexto e ruído}
+    \begin{columns}[t]
+        \begin{column}{0.50\textwidth}
+            \begin{block}{1. Pares centro $\to$ contexto}
+                \footnotesize
+                \begin{itemize}
+                    \item Para cada posição, sorteia o tamanho da janela entre \textbf{1 e 5}.
+                    \item As palavras dentro da janela viram o \textbf{contexto} do centro.
+                    \item No PTB: cerca de \textbf{1,5 milhão} de pares centro-contexto.
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{2. Palavras de ruído}
+                \footnotesize
+                \begin{itemize}
+                    \item $K = 5$ palavras de ruído para \textbf{cada} palavra de contexto.
+                    \item Sorteadas com probabilidade $\propto f(w)^{0{,}75}$ \cite{mikolov2013distributed}.
+                    \item Uma palavra de ruído nunca é uma palavra do contexto.
+                \end{itemize}
+            \end{alertblock}
+        \end{column}
+    \end{columns}
+    \vspace{0.2cm}
+    \centering
+    \begin{tikzpicture}[
+        w/.style={draw=dexpiBlue, rounded corners=2pt, minimum width=1.25cm, minimum height=0.55cm, font=\scriptsize},
+        ctx/.style={w, fill=dexpiGreenLight, draw=dexpiGreenDark},
+        neg/.style={w, fill=dexpiRedLight, draw=dexpiRedDark},
+        cen/.style={w, fill=dexpiBlue, text=white, font=\scriptsize\bfseries}]
+        \node[w] at (0,0) {intel};
+        \node[ctx] at (1.4,0) {makes};
+        \node[cen] (c) at (2.8,0) {chip};
+        \node[ctx] at (4.2,0) {for};
+        \node[w] at (5.6,0) {computers};
+        \node[font=\scriptsize, anchor=west] at (6.6,0) {$\Rightarrow$ centro \textbf{chip}, janela $= 1$};
+        \node[font=\scriptsize, anchor=west] at (0,-0.75) {contexto: \colorbox{dexpiGreenLight}{makes}, \colorbox{dexpiGreenLight}{for} \quad ruído ($2 \times 5 = 10$): \colorbox{dexpiRedLight}{bank}, \colorbox{dexpiRedLight}{year}, \colorbox{dexpiRedLight}{oil}, \ldots};
+    \end{tikzpicture}
+    \raggedright
+
+    \vspace{0.1cm}
+    \footnotesize Exemplo ilustrativo (não é do livro).
+
+    \note{
+        Agora montamos os exemplos de treino. Primeiro, os pares centro-contexto. Um detalhe: o tamanho da janela não é fixo. Para cada posição do texto, o código sorteia uma janela entre 1 e 5. Isso dá mais peso às palavras mais próximas do centro, que aparecem em quase todas as janelas sorteadas. No PTB, isso gera cerca de 1,5 milhão de pares.
+        Depois, as palavras de ruído da amostragem negativa. Para cada palavra de contexto, sorteamos $K = 5$ palavras de ruído. A probabilidade de sorteio é proporcional à frequência elevada a 0,75, como no artigo original do word2vec. O expoente 0,75 achata a distribuição: palavras frequentes ainda saem mais, mas as raras ganham uma chance maior do que teriam pela frequência pura.
+        No exemplo da figura, com centro ``chip'' e janela 1, o contexto é ``makes'' e ``for''. São 2 palavras de contexto, então sorteamos $2 \times 5 = 10$ palavras de ruído, como ``bank'', ``year'' e ``oil''.
+    }
+\end{frame}
+
+\begin{frame}{O minibatch: quatro tensores}
+    \small
+    \begin{itemize}
+        \item Cada exemplo tem um número diferente de contextos e ruídos. Para formar um tensor, completamos com \textbf{zeros} (\textit{padding}).
+        \item Exemplo do livro: centro 1, contextos {\color{dexpiGreenDark}\textbf{2}}, ruídos {\color{dexpiRedDark}\textbf{3}}.
+    \end{itemize}
+    \vspace{0.1cm}
+    \centering
+    \begin{tabular}{l|cccccc|l}
+        \toprule
+        \texttt{centers} & \multicolumn{6}{c|}{\texttt{contexts\_negatives}} & \\
+        \midrule
+        1 & \ctxcell{2} & \ctxcell{2} & \ruidocell{3} & \ruidocell{3} & \ruidocell{3} & \ruidocell{3} & exemplo 1 \\
+        1 & \ctxcell{2} & \ctxcell{2} & \ctxcell{2} & \ruidocell{3} & \ruidocell{3} & 0 & exemplo 2 \\
+        \midrule
+        \texttt{labels} & 1 & 1 & 0 & 0 & 0 & 0 & \\
+                        & 1 & 1 & 1 & 0 & 0 & 0 & \\
+        \midrule
+        \texttt{masks}  & 1 & 1 & 1 & 1 & 1 & 1 & \\
+                        & 1 & 1 & 1 & 1 & 1 & {\color{dexpiRedDark}\textbf{0}} & $\leftarrow$ padding \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.2cm}
+    \raggedright
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \footnotesize
+            \begin{itemize}
+                \item \texttt{labels}: \textbf{1} = contexto (positivo), \textbf{0} = ruído ou padding.
+                \item \texttt{masks}: \textbf{0} marca o padding, que a perda deve ignorar.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \footnotesize
+            \textbf{Formatos no PTB} (lote de 512):\\
+            \texttt{centers}: $512 \times 1$\\
+            os outros três: $512 \times 60$
+        \end{column}
+    \end{columns}
+
+    \note{
+        Como os exemplos entram no modelo? Em minibatches de quatro tensores. O problema é que cada centro tem um número diferente de palavras de contexto, porque a janela é sorteada, e portanto um número diferente de ruídos. Para empilhar os exemplos num tensor retangular, completamos as linhas mais curtas com zeros: é o padding.
+        Este é o exemplo do próprio livro. Os dois exemplos têm centro 1. O primeiro tem 2 contextos e 4 ruídos; o segundo tem 3 contextos e 2 ruídos, então ganha um zero no final.
+        \texttt{contexts\_negatives} junta, na mesma linha, os contextos, em verde, e depois os ruídos, em vermelho. \texttt{labels} diz qual é qual: 1 para contexto, 0 para ruído. \texttt{masks} diz o que é real e o que é padding: o zero no final do exemplo 2 é padding e não pode entrar na perda.
+        No PTB, com lotes de 512 exemplos, \texttt{centers} tem formato 512 por 1, e os outros três têm 512 por 60: 60 é o comprimento da linha mais longa do lote.
+    }
+\end{frame}
+
+\begin{frame}{O modelo: duas tabelas e um produto em lote}
+    \begin{columns}[c]
+        \begin{column}{0.50\textwidth}
+            \small
+            \begin{itemize}
+                \item Duas camadas \texttt{nn.Embedding}, cada uma $6.719 \times 100$:
+                \begin{itemize}
+                    \item \texttt{net[0]}: vetores de \textbf{centro} $\vv$;
+                    \item \texttt{net[1]}: vetores de \textbf{contexto} $\uu$.
+                \end{itemize}
+                \item Para cada exemplo, um único produto calcula os escores $\uu^\top \vv_c$ de \textbf{todos} os contextos e ruídos de uma vez.
+                \item \texttt{torch.bmm}: multiplicação de matrizes \textbf{em lote}.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \begin{tikzpicture}[
+                t/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm, minimum width=2.4cm},
+                arr/.style={-{Stealth}, thick, dexpiBlue}]
+                \node[t] (c) at (0,0) {\texttt{center}\\$(512, 1)$};
+                \node[t] (x) at (3.0,0) {\texttt{contexts\_neg.}\\$(512, 60)$};
+                \node[t, fill=dexpiGreenLight, draw=dexpiGreenDark] (v) at (0,-1.4) {$\vv$\\$(512, 1, 100)$};
+                \node[t, fill=dexpiGreenLight, draw=dexpiGreenDark] (u) at (3.0,-1.4) {$\uu^\top$\\$(512, 100, 60)$};
+                \node[t, fill=dexpiLightBlue, very thick] (p) at (1.5,-2.9) {escores $\uu^\top \vv_c$\\$(512, 1, 60)$};
+                \draw[arr] (c) -- node[left, font=\tiny] {net[0]} (v);
+                \draw[arr] (x) -- node[right, font=\tiny] {net[1]} (u);
+                \draw[arr] (v) -- (p);
+                \draw[arr] (u) -- (p);
+                \node[font=\tiny, text=dexpiBlue] at (1.5,-2.15) {\texttt{bmm}};
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+
+    \note{
+        O modelo é surpreendentemente simples: são só duas tabelas de embeddings, cada uma com 6.719 linhas, uma por palavra, e 100 colunas, a dimensão dos vetores. A primeira guarda os vetores de centro, $\vv$; a segunda, os vetores de contexto, $\uu$. São os mesmos dois vetores por palavra da Seção 15.1.
+        No passo para a frente, o centro de cada exemplo é consultado na primeira tabela, e vira um tensor de 512 por 1 por 100. As 60 palavras de contexto e ruído são consultadas na segunda tabela e transpostas, virando 512 por 100 por 60.
+        A função \texttt{torch.bmm} multiplica essas matrizes exemplo a exemplo, em lote. O resultado tem formato 512 por 1 por 60: para cada exemplo, os 60 produtos escalares entre o vetor do centro e cada palavra de contexto ou ruído. Esses são os escores que vão para a sigmoide.
+        Repare que não existe softmax aqui: nunca comparamos com o vocabulário inteiro.
+    }
+\end{frame}
+
+\begin{frame}{A perda: entropia cruzada binária com máscara}
+    \small
+    \begin{itemize}
+        \item Cada escore $x$ vira uma classificação binária com rótulo $y \in \{0, 1\}$:
+    \end{itemize}
+    \begin{equation*}
+        \ell(x, y) = -\Big[\, y \log \sigma(x) + (1 - y) \log\big(1 - \sigma(x)\big) \Big]
+        = \begin{cases}
+            {\color{dexpiGreenDark}-\log \sigma(x)}, & y = 1 \text{ (contexto)} \\[2pt]
+            {\color{dexpiRedDark}-\log \sigma(-x)}, & y = 0 \text{ (ruído)}
+        \end{cases}
+    \end{equation*}
+    \begin{itemize}
+        \item São exatamente os \textbf{dois termos} da perda da amostragem negativa!
+        \item No PyTorch: \texttt{binary\_cross\_entropy\_with\_logits(pred, labels, weight=mask)}.
+        \item A \texttt{mask} zera o padding; dividimos pelo número de entradas reais de cada linha.
+    \end{itemize}
+    \begin{exampleblock}{Exemplo do livro}
+        \footnotesize
+        Escores $(1{,}1;\, -2{,}2;\, 3{,}3;\, -4{,}4)$ com rótulos $(1, 0, 0, 0)$: perda média $= 0{,}9352$. O termo que mais pesa é o ruído com escore $3{,}3$: $-\log\sigma(-3{,}3) \approx 3{,}34$.
+    \end{exampleblock}
+
+    \note{
+        A perda usada é a entropia cruzada binária, a mesma da regressão logística. Para um escore $x$ e um rótulo $y$, ela vale menos log da sigmoide de $x$ quando $y = 1$, e menos log de 1 menos a sigmoide quando $y = 0$, o que é igual a menos log da sigmoide de menos $x$.
+        Repare: são exatamente os dois termos da perda da amostragem negativa que vimos antes. O termo verde aproxima o centro das palavras de contexto; o termo vermelho afasta o centro das palavras de ruído.
+        No PyTorch, isso é a função \texttt{binary\_cross\_entropy\_with\_logits}, que recebe os escores crus, ``logits'', e aplica a sigmoide internamente de forma numericamente estável. O argumento \texttt{weight} recebe a máscara, o que zera a contribuição do padding. Depois dividimos pelo número de entradas reais de cada linha, para que exemplos com mais padding não fiquem com perda menor.
+        No exemplo do livro, o escore 3,3 é de uma palavra de ruído: o modelo está dizendo ``sim'' para um par falso. É o termo que mais pesa na perda, cerca de 3,34.
+    }
+\end{frame}
+
+\begin{frame}[fragile]{O laço de treino}
+\vspace{-0.2cm}
+\begin{lstlisting}[basicstyle=\ttfamily\fontsize{6.2}{7.0}\selectfont]
+embed_size = 100
+net = nn.Sequential(nn.Embedding(len(vocab), embed_size),   # net[0]: vetores de centro v
+                    nn.Embedding(len(vocab), embed_size))   # net[1]: vetores de contexto u
+
+def train(net, data_iter, lr, num_epochs, device):
+    net.apply(init_weights)                                 # inicializacao Xavier
+    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+    for epoch in range(num_epochs):
+        for center, context_negative, mask, label in data_iter:
+            pred = skip_gram(center, context_negative, net[0], net[1])   # (B, 1, 60)
+            l = (loss(pred.reshape(label.shape).float(), label.float(), mask)
+                 / mask.sum(axis=1) * mask.shape[1])                     # ignora o padding
+            optimizer.zero_grad()
+            l.sum().backward()
+            optimizer.step()
+
+lr, num_epochs = 0.002, 5
+train(net, data_iter, lr, num_epochs)
+\end{lstlisting}
+\vspace{-0.2cm}
+\footnotesize
+\textbf{Hiperparâmetros}: lote 512, janela máx. 5, $K = 5$, $d = 100$, Adam com $\text{lr} = 0{,}002$, 5 épocas.\\
+\textbf{Saída do livro}: {\color{dexpiGreenDark}\texttt{loss 0.410}}, cerca de 223 mil \textit{tokens}/s numa GPU.
+
+\note{
+    Este é o laço de treino, com o código do livro levemente resumido.
+    O modelo são as duas tabelas de embeddings de dimensão 100. Antes de treinar, os pesos são inicializados com Xavier, e o otimizador é o Adam.
+    Para cada minibatch: calculamos os escores com o skip-gram, que dá o formato B por 1 por 60. Achatamos para o formato dos rótulos e calculamos a perda binária com a máscara. A divisão por \texttt{mask.sum} e a multiplicação por \texttt{mask.shape[1]} fazem a média só sobre as entradas reais, ignorando o padding. Depois vem o passo de sempre: zerar os gradientes, retropropagar e atualizar os pesos.
+    Com taxa de aprendizado 0,002 e 5 épocas, a perda final no livro é 0,410, processando cerca de 223 mil tokens por segundo numa GPU. Para comparação, um classificador que chuta 50\% em cada par teria perda $\log 2 \approx 0{,}69$.
+}
+\end{frame}
+
+\begin{frame}{O resultado: palavras parecidas com ``chip''}
+    \begin{columns}[c]
+        \begin{column}{0.52\textwidth}
+            \small
+            \begin{itemize}
+                \item Depois do treino, usamos os \textbf{vetores de centro} (\texttt{net[0]}) como embeddings.
+                \item Para achar vizinhos de uma palavra, calculamos a \destaque{similaridade do cosseno} com todo o vocabulário:
+            \end{itemize}
+            \begin{equation*}
+                \cos(\vv_a, \vv_b) = \frac{\vv_a^\top \vv_b}{\|\vv_a\|\,\|\vv_b\|}
+            \end{equation*}
+            \vspace{-0.2cm}
+            Ficamos com as $k$ maiores (fora a própria palavra).
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \centering
+            \texttt{get\_similar\_tokens('chip', 3, net[0])}
+
+            \vspace{0.2cm}
+            \begin{tabular}{lc}
+                \toprule
+                Palavra & cosseno \\
+                \midrule
+                \textbf{microprocessor} & 0,702 \\
+                \textbf{mips} & 0,649 \\
+                \textbf{intel} & 0,643 \\
+                \bottomrule
+            \end{tabular}
+
+            \vspace{0.2cm}
+            {\scriptsize MIPS: fabricante de processadores.}
+        \end{column}
+    \end{columns}
+    \begin{exampleblock}{O que isso mostra}
+        \footnotesize
+        Ninguém disse ao modelo o que é um ``chip''. Só de prever vizinhos em notícias, ele o colocou perto de \textbf{microprocessor}, \textbf{mips} e \textbf{intel}: a hipótese distribucional funcionando.
+    \end{exampleblock}
+
+    \note{
+        E o resultado? Depois do treino, pegamos os vetores de centro, a primeira tabela, como a representação de cada palavra, como vimos na Seção 15.1.
+        Para encontrar palavras parecidas com uma palavra de consulta, calculamos a similaridade do cosseno entre o vetor dela e o vetor de todas as outras 6.718 palavras, e ficamos com as maiores. O cosseno vai de $-1$ a 1 e mede o ângulo entre os vetores, sem depender do tamanho deles.
+        O livro consulta a palavra ``chip''. As três mais parecidas são ``microprocessor'', com cosseno 0,702, ``mips'', com 0,649, e ``intel'', com 0,643. MIPS é uma fabricante e uma arquitetura de processadores.
+        O ponto importante: ninguém disse ao modelo o que é um chip. Ele só tentou adivinhar vizinhos em notícias do Wall Street Journal. Como ``chip'', ``microprocessor'' e ``intel'' aparecem em contextos parecidos, ganharam vetores parecidos. É a hipótese distribucional, do começo da apresentação, funcionando na prática.
+    }
+\end{frame}
+

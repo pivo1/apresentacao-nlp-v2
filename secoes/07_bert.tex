@@ -1,0 +1,630 @@
+%========================================================================================
+%  Seção 15.8 do D2L -- Bidirectional Encoder Representations from Transformers (BERT)
+%  https://d2l.ai/chapter_natural-language-processing-pretraining/bert.html
+%========================================================================================
+
+%------------------------------------------------
+\section{BERT}
+%------------------------------------------------
+
+\begin{frame}{Do vetor fixo ao vetor com contexto}
+    \begin{columns}[c]
+        \begin{column}{0.46\textwidth}
+            \footnotesize
+            \begin{itemize}
+                \item word2vec, GloVe e fastText dão \textbf{um vetor por palavra}, qualquer que seja a frase: $f(x)$.
+                \item Mas o sentido depende do contexto. ``Crane'' pode ser um \textbf{grou} (a ave) ou um \textbf{guindaste}.
+                \item Ideia: o vetor depende da palavra \textbf{e} do contexto, $f(x, c(x))$.
+                \item \textbf{ELMo} (2018): uma LSTM bidirecional pré-treinada lê a frase inteira e gera o vetor de cada palavra.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.52\textwidth}
+            \centering
+            \begin{tikzpicture}[font=\scriptsize,
+                frase/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, inner sep=3pt},
+                vet/.style={circle, inner sep=2.2pt}]
+                % estatico
+                \node[font=\footnotesize\bfseries, text=dexpiRedDark, anchor=west] at (-1.5,3.45) {Estático (word2vec, GloVe)};
+                \node[frase] (s1) at (0,2.8) {a \textbf{crane} is flying};
+                \node[frase] (s2) at (0,2.0) {a \textbf{crane} driver came};
+                \node[vet, fill=dexpiRedDark] (v) at (2.8,2.4) {};
+                \node[right=2pt of v, text=dexpiRedDark, align=left] {o mesmo\\vetor};
+                \draw[-{Stealth}, dexpiRedDark] (s1.east) -- (v);
+                \draw[-{Stealth}, dexpiRedDark] (s2.east) -- (v);
+                % contextual
+                \draw[dexpiLightBlue, thick] (-1.5,1.45) -- (4.6,1.45);
+                \node[font=\footnotesize\bfseries, text=dexpiGreenDark, anchor=west] at (-1.5,1.0) {Contextual (ELMo, GPT, BERT)};
+                \node[frase] (t1) at (0,0.35) {a \textbf{crane} is flying};
+                \node[frase] (t2) at (0,-0.45) {a \textbf{crane} driver came};
+                \node[vet, fill=dexpiGreenDark] (w1) at (2.8,0.6) {};
+                \node[vet, fill=dexpiGreenDark] (w2) at (2.8,-0.7) {};
+                \node[right=2pt of w1, text=dexpiGreenDark] {perto de ``bird''};
+                \node[right=2pt of w2, text=dexpiGreenDark] {perto de ``truck''};
+                \draw[-{Stealth}, dexpiGreenDark] (t1.east) -- (w1);
+                \draw[-{Stealth}, dexpiGreenDark] (t2.east) -- (w2);
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+    \vspace{0.25cm}
+    \begin{exampleblock}{Em uma frase}
+        \footnotesize
+        Os vetores das seções anteriores são \textbf{independentes do contexto}. A partir daqui, o vetor de uma palavra \textbf{muda conforme a frase} em que ela aparece.
+    \end{exampleblock}
+
+    \note{
+        Chegamos à última seção, a 15.8, sobre o BERT. Para entender por que ele existe, precisamos olhar para uma limitação de tudo o que vimos até agora.
+        O word2vec, o GloVe e o fastText dão um único vetor para cada palavra. Não importa a frase em que ela aparece, o vetor é sempre o mesmo. Em notação, a representação é uma função só da palavra, f de x.
+        Mas o sentido de uma palavra depende do contexto. O exemplo do livro é ``crane'', que em inglês pode ser um grou, a ave, ou um guindaste. Em ``a crane is flying'' é a ave; em ``a crane driver came'' é a máquina.
+        No desenho de cima, com vetores estáticos, as duas frases levam ao mesmo ponto. No de baixo, com vetores contextuais, cada frase leva a um ponto diferente: um perto de ``bird'', outro perto de ``truck''.
+        A ideia, então, é que o vetor dependa da palavra e também do contexto: f de x e c de x. O primeiro modelo famoso a fazer isso foi o ELMo, de 2018: uma rede LSTM bidirecional, pré-treinada, que lê a frase inteira e só então gera o vetor de cada palavra.
+    }
+\end{frame}
+
+\begin{frame}{Os antecessores do BERT: ELMo e GPT}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{ELMo (2018)}
+                \footnotesize
+                \begin{itemize}
+                    \item LSTM \textbf{bidirecional}: lê da esquerda para a direita e da direita para a esquerda.
+                    \item Fica \textbf{congelado}: seus vetores entram como \textit{features} extras num modelo da tarefa.
+                    \item {\color{dexpiGreenDark}\checkmark} Usa o contexto dos \textbf{dois lados}.
+                    \item {\color{dexpiRedDark}$\times$} Cada tarefa exige uma \textbf{arquitetura própria}, feita à mão.
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{GPT (2018)}
+                \footnotesize
+                \begin{itemize}
+                    \item \textit{Transformer decoder}: um modelo de linguagem que prevê a \textbf{próxima} palavra.
+                    \item Para cada tarefa: uma \textbf{camada de saída} nova, e todos os parâmetros são ajustados.
+                    \item {\color{dexpiGreenDark}\checkmark} \textbf{Agnóstico à tarefa}: o mesmo modelo serve para tudo.
+                    \item {\color{dexpiRedDark}$\times$} \textbf{Unidirecional}: só olha para a esquerda.
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+    \vspace{0.2cm}
+    \footnotesize
+    \textbf{O problema do GPT}, num exemplo do D2L:
+    \begin{center}
+        ``i went to the \textbf{bank} to deposit cash'' \qquad vs. \qquad ``i went to the \textbf{bank} to sit down''
+    \end{center}
+    \vspace{-0.1cm}
+    Lendo só a esquerda, o GPT vê ``i went to the'' nas duas frases e dá o \textbf{mesmo vetor} para ``bank''. Mas uma é o banco (dinheiro) e a outra é a margem do rio.
+
+    \note{
+        Antes do BERT, havia dois modelos importantes, e cada um resolvia metade do problema.
+        O ELMo usa uma LSTM bidirecional: uma LSTM lê a frase da esquerda para a direita, outra da direita para a esquerda, e o vetor de cada palavra combina as duas. Então ele enxerga o contexto dos dois lados, o que é ótimo. O problema é o uso: o ELMo fica congelado, e seus vetores entram como features extras num modelo que alguém precisa projetar para cada tarefa. Para análise de sentimento, uma arquitetura; para perguntas e respostas, outra. É trabalho artesanal.
+        O GPT faz o contrário. Ele usa um Transformer decoder, treinado como modelo de linguagem: prever a próxima palavra. Para usá-lo numa tarefa, basta trocar a camada de saída e ajustar todos os parâmetros. O mesmo modelo serve para tudo; dizemos que ele é agnóstico à tarefa. O problema é que, para prever a próxima palavra, ele só pode olhar para a esquerda.
+        O exemplo do livro mostra por que isso é ruim. ``I went to the bank to deposit cash'' e ``I went to the bank to sit down''. Na primeira, bank é o banco; na segunda, é a margem do rio. Mas o que define o sentido vem depois da palavra. Como o GPT só lê ``i went to the'', que é igual nas duas frases, ele gera o mesmo vetor para bank nos dois casos.
+        A pergunta natural é: dá para ter os dois? Bidirecional como o ELMo, e fácil de adaptar como o GPT?
+    }
+\end{frame}
+
+\begin{frame}{BERT: combinando o melhor dos dois mundos}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        tok/.style={draw=dexpiBlue, fill=white, minimum width=0.55cm, minimum height=0.42cm, inner sep=0pt, font=\tiny},
+        cel/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.55cm, minimum height=0.42cm, inner sep=0pt, font=\tiny},
+        att/.style={gray!60, line width=0.4pt},
+        seta/.style={-{Stealth[length=1.4mm]}, dexpiBlue, line width=0.5pt}]
+        %---------------- ELMo
+        \begin{scope}[xshift=0cm]
+            \foreach \i in {1,...,4} \draw[att] ({0.8*(\i-1)},0.2) -- ({0.8*(\i-1)},1.4);
+            \foreach \i in {1,...,4} {
+                \node[tok] (ex\i) at ({0.8*(\i-1)},0) {$x_\i$};
+                \node[cel] (ef\i) at ({0.8*(\i-1)},0.8) {$\rightarrow$};
+                \node[cel] (eb\i) at ({0.8*(\i-1)},1.55) {$\leftarrow$};
+            }
+            \foreach \i/\j in {1/2,2/3,3/4} {
+                \draw[seta] (ef\i) -- (ef\j);
+                \draw[seta] (eb\j) -- (eb\i);
+            }
+            \node[draw=dexpiRedDark, fill=dexpiRedLight, minimum width=3.0cm, minimum height=0.6cm, align=center, font=\tiny] (etask) at (1.2,2.65) {modelo da tarefa\\(arquitetura feita à mão)};
+            \foreach \i in {1,...,4} \draw[seta] (eb\i.north) -- (eb\i.north |- etask.south);
+            \node[font=\footnotesize\bfseries] at (1.2,-0.6) {ELMo};
+            \node[align=center, font=\tiny] at (1.2,-1.15) {LSTM bidirecional\\{\color{dexpiGreenDark}\checkmark} contexto dos dois lados\\{\color{dexpiRedDark}$\times$} arquitetura por tarefa};
+        \end{scope}
+        %---------------- GPT
+        \begin{scope}[xshift=4.6cm]
+            \foreach \i in {1,...,4} \foreach \j in {1,...,4} {
+                \ifnum\j>\i\relax\else
+                    \draw[att] ({0.8*(\j-1)},0.2) -- ({0.8*(\i-1)},0.95);
+                \fi
+            }
+            \foreach \i in {1,...,4} {
+                \node[tok] (gx\i) at ({0.8*(\i-1)},0) {$x_\i$};
+                \node[cel] (gh\i) at ({0.8*(\i-1)},1.15) {$h_\i$};
+            }
+            \node[draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=3.0cm, minimum height=0.45cm, font=\tiny] (gtask) at (1.2,2.65) {camada de saída (mudança mínima)};
+            \foreach \i in {1,...,4} \draw[seta] (gh\i.north) -- (gh\i.north |- gtask.south);
+            \node[font=\footnotesize\bfseries] at (1.2,-0.6) {GPT};
+            \node[align=center, font=\tiny] at (1.2,-1.15) {Transformer \textit{decoder}\\{\color{dexpiRedDark}$\times$} só o contexto da esquerda\\{\color{dexpiGreenDark}\checkmark} mudanças mínimas por tarefa};
+        \end{scope}
+        %---------------- BERT
+        \begin{scope}[xshift=9.2cm]
+            \foreach \i in {1,...,4} \foreach \j in {1,...,4} {
+                \draw[att] ({0.8*(\j-1)},0.2) -- ({0.8*(\i-1)},0.95);
+            }
+            \foreach \i in {1,...,4} {
+                \node[tok] (bx\i) at ({0.8*(\i-1)},0) {$x_\i$};
+                \node[cel] (bh\i) at ({0.8*(\i-1)},1.15) {$h_\i$};
+            }
+            \node[draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=3.0cm, minimum height=0.45cm, font=\tiny] (btask) at (1.2,2.65) {camada de saída (mudança mínima)};
+            \foreach \i in {1,...,4} \draw[seta] (bh\i.north) -- (bh\i.north |- btask.south);
+            \node[font=\footnotesize\bfseries, text=dexpiBlue] at (1.2,-0.6) {BERT};
+            \node[align=center, font=\tiny] at (1.2,-1.15) {Transformer \textit{encoder}\\{\color{dexpiGreenDark}\checkmark} contexto dos dois lados\\{\color{dexpiGreenDark}\checkmark} mudanças mínimas por tarefa};
+            \node[draw=dexpiBlue, thick, rounded corners, fit=(bx1)(btask)(bh4), inner sep=4pt] {};
+        \end{scope}
+    \end{tikzpicture}
+
+    \vspace{0.15cm}
+    \raggedright
+    \begin{exampleblock}{BERT = \textit{Bidirectional Encoder Representations from Transformers}}
+        \footnotesize
+        \textbf{Bidirecional} como o ELMo (cada $h_i$ vê \textbf{todas} as palavras) e \textbf{agnóstico à tarefa} como o GPT (só uma camada de saída nova por tarefa).
+    \end{exampleblock}
+
+    \note{
+        A resposta é o BERT, e esta figura, que reproduz a Figura 15.8.1 do livro, resume a evolução.
+        À esquerda, o ELMo. As duas fileiras de caixas são as duas LSTMs: uma com setas para a direita, outra com setas para a esquerda. Ele vê os dois lados, mas a saída alimenta um modelo da tarefa feito à mão, em vermelho.
+        No meio, o GPT. As linhas cinza mostram de quem cada vetor h depende: h1 só vê x1, h2 vê x1 e x2, e assim por diante. É o triângulo da atenção causal: só a esquerda. Em compensação, em cima há só uma camada de saída simples, em verde.
+        À direita, o BERT. Agora cada h depende de todos os x: as linhas formam uma malha completa. Isso é o Transformer encoder, em que a autoatenção olha a sequência inteira. E em cima continua só uma camada de saída simples.
+        O nome diz tudo: Bidirectional Encoder Representations from Transformers. Bidirecional como o ELMo, agnóstico à tarefa como o GPT. É literalmente o melhor dos dois mundos.
+    }
+\end{frame}
+
+\begin{frame}{Como o BERT é usado: pré-treino e ajuste fino}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        caixa/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum width=3.6cm, minimum height=0.5cm, align=center},
+        bert/.style={draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, minimum width=3.6cm, minimum height=0.6cm, align=center, font=\scriptsize\bfseries},
+        nova/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, minimum width=3.6cm, minimum height=0.5cm, align=center},
+        seta/.style={-{Stealth}, thick, dexpiBlue}]
+        % pre-treino
+        \node[font=\footnotesize\bfseries, text=dexpiBlue] at (0,3.1) {1. Pré-treino (uma vez, caro)};
+        \node[caixa] (p1) at (0,0) {Wikipédia + livros\\(texto sem rótulo)};
+        \node[bert] (p2) at (0,1.2) {BERT (\textit{encoder})};
+        \node[caixa] (p3) at (0,2.35) {tarefas MLM + NSP};
+        \draw[seta] (p1) -- (p2);
+        \draw[seta] (p2) -- (p3);
+        % ajuste fino
+        \node[font=\footnotesize\bfseries, text=dexpiGreenDark] at (6.6,3.1) {2. Ajuste fino (por tarefa, barato)};
+        \node[caixa] (f1) at (6.6,0) {frases rotuladas\\(ex.: ``this movie is great'')};
+        \node[bert] (f2) at (6.6,1.2) {BERT (todos os pesos ajustados)};
+        \node[nova] (f3) at (6.6,2.35) {camada de saída \textbf{nova}: positivo / negativo};
+        \draw[seta] (f1) -- (f2);
+        \draw[seta, dexpiGreenDark] (f2) -- (f3);
+        % copia
+        \draw[-{Stealth}, very thick, dexpiRedDark] (p2.east) -- node[above, font=\scriptsize, text=dexpiRedDark] {copia os pesos} (f2.west);
+    \end{tikzpicture}
+
+    \vspace{0.2cm}
+    \raggedright
+    \footnotesize
+    \begin{itemize}
+        \item No ajuste fino, \textbf{todos} os parâmetros do BERT são ajustados, e só a camada de saída começa do zero.
+        \item Em 2018, superou o estado da arte em \textbf{11 tarefas}: classificação de texto, pares de textos (inferência), perguntas e respostas e marcação de palavras.
+        \item Dois tamanhos: \textbf{base} (12 camadas, $d = 768$, 12 cabeças, 110 M parâmetros) e \textbf{large} (24 camadas, $d = 1024$, 16 cabeças, 340 M).
+    \end{itemize}
+
+    \note{
+        Como o BERT é usado na prática? Em duas etapas.
+        Primeiro, o pré-treino, à esquerda. Pegamos uma quantidade enorme de texto sem rótulo, a Wikipédia e livros, e treinamos o BERT em duas tarefas que vamos ver daqui a pouco, chamadas MLM e NSP. Isso é feito uma vez só, e é caro.
+        Depois, o ajuste fino, ou fine-tuning, à direita. Copiamos os pesos do BERT pré-treinado, colocamos em cima uma camada de saída nova, por exemplo uma que diz se uma crítica de filme é positiva ou negativa, e treinamos com os dados rotulados da tarefa. Um detalhe importante: todos os parâmetros do BERT são ajustados, não só a camada nova. Mas como ele já começa sabendo muito sobre a língua, esse ajuste é rápido e precisa de poucos dados.
+        O resultado em 2018 foi impressionante: o BERT superou o estado da arte em 11 tarefas diferentes, de classificação de texto, inferência entre pares de frases, perguntas e respostas e marcação de palavras, como reconhecer nomes de pessoas e lugares.
+        O BERT original veio em dois tamanhos: o base, com 12 camadas, dimensão 768 e 110 milhões de parâmetros, e o large, com 24 camadas, dimensão 1024 e 340 milhões.
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Representação de entrada: os tokens especiais}
+    \begin{columns}[t]
+        \begin{column}{0.46\textwidth}
+            \footnotesize
+            \begin{itemize}
+                \item Algumas tarefas têm \textbf{um texto} (ex.: sentimento), outras têm \textbf{dois} (ex.: inferência: a frase B decorre da A?).
+                \item \texttt{<cls>} (\textit{classification}): sempre no \textbf{início}. Seu vetor final resume a sequência e é usado para \textbf{classificar}.
+                \item \texttt{<sep>} (\textit{separator}): marca o \textbf{fim} de cada texto.
+                \item Segmento: \textbf{0} para o texto A, \textbf{1} para o texto B.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.52\textwidth}
+\begin{lstlisting}[basicstyle=\ttfamily\fontsize{6.2}{7.2}\selectfont]
+def get_tokens_and_segments(tokens_a, tokens_b=None):
+    tokens = ['<cls>'] + tokens_a + ['<sep>']
+    segments = [0] * (len(tokens_a) + 2)        # texto A -> 0
+    if tokens_b is not None:
+        tokens += tokens_b + ['<sep>']
+        segments += [1] * (len(tokens_b) + 1)   # texto B -> 1
+    return tokens, segments
+\end{lstlisting}
+        \end{column}
+    \end{columns}
+    \vspace{0.05cm}
+    \centering
+    \begin{tikzpicture}[font=\tiny,
+        t/.style={draw, minimum width=1.0cm, minimum height=0.45cm, inner sep=0pt},
+        esp/.style={t, draw=dexpiGreenDark, fill=dexpiGreenLight},
+        ta/.style={t, draw=dexpiBlue, fill=dexpiBlueLight},
+        tb/.style={t, draw=dexpiRedDark, fill=dexpiRedLight}]
+        \node[font=\scriptsize\bfseries, anchor=east] at (-0.6,0) {tokens};
+        \node[font=\scriptsize\bfseries, anchor=east] at (-0.6,-0.6) {segmentos};
+        \foreach \w/\s/\st [count=\k from 0] in {<cls>/0/esp, this/0/ta, movie/0/ta, is/0/ta, great/0/ta, <sep>/0/esp, i/1/tb, like/1/tb, it/1/tb, <sep>/1/esp} {
+            \node[\st] at ({1.1*\k},0) {\texttt{\w}};
+            \node[font=\scriptsize] at ({1.1*\k},-0.6) {\s};
+        }
+        \draw[decorate, decoration={brace, mirror, amplitude=3pt}, dexpiBlue] (-0.5,-0.82) -- (6.0,-0.82) node[midway, below=2pt, font=\scriptsize, text=dexpiBlue] {texto A};
+        \draw[decorate, decoration={brace, mirror, amplitude=3pt}, dexpiRedDark] (6.1,-0.82) -- (10.4,-0.82) node[midway, below=2pt, font=\scriptsize, text=dexpiRedDark] {texto B};
+    \end{tikzpicture}
+
+    \note{
+        Agora vamos ver como o BERT lê o texto, a chamada representação de entrada.
+        O primeiro ponto é que algumas tarefas recebem um texto só, como a análise de sentimento, e outras recebem dois textos, como a inferência de linguagem natural, em que perguntamos se a frase B decorre da frase A. O BERT precisa aceitar os dois formatos com a mesma entrada.
+        Para isso ele usa dois tokens especiais. O \texttt{<cls>}, de classification, vai sempre no início. Como o encoder é bidirecional, o vetor final desse token acaba resumindo a sequência toda, e é ele que usamos para classificar. O \texttt{<sep>}, de separator, marca o fim de cada texto.
+        Além dos tokens, cada posição recebe um número de segmento: 0 para tudo que pertence ao texto A, incluindo o \texttt{<cls>} e o primeiro \texttt{<sep>}, e 1 para o texto B e o \texttt{<sep>} final.
+        A figura mostra o exemplo do livro: ``this movie is great'' como texto A e ``i like it'' como texto B. O código, à direita, é a função do D2L que monta isso: põe o \texttt{<cls>} e o \texttt{<sep>}, e cria a lista de segmentos com zeros para A e uns para B.
+    }
+\end{frame}
+
+\begin{frame}{Representação de entrada: a soma de três embeddings}
+    \centering
+    \begin{tikzpicture}[font=\tiny,
+        t/.style={minimum width=1.0cm, minimum height=0.42cm, inner sep=0pt},
+        emb/.style={t, draw=dexpiBlue, fill=dexpiBlueLight},
+        sa/.style={t, draw=dexpiBlue, fill=dexpiLightBlue},
+        sb/.style={t, draw=dexpiRedDark, fill=dexpiRedLight},
+        psn/.style={t, draw=dexpiGreenDark, fill=dexpiGreenLight},
+        rot/.style={font=\scriptsize\bfseries, anchor=east}]
+        \node[rot] at (-0.6,0) {entrada};
+        \node[rot, text=dexpiBlue] at (-0.6,-0.75) {token};
+        \node[rot, text=dexpiBlue] at (-0.6,-1.5) {segmento};
+        \node[rot, text=dexpiGreenDark] at (-0.6,-2.25) {posição};
+        \foreach \w/\e/\st/\sg [count=\k from 0] in {<cls>/{\langle\mathrm{cls}\rangle}/sa/A, this/{\mathrm{this}}/sa/A, movie/{\mathrm{movie}}/sa/A, is/{\mathrm{is}}/sa/A, great/{\mathrm{great}}/sa/A, <sep>/{\langle\mathrm{sep}\rangle}/sa/A, i/{\mathrm{i}}/sb/B, like/{\mathrm{like}}/sb/B, it/{\mathrm{it}}/sb/B, <sep>/{\langle\mathrm{sep}\rangle}/sb/B} {
+            \node[t] at ({1.1*\k},0) {\texttt{\w}};
+            \node[emb] at ({1.1*\k},-0.75) {$\mathbf{E}_{\e}$};
+            \node at ({1.1*\k},-1.125) {$+$};
+            \node[\st] at ({1.1*\k},-1.5) {$\mathbf{e}_\sg$};
+            \node at ({1.1*\k},-1.875) {$+$};
+            \node[psn] at ({1.1*\k},-2.25) {$\mathbf{p}_{\k}$};
+        }
+    \end{tikzpicture}
+
+    \vspace{0.25cm}
+    \raggedright
+    \footnotesize
+    \begin{itemize}
+        \item \textbf{Token}: o significado da palavra em si (o vetor de ``this'').
+        \item \textbf{Segmento}: a qual texto a palavra pertence. O modelo aprende só dois vetores, $\mathbf{e}_A$ e $\mathbf{e}_B$.
+        \item \textbf{Posição}: 1.ª, 2.ª, 3.ª\ldots\ No BERT é \textbf{aprendida} no treino (\texttt{nn.Parameter}), e não as senoides fixas do Transformer original.
+    \end{itemize}
+    \vspace{-0.1cm}
+    \begin{equation*}
+        \text{entrada}_i = \text{token}_i + \text{segmento}_i + \text{posição}_i \qquad (\text{todos em } \mathbb{R}^{d},\ d = 768 \text{ no BERT base})
+    \end{equation*}
+
+    \note{
+        Com os tokens e os segmentos prontos, como isso vira números? A resposta, mostrada nesta figura, que reproduz a Figura 15.8.2 do livro, é que a entrada do BERT é a soma de três embeddings.
+        O primeiro é o embedding do token, em azul: o significado da palavra em si, como os vetores que vimos no word2vec. Cada palavra do vocabulário tem o seu.
+        O segundo é o embedding de segmento. Aqui o modelo aprende só dois vetores: e A, somado a todas as posições do texto A, e e B, somado às do texto B. É isso que permite ao modelo saber de qual texto cada palavra veio.
+        O terceiro é o embedding de posição, em verde: um vetor para a primeira posição, outro para a segunda, e assim por diante. O Transformer não tem noção de ordem por si só, então precisamos dizer onde cada palavra está. Um detalhe: no Transformer original essas posições eram senos e cossenos fixos; no BERT elas são parâmetros aprendidos durante o treino.
+        Os três vetores têm a mesma dimensão, 768 no BERT base, e são simplesmente somados. Então o BERT não olha só para a palavra: olha para a palavra, mais a posição dela, mais a frase a que ela pertence.
+    }
+\end{frame}
+
+\begin{frame}{Tarefa de pré-treino 1: \textit{Masked Language Modeling} (MLM)}
+    \footnotesize
+    \begin{itemize}
+        \item Um modelo de linguagem clássico (como o GPT) prevê a \textbf{próxima} palavra olhando só para a esquerda.
+        \item Se o modelo olha os \textbf{dois lados}, prever a próxima palavra vira \textbf{trapaça}: a resposta já está na entrada.
+        \item Solução: \textbf{esconder 15\%} dos tokens e pedir para o modelo adivinhá-los usando a \textbf{esquerda e a direita}.
+        \item É \textbf{auto-supervisionado}: o próprio texto dá a resposta, sem rótulo humano.
+    \end{itemize}
+    \centering
+    \begin{tikzpicture}[font=\tiny,
+        t/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.95cm, minimum height=0.42cm, inner sep=0pt},
+        msk/.style={draw=dexpiRedDark, fill=dexpiRedLight, minimum width=0.95cm, minimum height=0.42cm, inner sep=0pt},
+        lig/.style={dexpiBlue!60, line width=0.4pt},
+        ligd/.style={dexpiGreenDark!80, line width=0.4pt},
+        alvo/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize\bfseries, inner sep=2pt}]
+        % GPT
+        \node[font=\scriptsize\bfseries, anchor=east] at (-0.7,0) {GPT};
+        \foreach \w [count=\k from 0] in {this, movie, is} \node[t] (g\k) at ({1.05*\k},0) {\texttt{\w}};
+        \node[msk, dashed] (g3) at (3.15,0) {\texttt{?}};
+        \node[alvo] (ga) at (3.15,0.9) {great};
+        \foreach \k in {0,1,2} \draw[lig] (g\k.north) -- (ga.south);
+        \node[anchor=west, font=\scriptsize, text=dexpiBlue] at (4.0,0.45) {prever a próxima: só a esquerda};
+        % BERT
+        \node[font=\scriptsize\bfseries, anchor=east, text=dexpiBlue] at (-0.7,-1.4) {BERT};
+        \foreach \w [count=\k from 0] in {<cls>, this, movie, is, <mask>, <sep>, i, like, it, <sep>} {
+            \ifnum\k=4
+                \node[msk] (b\k) at ({1.05*\k},-1.4) {\texttt{\w}};
+            \else
+                \node[t] (b\k) at ({1.05*\k},-1.4) {\texttt{\w}};
+            \fi
+        }
+        \node[alvo] (ba) at (4.2,-0.5) {great};
+        \foreach \k in {0,1,2,3} \draw[lig] (b\k.north) -- (ba.south);
+        \foreach \k in {5,6,7,8,9} \draw[ligd] (b\k.north) -- (ba.south);
+        \draw[-{Stealth}, thick, dexpiRedDark] (b4.north) -- (ba.south);
+    \end{tikzpicture}
+
+    \note{
+        Agora o coração do treino do BERT: as tarefas de pré-treino. São duas, treinadas ao mesmo tempo. A primeira é o Masked Language Modeling, ou modelagem de linguagem mascarada.
+        Começamos pelo problema. Um modelo de linguagem clássico, como o GPT, aprende prevendo a próxima palavra. Na linha de cima da figura: ele vê ``this movie is'' e precisa adivinhar ``great'', usando só a esquerda.
+        O BERT quer olhar para os dois lados. Mas, se o modelo vê a frase inteira, prever a próxima palavra deixa de ser um desafio: ele simplesmente olharia a resposta, que já está na entrada. Seria trapaça.
+        A solução é esconder palavras. Sorteamos 15\% dos tokens, trocamos por um token especial de máscara, e pedimos ao modelo para adivinhar quais eram. Na linha de baixo: o BERT vê ``this movie is \texttt{<mask>}'' seguido de ``i like it'', e precisa prever ``great''. Agora ele pode e deve usar os dois lados: as linhas azuis vêm da esquerda e as verdes, da direita. O ``i like it'' depois da lacuna é uma pista forte de que a palavra é positiva.
+        E repare que ninguém precisou rotular nada: o próprio texto fornece a resposta. Isso se chama aprendizado auto-supervisionado.
+    }
+\end{frame}
+
+\begin{frame}{MLM: a estratégia 80\,/\,10\,/\,10}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        raiz/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, inner sep=4pt},
+        filho/.style={rounded corners=2pt, align=center, minimum width=3.6cm, minimum height=0.9cm, inner sep=3pt},
+        pct/.style={font=\footnotesize\bfseries, fill=white, inner sep=1pt}]
+        \node[raiz] (r) at (0,0) {\texttt{this movie is \textbf{great}}\\{\tiny ``great'' foi sorteada entre os 15\%}};
+        \node[filho, draw=dexpiBlue, fill=dexpiBlueLight] (a) at (-4.4,-1.8) {\texttt{this movie is <mask>}\\{\tiny troca pela máscara}};
+        \node[filho, draw=dexpiRedDark, fill=dexpiRedLight] (b) at (0,-1.8) {\texttt{this movie is drink}\\{\tiny troca por palavra aleatória}};
+        \node[filho, draw=dexpiGreenDark, fill=dexpiGreenLight] (c) at (4.4,-1.8) {\texttt{this movie is great}\\{\tiny mantém a palavra}};
+        \draw[-{Stealth}, thick, dexpiBlue] (r.south) -- node[pct, text=dexpiBlue] {80\%} (a.north);
+        \draw[-{Stealth}, thick, dexpiRedDark] (r.south) -- node[pct, text=dexpiRedDark] {10\%} (b.north);
+        \draw[-{Stealth}, thick, dexpiGreenDark] (r.south) -- node[pct, text=dexpiGreenDark] {10\%} (c.north);
+        \foreach \n in {a,b,c} \node[below=2pt of \n, font=\tiny] {alvo: \textbf{great}};
+    \end{tikzpicture}
+
+    \vspace{0.2cm}
+    \raggedright
+    \begin{alertblock}{Por que não usar sempre \texttt{<mask>}?}
+        \footnotesize
+        \begin{itemize}
+            \item No uso real (ajuste fino), \texttt{<mask>} \textbf{nunca aparece}. Treinar só com ele criaria um \textbf{descompasso} entre treino e uso.
+            \item \textbf{Palavra aleatória}: o modelo não pode confiar cegamente na palavra que vê; precisa conferir com o contexto.
+            \item \textbf{Palavra mantida}: aproxima o treino do uso real, em que todas as palavras são verdadeiras.
+        \end{itemize}
+    \end{alertblock}
+
+    \note{
+        Há um detalhe importante nessa máscara. Se o BERT sempre visse o token \texttt{<mask>} no treino, ele aprenderia a trabalhar com esse token. Mas, quando usamos o modelo pronto, no ajuste fino, a máscara nunca aparece: o texto é sempre normal. Isso cria um descompasso entre o treino e o uso.
+        Para reduzir esse problema, quando uma palavra é sorteada, como ``great'' aqui, o BERT faz uma de três coisas.
+        Em 80\% das vezes, troca pela máscara: ``this movie is \texttt{<mask>}''. É o caso normal.
+        Em 10\% das vezes, troca por uma palavra aleatória: ``this movie is drink''. Isso força o modelo a não confiar cegamente na palavra que está vendo. Ele precisa conferir com o contexto se ela faz sentido.
+        E nos outros 10\%, mantém a palavra original: ``this movie is great''. Isso aproxima o treino do uso real, em que as palavras são verdadeiras.
+        Nos três casos, o alvo é o mesmo: o modelo precisa prever ``great'' naquela posição. Como ele nunca sabe qual dos três casos está vendo, precisa construir uma boa representação de toda palavra, não só das mascaradas.
+    }
+\end{frame}
+
+\begin{frame}[fragile]{MLM no código: a classe \texttt{MaskLM}}
+    \begin{columns}[c]
+        \begin{column}{0.60\textwidth}
+\begin{lstlisting}[basicstyle=\ttfamily\fontsize{5.9}{6.9}\selectfont]
+class MaskLM(nn.Module):
+    def __init__(self, vocab_size, num_hiddens, **kwargs):
+        super().__init__(**kwargs)
+        self.mlp = nn.Sequential(nn.LazyLinear(num_hiddens), nn.ReLU(),
+                                 nn.LayerNorm(num_hiddens),
+                                 nn.LazyLinear(vocab_size))
+
+    def forward(self, X, pred_positions):              # X: (B, T, d)
+        B, P = pred_positions.shape
+        batch_idx = torch.arange(B).repeat_interleave(P)
+        masked_X = X[batch_idx, pred_positions.reshape(-1)]
+        masked_X = masked_X.reshape((B, P, -1))       # (B, P, d)
+        return self.mlp(masked_X)                     # (B, P, |V|)
+
+mlm = MaskLM(vocab_size=10000, num_hiddens=768)
+mlm_positions = torch.tensor([[1, 5, 2], [6, 1, 5]])
+mlm_Y_hat = mlm(encoded_X, mlm_positions)   # torch.Size([2, 3, 10000])
+mlm_Y = torch.tensor([[7, 8, 9], [10, 20, 30]])  # palavras verdadeiras
+loss = nn.CrossEntropyLoss(reduction='none')
+mlm_l = loss(mlm_Y_hat.reshape((-1, 10000)), mlm_Y.reshape(-1))
+\end{lstlisting}
+            {\scriptsize (forward resumido; o D2L faz o mesmo em mais linhas)}
+        \end{column}
+        \begin{column}{0.38\textwidth}
+            \centering
+            \begin{tikzpicture}[font=\scriptsize,
+                p/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum width=4.4cm, align=center, inner sep=3pt},
+                s/.style={-{Stealth}, thick, dexpiBlue},
+                dim/.style={font=\tiny, text=dexpiRedDark, anchor=west}]
+                \node[p] (n1) at (0,0) {saída do \textit{encoder}: \texttt{encoded\_X}};
+                \node[p] (n2) at (0,-1.1) {pega só as posições mascaradas};
+                \node[p, fill=dexpiGreenLight, draw=dexpiGreenDark] (n3) at (0,-2.2) {MLP: Linear $\to$ ReLU $\to$\\LayerNorm $\to$ Linear};
+                \node[p] (n4) at (0,-3.45) {um escore por palavra\\do vocabulário};
+                \node[p, fill=dexpiRedLight, draw=dexpiRedDark] (n5) at (0,-4.6) {entropia cruzada com \texttt{mlm\_Y}};
+                \draw[s] (n1) -- node[dim, right=1pt] {(2, 8, 768)} (n2);
+                \draw[s] (n2) -- node[dim, right=1pt] {(2, 3, 768)} (n3);
+                \draw[s] (n3) -- node[dim, right=1pt] {(2, 3, 10000)} (n4);
+                \draw[s] (n4) -- node[dim, right=1pt] {6 perdas} (n5);
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+
+    \note{
+        Agora o código do livro para o MLM. A classe MaskLM é a cabeça de saída dessa tarefa.
+        Ela recebe duas coisas: a saída do encoder, \texttt{encoded\_X}, que tem um vetor de contexto para cada posição, e as posições que foram mascaradas, \texttt{pred\_positions}. No exemplo, o lote tem 2 sequências de 8 tokens, com vetores de dimensão 768.
+        O forward primeiro pega só os vetores das posições mascaradas. O livro escolhe as posições 1, 5 e 2 da primeira sequência e 6, 1 e 5 da segunda. Ficamos com um tensor 2 por 3 por 768: duas sequências, três previsões por sequência.
+        Esses vetores passam por um MLP com uma camada oculta: linear, ReLU, LayerNorm e uma linear final do tamanho do vocabulário. A saída não é uma palavra: é um escore para cada uma das 10 mil palavras do vocabulário, que a softmax transforma em probabilidades. Por isso o formato é 2 por 3 por 10 mil.
+        Para a perda, \texttt{mlm\_Y} guarda os índices das palavras verdadeiras que estavam escondidas. A entropia cruzada compara as previsões com essas respostas. Com \texttt{reduction='none'}, ela devolve uma perda para cada uma das 6 previsões. Esse erro é que atualiza os pesos do BERT.
+        É a mesma entropia cruzada que vimos no word2vec: no fundo, é uma classificação com tantas classes quanto palavras no vocabulário.
+    }
+\end{frame}
+
+\begin{frame}{Tarefa de pré-treino 2: \textit{Next Sentence Prediction} (NSP)}
+    \begin{columns}[c]
+        \begin{column}{0.48\textwidth}
+            \footnotesize
+            \begin{itemize}
+                \item O MLM ensina palavras \textbf{dentro} de uma frase. Mas perguntas e respostas e inferência exigem a \textbf{relação entre duas frases}.
+                \item NSP: classificação \textbf{binária}. ``A frase B vem logo depois da A no texto?''
+                \item Na geração dos pares:
+                \begin{itemize}
+                    \footnotesize
+                    \item 50\%: B é a frase seguinte de verdade $\Rightarrow$ {\color{dexpiGreenDark}\textbf{True}};
+                    \item 50\%: B é uma frase aleatória do corpus $\Rightarrow$ {\color{dexpiRedDark}\textbf{False}}.
+                \end{itemize}
+                \item Quem responde é o vetor do \texttt{<cls>}: como o \textit{encoder} é bidirecional, ele ``absorve'' as duas frases.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.50\textwidth}
+            \centering
+            \begin{tikzpicture}[font=\tiny,
+                fa/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum width=2.55cm, minimum height=0.45cm, inner sep=1pt},
+                fb/.style={rounded corners=2pt, minimum width=2.55cm, minimum height=0.45cm, inner sep=1pt}]
+                \node[font=\scriptsize\bfseries, anchor=west] at (-1.3,2.9) {Exemplos de pares};
+                \node[fa] (a1) at (0,2.35) {A: \texttt{this movie is great}};
+                \node[fb, draw=dexpiGreenDark, fill=dexpiGreenLight] (b1) at (2.7,2.35) {B: \texttt{i like it}};
+                \node[font=\scriptsize\bfseries, text=dexpiGreenDark, anchor=west] at (4.05,2.35) {True};
+                \node[fa] (a2) at (0,1.75) {A: \texttt{this movie is great}};
+                \node[fb, draw=dexpiRedDark, fill=dexpiRedLight] (b2) at (2.7,1.75) {B: \texttt{the sky is blue}};
+                \node[font=\scriptsize\bfseries, text=dexpiRedDark, anchor=west] at (4.05,1.75) {False};
+                % pipeline
+                \node[draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, minimum width=5.2cm, minimum height=0.5cm, font=\scriptsize\bfseries] (enc) at (1.35,0.6) {BERT \textit{encoder}};
+                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=0.9cm, minimum height=0.4cm, inner sep=0pt] (cls) at (-0.75,-0.35) {\texttt{<cls>}};
+                \foreach \x in {0.4,1.2,2.0,2.8,3.6} \node[draw=gray, fill=gray!10, minimum width=0.6cm, minimum height=0.4cm] at (\x,-0.35) {};
+                \draw[-{Stealth}, thick, dexpiGreenDark] (enc.south -| cls) -- (cls);
+                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, align=center, font=\scriptsize] (mlp) at (-0.75,-1.35) {MLP\\{\tiny\texttt{hidden} +}\\{\tiny\texttt{NextSentencePred}}};
+                \draw[-{Stealth}, thick, dexpiGreenDark] (cls) -- (mlp);
+                \node[font=\scriptsize, anchor=west, align=left] at (0.55,-1.35) {2 saídas: True / False\\{\tiny\texttt{nsp\_Y\_hat.shape}:}\\{\tiny\texttt{torch.Size([2, 2])}}};
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+
+    \note{
+        A segunda tarefa de pré-treino é a Next Sentence Prediction, ou previsão da próxima frase.
+        Por que ela existe? O MLM ensina o BERT a entender palavras dentro de uma frase. Mas muitas tarefas, como responder perguntas ou a inferência de linguagem natural, exigem entender a relação lógica entre duas frases. O MLM não ensina isso explicitamente.
+        A NSP é uma classificação binária, sim ou não. O modelo recebe um par de frases, A e B, e precisa dizer se B é de fato a frase que vem logo depois de A no texto original.
+        Os dados são gerados assim: em metade dos casos, B é realmente a frase seguinte, e o rótulo é True. Na outra metade, B é uma frase aleatória pega de qualquer lugar do corpus, e o rótulo é False. Nos exemplos da figura: depois de ``this movie is great'', ``i like it'' faz sentido, então True; ``the sky is blue'' não tem nada a ver, então False.
+        E quem dá a resposta? Aqui entra o token \texttt{<cls>}. Como o encoder é bidirecional, o vetor final do \texttt{<cls>} recebe informação das duas frases inteiras. O modelo pega só esse vetor e passa por um MLP de uma camada oculta, que devolve 2 escores: True ou False. No exemplo do livro, com 2 sequências no lote, a saída tem formato 2 por 2.
+    }
+\end{frame}
+
+\begin{frame}{De onde vêm os dados? Rótulos de graça}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        doc/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=left, inner sep=4pt, text width=3.3cm},
+        ex/.style={rounded corners=2pt, align=left, inner sep=4pt, text width=5.0cm},
+        s/.style={-{Stealth}, thick, dexpiBlue}]
+        \node[doc] (t) at (0,0) {\textbf{Texto bruto}\\[2pt]{\tiny ``this movie is great. i like it. the actors are good. \ldots''}};
+        \node[ex, draw=dexpiRedDark, fill=dexpiRedLight] (m) at (6.2,0.8) {\textbf{MLM}: apaga palavras\\[1pt]entrada: \texttt{this movie is <mask>}\\rótulo: \texttt{great}};
+        \node[ex, draw=dexpiGreenDark, fill=dexpiGreenLight] (n) at (6.2,-0.8) {\textbf{NSP}: monta pares de frases\\[1pt]entrada: \texttt{this movie is great} + \texttt{i like it}\\rótulo: \texttt{True} (vizinhas) ou \texttt{False}};
+        \draw[s] (t.east) -- (m.west);
+        \draw[s] (t.east) -- (n.west);
+        \node[font=\footnotesize\bfseries, text=dexpiBlue] at (3.2,-2.0) {nenhuma anotação humana};
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    \raggedright
+    \footnotesize
+    \begin{itemize}
+        \item Os dois rótulos saem do \textbf{próprio texto}: basta apagar palavras ou separar frases.
+        \item O BERT original foi pré-treinado no \textbf{BookCorpus} (800 milhões de palavras) e na \textbf{Wikipédia em inglês} (2,5 bilhões de palavras).
+        \item Por isso foi possível treinar um modelo enorme (até 340 M parâmetros) \textbf{sem pagar} por anotação.
+    \end{itemize}
+
+    \note{
+        O livro faz uma observação que vale destacar: não foi preciso nenhum trabalho humano para criar os dados de treino.
+        Para o MLM, basta pegar uma frase e apagar palavras: a palavra apagada é o rótulo. Para a NSP, basta pegar duas frases vizinhas de um texto, que dão o rótulo True, ou juntar uma frase com outra de qualquer lugar, que dá False.
+        Ou seja, a partir de texto bruto, geramos os exemplos e os rótulos automaticamente. É a mesma ideia do word2vec, em que o próprio texto dizia quais palavras eram vizinhas.
+        O BERT original foi pré-treinado em dois corpora: o BookCorpus, com 800 milhões de palavras, e a Wikipédia em inglês, com 2,5 bilhões de palavras. Com rótulos de graça nessa escala, foi possível treinar um modelo de até 340 milhões de parâmetros sem gastar milhões com anotação.
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Juntando tudo: o \texttt{BERTModel}}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        b/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, inner sep=3pt, minimum height=0.55cm},
+        enc/.style={draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, align=center, inner sep=3pt, minimum height=0.9cm, font=\scriptsize\bfseries},
+        h/.style={rounded corners=2pt, align=center, inner sep=3pt, minimum height=0.55cm},
+        s/.style={-{Stealth}, thick, dexpiBlue}]
+        \node[b] (in) at (0,0) {tokens\\+ segmentos};
+        \node[enc] (e) at (2.6,0) {\texttt{BERTEncoder}\\{\tiny (Transformer \textit{encoder})}};
+        \node[b] (x) at (5.4,0) {\texttt{encoded\_X}\\{\tiny (B, T, d)}};
+        \node[h, draw=dexpiRedDark, fill=dexpiRedLight] (mlm) at (8.3,0.75) {\texttt{MaskLM}\\{\tiny posições mascaradas}};
+        \node[h, draw=dexpiGreenDark, fill=dexpiGreenLight] (nsp) at (8.3,-0.75) {\texttt{hidden} + \texttt{NextSentencePred}\\{\tiny só o vetor do \texttt{<cls>}}};
+        \node[h, draw=dexpiRedDark, fill=white] (lm) at (11.3,0.75) {$\mathcal{L}_{\text{MLM}}$};
+        \node[h, draw=dexpiGreenDark, fill=white] (ln) at (11.3,-0.75) {$\mathcal{L}_{\text{NSP}}$};
+        \node[draw=dexpiBlue, thick, rounded corners=2pt, inner sep=3pt] (lt) at (12.8,0) {$+$};
+        \draw[s] (in) -- (e);
+        \draw[s] (e) -- (x);
+        \draw[s, dexpiRedDark] (x.east) -- (mlm.west);
+        \draw[s, dexpiGreenDark] (x.east) -- node[below left, font=\tiny, text=dexpiGreenDark] {\texttt{[:, 0, :]}} (nsp.west);
+        \draw[s, dexpiRedDark] (mlm) -- (lm);
+        \draw[s, dexpiGreenDark] (nsp) -- (ln);
+        \draw[s] (lm.east) -- (lt);
+        \draw[s] (ln.east) -- (lt);
+    \end{tikzpicture}
+
+    \vspace{0.15cm}
+    \begin{columns}[c]
+        \begin{column}{0.62\textwidth}
+\begin{lstlisting}[basicstyle=\ttfamily\fontsize{5.9}{6.9}\selectfont]
+def forward(self, tokens, segments, valid_lens=None,
+            pred_positions=None):
+    encoded_X = self.encoder(tokens, segments, valid_lens)
+    if pred_positions is not None:
+        mlm_Y_hat = self.mlm(encoded_X, pred_positions)
+    else:
+        mlm_Y_hat = None
+    # o vetor do <cls> (indice 0) vai para a cabeca do NSP
+    nsp_Y_hat = self.nsp(self.hidden(encoded_X[:, 0, :]))
+    return encoded_X, mlm_Y_hat, nsp_Y_hat
+\end{lstlisting}
+        \end{column}
+        \begin{column}{0.36\textwidth}
+            \centering
+            \footnotesize
+            Perda do pré-treino:
+            \begin{equation*}
+                \boxed{\;\mathcal{L} = \mathcal{L}_{\text{MLM}} + \mathcal{L}_{\text{NSP}}\;}
+            \end{equation*}
+            As duas tarefas são otimizadas \textbf{ao mesmo tempo}, com o mesmo \textit{encoder}.
+        \end{column}
+    \end{columns}
+
+    \note{
+        Por fim, o livro junta tudo numa classe só, o BERTModel. Ela tem três peças: o BERTEncoder, que é o Transformer encoder que processa o texto; o MaskLM, a cabeça do MLM; e o NextSentencePred, a cabeça da NSP.
+        Seguindo a figura da esquerda para a direita: os tokens e os segmentos entram no encoder, que devolve \texttt{encoded\_X}, um vetor de contexto para cada posição.
+        Esse resultado segue por dois caminhos. Em cima, se houver posições mascaradas, o MaskLM pega os vetores dessas posições e prevê as palavras escondidas. Embaixo, pegamos só o vetor da posição zero, que é o \texttt{<cls>}, passamos por uma camada oculta, \texttt{self.hidden}, e depois pelo NextSentencePred, que dá a resposta True ou False.
+        O código do forward é exatamente isso, e devolve três coisas: os vetores codificados, as previsões do MLM e as da NSP.
+        No treino, a perda total é a soma das duas perdas: a do MLM mais a da NSP. O modelo é otimizado para as duas tarefas ao mesmo tempo, e o encoder, que é compartilhado, aprende com as duas.
+    }
+\end{frame}
+
+\begin{frame}{Resumo: do word2vec ao BERT}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        m/.style={fill=white, rounded corners=2pt, align=center, minimum width=1.75cm, minimum height=0.8cm, inner sep=2pt},
+        s/.style={-{Stealth}, thick, gray}]
+        \node[m, draw=dexpiRedDark] (w) at (0,0) {\textbf{word2vec}\\{\tiny 2013}};
+        \node[m, draw=dexpiRedDark] (g) at (2.2,0) {\textbf{GloVe}\\{\tiny 2014}};
+        \node[m, draw=dexpiRedDark] (f) at (4.4,0) {\textbf{fastText}\\{\tiny 2017}};
+        \node[m, draw=dexpiGreenDark] (e) at (6.6,0) {\textbf{ELMo}\\{\tiny 2018}};
+        \node[m, draw=dexpiGreenDark] (p) at (8.8,0) {\textbf{GPT}\\{\tiny 2018}};
+        \node[m, draw=dexpiBlue, fill=dexpiBlueLight, very thick] (b) at (11.0,0) {\textbf{BERT}\\{\tiny 2018}};
+        \foreach \a/\c in {w/g, g/f, f/e, e/p, p/b} \draw[s] (\a) -- (\c);
+        \draw[decorate, decoration={brace, mirror, amplitude=5pt}, dexpiRedDark] (-0.85,-0.55) -- (5.25,-0.55) node[midway, below=6pt, text=dexpiRedDark] {um vetor fixo por palavra};
+        \draw[decorate, decoration={brace, mirror, amplitude=5pt}, dexpiGreenDark] (5.75,-0.55) -- (11.85,-0.55) node[midway, below=6pt, text=dexpiGreenDark] {um vetor por palavra \textbf{em cada contexto}};
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    \raggedright
+    \footnotesize
+    \begin{itemize}
+        \item \textbf{Arquitetura}: Transformer \textit{encoder} bidirecional; para cada tarefa, só uma camada de saída nova.
+        \item \textbf{Entrada}: \texttt{<cls>} e \texttt{<sep>}; cada posição é token $+$ segmento $+$ posição.
+        \item \textbf{Pré-treino}: MLM (adivinhar palavras escondidas, 80/10/10) $+$ NSP (as frases são vizinhas?).
+        \item \textbf{Dados}: auto-supervisionados, BookCorpus $+$ Wikipédia, sem anotação humana.
+        \item \textbf{Uso}: ajuste fino de todos os parâmetros na tarefa desejada.
+    \end{itemize}
+
+    \note{
+        Para fechar a seção, vamos olhar o caminho todo.
+        Começamos com o word2vec, em 2013, passamos pelo GloVe, em 2014, e pelo fastText, em 2017. Esses três dão um vetor fixo por palavra, o mesmo em qualquer frase.
+        Em 2018 veio a virada: ELMo, GPT e BERT, que dão um vetor diferente para cada palavra em cada contexto.
+        O BERT, em resumo: é um Transformer encoder bidirecional, que se adapta a qualquer tarefa com só uma camada de saída nova. Lê a entrada com os tokens \texttt{<cls>} e \texttt{<sep>}, e cada posição é a soma de três embeddings: token, segmento e posição. É pré-treinado com duas tarefas ao mesmo tempo: o MLM, que adivinha palavras escondidas com a regra 80, 10, 10, e a NSP, que diz se duas frases são vizinhas. Os dados são auto-supervisionados, tirados de livros e da Wikipédia sem nenhuma anotação humana. E, para usar, fazemos o ajuste fino de todos os parâmetros na tarefa que queremos.
+        A ideia que atravessa tudo, desde o word2vec, é a mesma: aprender o significado de uma palavra a partir das palavras que aparecem perto dela.
+    }
+\end{frame}

@@ -1,0 +1,425 @@
+%========================================================================================
+%  Seção 15.5 do D2L -- Word Embedding with Global Vectors (GloVe)
+%  https://d2l.ai/chapter_natural-language-processing-pretraining/glove.html
+%========================================================================================
+
+% Entrada não nula da matriz de coocorrência
+\newcommand{\nz}[1]{\textbf{\color{dexpiBlue}#1}}
+
+%------------------------------------------------
+\section{GloVe: vetores globais}
+%------------------------------------------------
+
+\begin{frame}{Evolução para o modelo GloVe}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{word2vec}
+                \small
+                Passa pelo texto \textbf{janela por janela}. O par (gato, miou) é visto e atualizado \textbf{cada vez} que aparece.
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{GloVe \cite{pennington2014glove}}
+                \small
+                Primeiro \textbf{conta} quantas vezes cada par aparece junto no corpus inteiro. Depois treina com essas \textbf{contagens globais}.
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.3cm}
+    \raggedright
+    \begin{exampleblock}{Analogia}
+        \small
+        Em vez de reler o livro inteiro várias vezes, fazemos um \textbf{resumo} (as contagens) e estudamos só o resumo.
+    \end{exampleblock}
+
+    \note{
+        A grande sacada do GloVe, de Pennington, Socher e Manning, de 2014, é usar a estatística global de todo o corpus, em vez de passar pelo texto janela por janela como faz o word2vec. O nome vem daí: \textit{Global Vectors}.
+        No word2vec, se o par (gato, miou) aparece 500 vezes no texto, o modelo vê esse par 500 vezes, em 500 janelas diferentes.
+        O GloVe faz diferente: percorre o corpus uma única vez e conta quantas vezes cada par de palavras aparece junto. Isso forma a matriz de coocorrência. O treino depois usa só essas contagens.
+        Uma analogia: o word2vec é como estudar relendo o livro inteiro várias vezes. O GloVe primeiro faz um resumo do livro, as contagens, e depois estuda só o resumo.
+    }
+\end{frame}
+
+\begin{frame}{A matriz de coocorrência: ler o texto uma vez só}
+    \begin{columns}[c]
+        \begin{column}{0.40\textwidth}
+            \small
+            \textbf{Corpus de brinquedo} (janela $= 1$):
+            \begin{itemize}
+                \item o gato miou
+                \item o gato dormiu
+                \item o cão latiu
+            \end{itemize}
+            \vspace{0.1cm}
+            \footnotesize
+            $x_{ij}$ = quantas vezes $w_j$ aparece na janela de $w_i$ no corpus \textbf{inteiro}.
+            O par (o, gato) aparece \textbf{2 vezes} no texto, mas vira \textbf{uma} entrada com valor 2.
+        \end{column}
+        \begin{column}{0.58\textwidth}
+            \centering
+            \footnotesize
+            \begin{tabular}{l|cccccc}
+                \toprule
+                & o & gato & cão & miou & dormiu & latiu \\
+                \midrule
+                o      & 0 & \nz{2} & \nz{1} & 0 & 0 & 0 \\
+                gato   & \nz{2} & 0 & 0 & \nz{1} & \nz{1} & 0 \\
+                cão    & \nz{1} & 0 & 0 & 0 & 0 & \nz{1} \\
+                miou   & 0 & \nz{1} & 0 & 0 & 0 & 0 \\
+                dormiu & 0 & \nz{1} & 0 & 0 & 0 & 0 \\
+                latiu  & 0 & 0 & \nz{1} & 0 & 0 & 0 \\
+                \bottomrule
+            \end{tabular}
+
+            \vspace{0.1cm}
+            {\scriptsize Simétrica ($x_{ij} = x_{ji}$) e esparsa: só 10 das 36 entradas não são zero.}
+        \end{column}
+    \end{columns}
+    \vspace{0.25cm}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{word2vec: cada época relê o texto}
+                \footnotesize
+                10 épocas $=$ percorrer o corpus \textbf{10 vezes}. Um par que aparece 1 milhão de vezes é processado \textbf{10 milhões} de vezes.
+            \end{alertblock}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{GloVe: lê uma vez, treina na matriz}
+                \footnotesize
+                Percorre o corpus \textbf{1 vez} para contar. Cada época passa só pelas entradas \textbf{não nulas}: o mesmo par vira \textbf{1 termo} com $x_{ij} = 10^6$.
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+
+    \note{
+        Como o GloVe evita percorrer o texto várias vezes? Com a matriz de coocorrência.
+        Neste corpus de brinquedo, com três frases e janela de tamanho 1, contamos quantas vezes cada palavra aparece ao lado de cada outra. ``o'' aparece ao lado de ``gato'' duas vezes, então a entrada (o, gato) vale 2. ``gato'' aparece ao lado de ``miou'' uma vez, e assim por diante. Repare: o par (o, gato) aparece duas vezes no texto, mas na matriz é uma entrada só, com o valor 2.
+        A matriz é simétrica, porque se ``gato'' está na janela de ``miou'', ``miou'' está na janela de ``gato''. E é esparsa: só 10 das 36 entradas não são zero.
+        Agora a diferença no treino. O word2vec, a cada época, relê o corpus inteiro, janela por janela. Com 10 épocas, um par que aparece um milhão de vezes é processado 10 milhões de vezes.
+        O GloVe lê o corpus uma única vez, só para montar a matriz. Depois disso, o texto não é mais usado: cada época passa só pelas entradas não nulas da matriz. Aquele par que aparecia um milhão de vezes vira um único termo, com contagem um milhão. Depois de contar, o tamanho do texto deixa de importar.
+    }
+\end{frame}
+
+\begin{frame}{Por que não continuar com o word2vec?}
+    \small
+    \begin{itemize}
+        \item O modelo Skip-gram clássico reescrito usando contagens estáticas:
+    \end{itemize}
+    \vspace{-0.1cm}
+    \begin{equation*}
+        \underbrace{-\sum_{i \in \V} \sum_{j \in \V} x_{ij} \log q_{ij}}_{\text{entropia cruzada}},
+        \qquad
+        q_{ij} = \frac{\exp\left(\uu_j^\top \vv_i\right)}{{\color{dexpiRedDark}\sum_{k \in \V} \exp\left(\uu_k^\top \vv_i\right)}}
+    \end{equation*}
+    \begin{itemize}
+        \item$q_{ij}$: A probabilidade que o modelo prevê de encontrar a palavra j no contexto de i (Calculada via Softmax)
+
+        \item  $x_{ij}$: contagem real (quantas vezes j aparece perto de i em todo o texto)
+    \end{itemize}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{1. Custo}
+                \footnotesize
+                $q_{ij}$ ainda soma \textbf{todo o vocabulário} no denominador.
+            \end{alertblock}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{2. Eventos raros}
+                \footnotesize
+                Pares que aparecem juntos 1 ou 2 vezes \textbf{por acaso} recebem peso demais.
+            \end{alertblock}
+        \end{column}
+    \end{columns}
+
+    \note{
+        Por que não continuar com o word2vec? O livro mostra que a perda do skip-gram pode ser reescrita agrupando os termos por par de palavras: somamos sobre todos os pares do vocabulário, cada um multiplicado por $x_{ij}$, o número de vezes que $w_j$ apareceu perto de $w_i$ no texto todo. Se (gato, miou) aparece 500 vezes, isso vira um termo só com peso 500.
+        Mas essa perda, uma entropia cruzada, tem dois problemas. Primeiro, o custo: $q_{ij}$ é a softmax completa, e o denominador, em vermelho, ainda soma o vocabulário inteiro. Segundo, os eventos raros: pares que aparecem juntos uma ou duas vezes por puro acaso recebem peso demais.
+        O GloVe resolve os dois.
+    }
+\end{frame}
+
+\begin{frame}{Mudança 1: logaritmo e erro quadrático}
+    \small
+    \begin{itemize}
+        \item Em vez de prever probabilidades, o GloVe tenta igualar o \textbf{produto escalar} ao \textbf{logaritmo da contagem real}.
+        \item Sem a softmax, $\uu_j^\top \vv_i$ pode ser qualquer número real, e $\log x_{ij}$ também é um número real.
+    \end{itemize}
+    \begin{equation*}
+        \boxed{\;\left(\uu_j^\top \vv_i - \log x_{ij}\right)^2\;}
+    \end{equation*}
+    \begin{exampleblock}{Intuição}
+        \footnotesize
+        Se ``gelo'' e ``sólido'' aparecem juntos 1000 vezes, o modelo quer $\uu_j^\top \vv_i = \log 1000 \approx 6{,}9$.
+        Se o produto escalar for $2{,}0$ (vetores meio distantes), o erro é $(2{,}0 - 6{,}9)^2 = 24{,}01$,
+        e o gradiente empurra os vetores para \textbf{aumentar} o produto escalar.
+    \end{exampleblock}
+    \begin{block}{Ganho}
+        \footnotesize
+        Some o denominador da softmax: cada termo custa $O(1)$ em vez de $O(|\V|)$.
+    \end{block}
+
+    \note{
+        A primeira mudança do GloVe é trocar a probabilidade pelo logaritmo da contagem. Em vez de prever a chance de uma palavra aparecer perto da outra, o modelo tenta fazer o produto escalar dos vetores ficar igual ao log de quantas vezes as duas apareceram juntas.
+        Sem a softmax, o produto escalar pode ser qualquer número real, e o log da contagem também é um número real. Então dá para comparar os dois diretamente, com um erro quadrático, como numa regressão.
+        A intuição: se ``gelo'' e ``sólido'' aparecem juntos mil vezes, o modelo quer que o produto escalar seja log de mil, cerca de 6,9. Se o produto escalar for 2, com os vetores meio distantes, o erro é 2 menos 6,9 ao quadrado, cerca de 24. O gradiente então empurra os vetores para aumentar esse produto escalar.
+        E o ganho principal: não há mais denominador. Cada termo custa um produto escalar, e não uma soma sobre o vocabulário inteiro.
+    }
+\end{frame}
+
+\begin{frame}{Mudança 2: os vieses $b_i$ e $c_j$}
+    \small
+    \begin{itemize}
+        \item Algumas palavras são muito frequentes por pura \textbf{gramática} (``de'', ``a'', ``o''), não por relação semântica.
+        \item O GloVe adiciona um viés para a palavra central, $b_i$, e outro para a de contexto, $c_j$:
+    \end{itemize}
+    \begin{equation*}
+        \boxed{\;\uu_j^\top \vv_i + b_i + c_j - \log x_{ij}\;}
+    \end{equation*}
+    \begin{exampleblock}{O que os vieses fazem}
+        \small
+        O viés \textbf{absorve} a frequência bruta da palavra. Assim, os vetores $\uu$ e $\vv$ ficam livres para aprender só a \textbf{semântica}, sem se preocupar se a palavra é comum ou rara.
+    \end{exampleblock}
+
+    \note{
+        A segunda mudança são os vieses. Algumas palavras aparecem muito por pura gramática, como ``de'', ``a'' e ``o'', e não porque têm alguma relação de significado com as vizinhas.
+        Se só tivéssemos o produto escalar, os vetores dessas palavras teriam que crescer para dar conta dessas contagens enormes. Por isso o GloVe adiciona dois números aprendidos: um viés $b_i$ para a palavra central e um viés $c_j$ para a palavra de contexto.
+        O viés absorve o quanto a palavra é frequente. Com isso, os vetores $\uu$ e $\vv$ ficam livres para representar só o significado, sem se preocupar se a palavra é comum ou rara.
+    }
+\end{frame}
+
+\begin{frame}{Mudança 3: a função de peso $h(x_{ij})$}
+    \small
+    Para resolver os \textbf{eventos raros} e o custo de calcular todos os pares, o GloVe usa um peso:
+    \begin{equation*}
+        h(x) = \begin{cases}
+            (x / c)^{\alpha}, & x < c \\
+            1, & x \ge c
+        \end{cases}
+    \end{equation*}
+    \begin{itemize}
+        \item \textbf{$x = 0$} (nunca aparecem juntos): $h(0) = 0$ e o termo \textbf{some}. Como a matriz de coocorrência é esparsa, isso economiza muito: no minibatch, só amostramos pares com $x_{ij} \neq 0$.
+        \item \textbf{$x$ pequeno} (aparecem poucas vezes): o peso é \textbf{baixo}, e o modelo não se estressa com o par.
+        \item \textbf{$x$ grande} (aparecem muito): o peso para de crescer em $c$ (ex.: 100). Isso evita que pares como ``de a'' dominem a perda e façam os vetores \textbf{explodirem}.
+    \end{itemize}
+
+    \note{
+        A terceira mudança é a função de peso $h$. Ela resolve dois problemas de uma vez: os eventos raros e o custo de passar por todos os pares.
+        Se as duas palavras nunca aparecem juntas, $x$ é zero, $h$ de zero é zero e o termo inteiro some. Isso economiza um processamento gigantesco, porque a matriz de coocorrência é esparsa: a maioria das palavras nunca aparece junto com a maioria das outras. Por isso, no treino por minibatch, o livro só amostra pares com contagem diferente de zero.
+        Se $x$ é pequeno, o par apareceu poucas vezes, talvez por acaso, e o peso é baixo: o modelo não se estressa com ele.
+        Se $x$ é grande, o peso para de crescer ao chegar em $c$, por exemplo 100. Isso evita que pares como ``de'' e ``a'', que aparecem juntos um número enorme de vezes, dominem a função de perda e façam os vetores explodirem.
+    }
+\end{frame}
+
+\begin{frame}{A função $h(x)$ em números}
+    \begin{columns}[c]
+        \begin{column}{0.50\textwidth}
+            \begin{equation*}
+                h(x) = \begin{cases}
+                    (x / c)^{\alpha}, & x < c \\
+                    1, & x \ge c
+                \end{cases}
+            \end{equation*}
+            \small
+            Com $c = 100$ e $\alpha = 0{,}75$:
+            \vspace{0.1cm}
+
+            \centering
+            \begin{tabular}{lccccc}
+                \toprule
+                $x_{ij}$ & 0 & 1 & 10 & 50 & $\ge 100$ \\
+                \midrule
+                $h(x_{ij})$ & 0 & 0,03 & 0,18 & 0,59 & 1 \\
+                \bottomrule
+            \end{tabular}
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \centering
+            \begin{tikzpicture}
+                \begin{axis}[
+                    width=6.0cm, height=4.2cm,
+                    xmin=0, xmax=160, ymin=0, ymax=1.2,
+                    axis lines=left, xtick={0,100}, xticklabels={0,$c = 100$}, ytick={0,1},
+                    tick label style={font=\tiny},
+                    xlabel={\scriptsize contagem $x_{ij}$}, ylabel={\scriptsize peso $h(x_{ij})$}]
+                    \addplot[very thick, dexpiBlue, domain=0:100, samples=60] {(x/100)^0.75};
+                    \addplot[very thick, dexpiBlue, domain=100:160] {1};
+                    \addplot[dashed, gray] coordinates {(100,0) (100,1)};
+                \end{axis}
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+    \vspace{0.2cm}
+    \footnotesize
+    \begin{itemize}
+        \item $h(0) = 0$: pares que \textbf{nunca} aparecem juntos saem da soma (e evitamos $\log 0$).
+        \item Contagens pequenas (ruído) pesam \textbf{pouco}; pares muito comuns têm peso \textbf{travado} em 1, para não dominarem o treino.
+    \end{itemize}
+
+    \note{
+        Vamos ver a função $h$ com números, usando os valores do artigo: $c = 100$ e $\alpha = 0{,}75$. Ela depende só da contagem do par.
+        Pela tabela: um par que nunca aparece junto tem peso zero e sai da soma. Isso também evita o log de zero. Um par que aparece uma única vez, possivelmente por acaso, tem peso 0,03: quase não influencia. Com 10 ocorrências, 0,18; com 50, 0,59. A partir de 100 ocorrências, o peso trava em 1.
+        O travamento também importa: sem ele, pares extremamente comuns, como ``of the'' em inglês, teriam peso enorme e dominariam o treino.
+        Com isso, temos as três peças da equação final: o log das contagens, os vieses e o peso $h$.
+    }
+\end{frame}
+
+\begin{frame}{A equação final}
+    \begin{itemize}
+        \item Juntando as três mudanças (equação 15.5.4 do D2L \cite{zhang2023dive}):
+    \end{itemize}
+    \begin{equation*}
+        \sum_{i \in \V} \sum_{j \in \V}
+        {\color{dexpiGreenDark}\underbrace{h(x_{ij})}_{\substack{\text{peso (ignora raros,}\\ \text{limita frequentes)}}}}
+        \Big(
+        {\color{dexpiBlue}\underbrace{\uu_j^\top \vv_i + b_i + c_j}_{\substack{\text{o que o modelo prevê}\\ \text{(com vieses)}}}}
+        -
+        {\color{dexpiRedDark}\underbrace{\log x_{ij}}_{\substack{\text{a estatística real}\\ \text{do texto}}}}
+        \Big)^2
+    \end{equation*}
+    \begin{exampleblock}{Objetivo}
+        \small
+        Minimizar essa soma: um \textbf{erro quadrático ponderado}.
+    \end{exampleblock}
+
+    \note{
+        A equação final, a 15.5.4 do livro, junta as três mudanças. Em verde, o peso $h$, que ignora os pares raros e limita os frequentes. Em azul, o que o modelo prevê: o produto escalar mais os dois vieses. Em vermelho, a estatística real do texto: o log da contagem.
+        O objetivo do treino é minimizar essa soma, um erro quadrático ponderado.
+    }
+\end{frame}
+
+\begin{frame}{Treino do GloVe (1/2): o algoritmo}
+    \centering
+    \begin{tikzpicture}[
+        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.9cm},
+        passo/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, align=center, font=\scriptsize, text width=3.1cm, minimum height=1.35cm},
+        num/.style={circle, fill=dexpiGreenDark, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
+        arr/.style={-{Stealth}, thick, dexpiBlue},
+        garr/.style={-{Stealth}, thick, dexpiGreenDark}]
+        % Preparação: feita uma vez
+        \node[box, minimum width=2.4cm] (t) at (0,0) {corpus inteiro};
+        \node[box, minimum width=2.4cm, fill=dexpiLightBlue] (m) at (4.1,0) {matriz $x_{ij}$};
+        \node[box, minimum width=2.8cm, fill=dexpiLightBlue] (p) at (8.2,0) {lista de pares\\$(i, j, x_{ij})$ com $x_{ij} > 0$};
+        \draw[arr] (t) -- node[above, font=\tiny] {contar \textbf{uma vez}} (m);
+        \draw[arr] (m) -- node[above, font=\tiny] {tirar zeros} (p);
+
+        % Laço de treino
+        \node[passo] (s1) at (0,-2.5) {\textbf{Sortear} um minibatch\\de pares da lista};
+        \node[passo] (s2) at (4.1,-2.5) {\textbf{Medir o erro} de cada par:\\$e = \uu_j^\top \vv_i + b_i + c_j - \log x_{ij}$};
+        \node[passo] (s3) at (8.2,-2.5) {\textbf{Corrigir} $\uu_j$, $\vv_i$, $b_i$, $c_j$\\contra o gradiente\\de $h(x_{ij})\, e^2$};
+        \node[num] at (s1.north west) {1};
+        \node[num] at (s2.north west) {2};
+        \node[num] at (s3.north west) {3};
+        \draw[garr] (s1) -- (s2);
+        \draw[garr] (s2) -- (s3);
+        \draw[garr] (s3.south) -- ++(0,-0.35) -| node[pos=0.25, below, font=\tiny] {repetir por várias épocas} (s1.south);
+        \node[draw=dexpiGreenDark, dashed, rounded corners=4pt, inner sep=6pt, fit={(s1) (s2) (s3) ($(s1.south)+(0,-0.7)$)}] (loop) {};
+        \node[anchor=south west, font=\tiny, text=dexpiGreenDark] at (loop.north west) {laço de treino: o texto \textbf{não} é mais lido};
+        \draw[arr] (p.south) -- (p.south |- loop.north);
+
+        % Resultado
+        \node[box, minimum width=3.2cm, fill=dexpiGreenLight, draw=dexpiGreenDark] (f) at (4.1,-5.1) {vetor final: $\uu_i + \vv_i$};
+        \draw[arr] (loop.south) -- (f);
+    \end{tikzpicture}
+
+    \vspace{0.1cm}
+    {\footnotesize Antes do laço, $\uu$, $\vv$, $b$ e $c$ começam com valores \textbf{aleatórios}. O artigo usa o otimizador AdaGrad \cite{pennington2014glove}.}
+
+    \note{
+        Vamos ver o treino do GloVe como um algoritmo, passo a passo.
+        Na linha de cima, a preparação, que é feita uma vez só. Lemos o corpus inteiro uma única vez e contamos os pares, montando a matriz de coocorrência. Depois jogamos fora os zeros, porque $h(0) = 0$: sobra uma lista de pares, cada um com a sua contagem.
+        Na caixa verde está o laço de treino. Começamos com todos os vetores e vieses aleatórios. Passo 1: sorteamos um minibatch de pares da lista. Passo 2: para cada par, medimos o erro, que é a previsão do modelo, o produto escalar mais os vieses, menos o log da contagem. Passo 3: corrigimos os vetores e os vieses na direção contrária ao gradiente da perda, o peso vezes o erro ao quadrado. E repetimos isso por várias épocas.
+        Repare que dentro do laço o texto não aparece mais: só a lista de pares. É por isso que o tamanho do corpus deixa de importar depois da contagem.
+        No fim, somamos os dois vetores de cada palavra para obter o vetor final; o motivo está no slide sobre simetria.
+    }
+\end{frame}
+
+\begin{frame}{Treino do GloVe (2/2): um passo, com números}
+    \begin{columns}[c]
+        \begin{column}{0.54\textwidth}
+            \small
+            Par (gato, miou), com $x_{ij} = 50$ (valores ilustrativos):
+            \vspace{0.1cm}
+
+            \centering
+            \footnotesize
+            \begin{tabular}{lr}
+                \toprule
+                Alvo: $\log 50$ & $3{,}91$ \\
+                Previsão: $\uu^\top \vv + b + c = 2{,}5 + 0{,}3 + 0{,}1$ & $2{,}90$ \\
+                Erro: $e = 2{,}90 - 3{,}91$ & {\color{dexpiRedDark}$\mathbf{-1{,}01}$} \\
+                Peso: $h(50)$ & $0{,}59$ \\
+                Perda do par: $h\, e^2$ & $0{,}61$ \\
+                \bottomrule
+            \end{tabular}
+
+            \vspace{0.15cm}
+            \raggedright
+            \begin{itemize}
+                \item Gradiente: $2\, h\, e\, \uu_{\text{miou}} = 2 \times 0{,}59 \times (-1{,}01)\, \uu_{\text{miou}} \approx -1{,}2\, \uu_{\text{miou}}$
+                \item Passo: $\vv_{\text{gato}} \leftarrow \vv_{\text{gato}} - \eta\, (-1{,}2\, \uu_{\text{miou}}) = \vv_{\text{gato}} + 1{,}2\, \eta\, \uu_{\text{miou}}$
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.44\textwidth}
+            \centering
+            \begin{tikzpicture}[scale=1.0]
+                \fill[black] (0,0) circle (1.2pt);
+                \draw[-{Stealth}, very thick, dexpiGreenDark] (0,0) -- (2,0.73) node[right, font=\scriptsize] {$\uu_{\text{miou}}$};
+                \draw[-{Stealth}, very thick, gray] (0,0) -- (0.35,2.0) node[left, font=\scriptsize] {$\vv_{\text{gato}}$ antes};
+                \draw[-{Stealth}, very thick, dexpiBlue] (0,0) -- (1.15,2.29) node[right, font=\scriptsize] {depois};
+                \draw[-{Stealth}, thick, dashed, dexpiRedDark] (0.35,2.0) -- (1.13,2.28);
+                \node[font=\tiny, text=dexpiRedDark] at (0.6,2.55) {$+1{,}2\, \eta\, \uu_{\text{miou}}$};
+            \end{tikzpicture}
+
+            \vspace{0.1cm}
+            {\scriptsize O ângulo entre os vetores \textbf{diminui}: o produto escalar sobe em direção a 3,91.}
+        \end{column}
+    \end{columns}
+    \vspace{0.15cm}
+    \begin{exampleblock}{A regra, em palavras}
+        \footnotesize
+        Erro \textbf{negativo} (subestimou): os vetores se \textbf{aproximam}. Erro \textbf{positivo} (superestimou): se \textbf{afastam}. O peso $h$ decide o \textbf{tamanho} do passo.
+    \end{exampleblock}
+
+    \note{
+        Agora um passo de treino com números, para ver o que acontece com os vetores. Os valores são ilustrativos. Imagine que ``gato'' e ``miou'' aparecem juntos 50 vezes.
+        O alvo é log de 50, cerca de 3,91. A previsão atual do modelo é o produto escalar, 2,5, mais os vieses, 0,3 e 0,1: total 2,90. O erro é a previsão menos o alvo: menos 1,01. O peso é $h(50)$, 0,59, e a perda desse par é o peso vezes o erro ao quadrado, cerca de 0,61.
+        O gradiente da perda em relação ao vetor de ``gato'' é 2 vezes o peso, vezes o erro, vezes o vetor de ``miou'': cerca de menos 1,2 vezes $\uu_{\text{miou}}$. O gradiente descendente subtrai o gradiente, então o vetor de ``gato'' ganha mais 1,2 vezes a taxa de aprendizado vezes $\uu_{\text{miou}}$.
+        É o que mostra o desenho: o vetor de ``gato'' antes, em cinza, recebe um pedaço do vetor de ``miou'', em vermelho, e termina na posição azul. O ângulo entre os dois diminui, então o produto escalar aumenta e a previsão se aproxima de 3,91.
+        A regra geral: se o modelo subestimou a contagem, o erro é negativo e os vetores se aproximam. Se superestimou, o erro é positivo e eles se afastam. O peso $h$ decide o tamanho do passo, e os vieses são corrigidos do mesmo jeito.
+    }
+\end{frame}
+
+\begin{frame}{Detalhe importante: o GloVe é simétrico}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{word2vec (skip-gram)}
+                \small
+                A probabilidade de $A$ perto de $B$ é calculada de forma \textbf{diferente} da de $B$ perto de $A$ (o denominador muda).
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{GloVe}
+                \small
+                A contagem é \textbf{simétrica}: $x_{ij} = x_{ji}$. Se ``gato'' está perto de ``miou'', ``miou'' está perto de ``gato''.
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item Por isso, matematicamente, o vetor central $\vv_i$ e o de contexto $\uu_i$ de uma palavra são \textbf{equivalentes}.
+        \item Na prática, começam com valores aleatórios diferentes e terminam \textbf{ligeiramente diferentes}.
+    \end{itemize}
+    \begin{block}{Recomendação dos autores}
+        \centering
+        Vetor final da palavra $= \uu_i + \vv_i$
+    \end{block}
+
+    \note{
+        Um detalhe interessante: o GloVe é simétrico.
+        No skip-gram, a probabilidade de $A$ aparecer perto de $B$ é calculada de forma diferente da de $B$ aparecer perto de $A$, porque o denominador da softmax depende de quem é a palavra central.
+        No GloVe, a contagem é simétrica: se ``gato'' aparece na janela de ``miou'' 500 vezes, ``miou'' aparece na janela de ``gato'' as mesmas 500 vezes. Então os papéis de palavra central e de contexto são equivalentes, e os dois vetores de uma palavra deveriam ser iguais. Na prática, como começam com valores aleatórios diferentes, terminam ligeiramente diferentes.
+        A recomendação dos autores é somar os dois vetores no fim do treino e usar a soma como o vetor definitivo da palavra.
+    }
+\end{frame}
+
