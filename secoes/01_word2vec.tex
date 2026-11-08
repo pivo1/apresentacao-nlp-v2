@@ -473,7 +473,6 @@
             \begin{block}{Lendo o resultado}
                 \footnotesize
                 \begin{itemize}\setlength{\itemsep}{1pt}
-                    \item Exemplo ($N = 3$, $d = 2$): $p = (0{,}65;\,0{,}26;\,0{,}09)$ e $\uu_o = (1,0)$ dão $\nabla \approx (0{,}44;\,-0{,}26)$: puxa $\vv_c$ para perto de \textit{son} e para longe de \textit{man}.
                     \item Se o modelo já acerta, esperado $\approx$ observado e $\nabla \approx 0$: não há o que corrigir.
                     \item A soma percorre as $N$ palavras do vocabulário, a cada par: é o custo que a Seção 15.2 resolve.
                 \end{itemize}
@@ -651,28 +650,6 @@
     \begin{exampleblock}{O que isso muda na prática}
         \footnotesize
         Todas as palavras do contexto são puxadas \textbf{na mesma direção}, com um passo menor. É por isso que o CBOW dilui palavras raras: elas aparecem poucas vezes e sempre dentro de uma média.
-    \end{exampleblock}
-\end{frame}
-
-\begin{frame}{Resumo: Skip-gram ou CBOW?}
-    {\centering
-    \small
-    \begin{tabular}{@{}p{2.9cm}p{5.0cm}p{5.0cm}@{}}
-        \toprule
-        & \textbf{Skip-gram} & \textbf{CBOW} \\
-        \midrule
-        O que prevê & os vizinhos, dado o centro & o centro, dado o contexto \\
-        Termos por posição & $2m$ (com $m=2$: 4) & $1$ \\
-        Palavras raras & melhor: cada ocorrência vira um exemplo & pior: a média dilui \\
-        Velocidade de treino & mais lento & mais rápido \\
-        Vetor final & $\vv$ da palavra como \textbf{centro} & $\vv$ da palavra como \textbf{contexto} \\
-        \bottomrule
-    \end{tabular}\par}
-
-    \vspace{0.3cm}
-    \begin{exampleblock}{A regra que evita a confusão do fim da seção}
-        \footnotesize
-        Nos dois modelos o embedding final é o vetor da palavra quando ela é a \textbf{entrada} do modelo: no skip-gram a entrada é o centro; no CBOW, o contexto.
     \end{exampleblock}
 \end{frame}
 
