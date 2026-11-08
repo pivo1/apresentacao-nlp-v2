@@ -85,71 +85,86 @@
 
 \begin{frame}{A probabilidade do evento positivo}
     \begin{columns}[c]
-        \begin{column}{0.56\textwidth}
+        \begin{column}{0.55\textwidth}
+            {\small\textbf{Este par aparece junto de verdade?}\par}
+            \vspace{0.05cm}
             \begin{equation*}
                 P(D = 1 \mid w_c, w_o) = \sigma\left(\uu_o^\top \vv_c\right)
             \end{equation*}
-            \small
-            \begin{itemize}
-                \item $\vv_c$: vetor da palavra \textbf{central}.
-                \item $\uu_o$: vetor da palavra de \textbf{contexto}.
-                \item $\uu_o^\top \vv_c$: produto escalar; mede a \textbf{proximidade} geométrica das duas palavras.
-                \item $\sigma$: função \destaque{sigmoide}.
+            \footnotesize
+            \begin{itemize}\setlength{\itemsep}{1pt}
+                \item $\vv_c$: vetor da palavra \textbf{central} (ex.: \textit{gato}).
+                \item $\uu_o$: vetor da palavra de \textbf{contexto} (ex.: \textit{miou}).
+                \item $\uu_o^\top \vv_c$: o \textbf{escore} --- quanto os dois vetores apontam para o mesmo lado.
             \end{itemize}
         \end{column}
-        \begin{column}{0.42\textwidth}
+        \begin{column}{0.43\textwidth}
             \centering
-            \begin{equation*}
-                \sigma(x) = \frac{1}{1 + \exp(-x)}
-            \end{equation*}
+            {\small$\sigma(x) = \dfrac{1}{1+\exp(-x)}$}\par
+            \vspace{0.1cm}
             \begin{tikzpicture}
                 \begin{axis}[
-                    width=5.4cm, height=3.4cm,
-                    xmin=-6, xmax=6, ymin=-0.05, ymax=1.15,
-                    axis lines=middle, xtick={-4,0,4}, ytick={0.5,1},
+                    width=5.2cm, height=3.5cm,
+                    xmin=-5.5, xmax=5.5, ymin=-0.03, ymax=1.12,
+                    axis lines=middle,
+                    xtick={-2.2,0,2.2}, xticklabels={$-2{,}2$,$0$,$2{,}2$},
+                    ytick={0.1,0.5,0.9}, yticklabels={$0{,}10$,$0{,}50$,$0{,}90$},
                     tick label style={font=\tiny},
-                    xlabel={\scriptsize $x$}, xlabel style={anchor=north west}]
-                    \addplot[very thick, dexpiBlue, domain=-6:6, samples=60] {1/(1+exp(-x))};
+                    xlabel={\scriptsize escore}, xlabel style={anchor=north west}]
+                    \addplot[dashed, gray, domain=-5.5:5.5] {0.5};
+                    \addplot[very thick, dexpiBlue, domain=-5.5:5.5, samples=80] {1/(1+exp(-x))};
+                    \addplot[only marks, mark=*, mark size=1.6pt, color=dexpiRedDark] coordinates {(-2.2,0.0998)};
+                    \addplot[only marks, mark=*, mark size=1.6pt, color=gray] coordinates {(0,0.5)};
+                    \addplot[only marks, mark=*, mark size=1.6pt, color=dexpiGreenDark] coordinates {(2.2,0.9002)};
+                    \node[font=\tiny, anchor=north east, text=dexpiRedDark] at (axis cs:-2.35,0.08) {ruído};
+                    \node[font=\tiny, anchor=north west, text=gray] at (axis cs:0.15,0.45) {empate};
+                    \node[font=\tiny, anchor=south east, text=dexpiGreenDark] at (axis cs:2.1,0.95) {par real};
                 \end{axis}
             \end{tikzpicture}
         \end{column}
     \end{columns}
-    \vspace{0.2cm}
-    \begin{block}{A sigmoide transforma o escore em probabilidade}
-        \small
-        Esmaga qualquer número real para o intervalo $(0, 1)$:
-        \quad $x \to +\infty \Rightarrow \sigma(x) \to 1$
-        \quad e \quad $x \to -\infty \Rightarrow \sigma(x) \to 0$.
-    \end{block}
+    \vspace{0.15cm}
+    \begin{exampleblock}{A sigmoide é a softmax de duas classes}
+        \footnotesize
+        A softmax reparte 100\% entre $N$ palavras; a sigmoide responde uma pergunta de \textbf{sim ou não}. Escore $0$ = 50/50; escore $2{,}2$ = \destaque{90\%} de chance de o par ser real; escore $-2{,}2$ = 10\%.
+    \end{exampleblock}
 
     \note{
-        Como calculamos a chance de um par ser real? Com esta fórmula: a probabilidade de $D = 1$, dado o centro $w_c$ e a palavra de contexto $w_o$, é a sigmoide do produto escalar entre os dois vetores.
-        $\vv_c$ é o vetor da palavra central, por exemplo ``gato''. $\uu_o$ é o vetor da palavra de contexto, por exemplo ``miou''. O produto escalar $\uu_o^\top \vv_c$ mede o quanto os dois vetores apontam na mesma direção: quanto maior, mais ``próximas'' as palavras estão no espaço.
-        O produto escalar pode ser qualquer número real, e uma probabilidade precisa estar entre 0 e 1. É isso que a sigmoide faz: ela esmaga a reta inteira para o intervalo entre 0 e 1. Se o escore vai para mais infinito, a probabilidade tende a 1; se vai para menos infinito, tende a 0; e escore zero dá exatamente 0,5.
-        Repare que é a mesma ideia da regressão logística: uma classificação binária.
+        Como transformar o escore em probabilidade? O escore $\uu_o^\top\vv_c$ pode ser qualquer número real; a sigmoide devolve algo entre 0 e 1. Três pontos dão a régua: escore zero é 50/50, o empate; escore 2,2 dá 90\%; escore menos 2,2 dá 10\%.
+        A leitura prática: acima de 0,5 o modelo aposta que o par é real; abaixo, aposta que é ruído.
+        E a ponte com o que já vimos: a sigmoide é a softmax de duas classes. A softmax reparte 100\% entre as $N$ palavras do vocabulário; a sigmoide responde uma pergunta única de sim ou não.
     }
 \end{frame}
 
 \begin{frame}{Por que não basta usar só os exemplos positivos?}
-    \begin{itemize}
-        \item A probabilidade de \textbf{todo o texto} estar correto seria o produto sobre todas as posições $t$ e todos os vizinhos $j$:
+    \small
+    \begin{itemize}\setlength{\itemsep}{1pt}
+        \item Se só exigimos $P(D=1)$ alta, a perda $-\sum_t\sum_j \log\sigma(\uu_o^\top\vv_c)$ tem uma \textbf{saída fácil}: fazer \textbf{todos os vetores iguais} (mesma direção) e \textbf{enormes}.
+        \item Exemplo: todos os vetores iguais a $(10,\,0)$ $\Rightarrow$ todo par tem escore $100$ e $\sigma(100) \approx 1$.
     \end{itemize}
-    \begin{equation*}
-        \prod_{t=1}^{T} \prod_{\substack{-m \le j \le m \\ j \neq 0}} P\left(D = 1 \mid w^{(t)}, w^{(t+j)}\right)
-    \end{equation*}
-    \begin{itemize}
-        \item Maximizar isso só exige que \textbf{todo} $\sigma(\uu_o^\top \vv_c)$ chegue perto de 1.
-        \item O jeito mais fácil: fazer todos os produtos escalares \textbf{enormes}.
-    \end{itemize}
-    \begin{alertblock}{Os vetores explodem}
-        \small
-        Sem termos negativos, os vetores crescem até o infinito e ficam todos parecidos: o modelo diz ``sim'' para qualquer par e se torna \textbf{inútil}.
+
+    \vspace{0.1cm}
+    {\centering
+    \footnotesize
+    \begin{tabular}{@{}p{5.9cm}cc@{}}
+        \toprule
+        par & escore & $P(D=1)$ \\
+        \midrule
+        (\textit{gato}, \textit{miou}) --- \textbf{real} & $100$ & \destaque{1,000} \\
+        (\textit{gato}, \textit{cloreto}) --- \textbf{falso} & $100$ & \destaque{1,000} \\
+        \bottomrule
+    \end{tabular}\par}
+
+    \vspace{0.2cm}
+    \begin{alertblock}{Perda zero, utilidade zero}
+        \footnotesize
+        O modelo aprendeu a dizer ``sim'' para \textbf{tudo}, inclusive para (\textit{gato}, \textit{cloreto}), e os vetores ficaram todos iguais: não distinguem mais nada. A cura é exigir que ele diga ``não'' --- é o que o próximo slide faz.
     \end{alertblock}
 
     \note{
-        Uma primeira tentativa seria usar só os pares reais. A probabilidade de todo o texto estar correto é o produto, sobre cada posição $t$ do texto e cada vizinho $j$ da janela, da probabilidade de $D = 1$.
-        O problema é que maximizar esse produto é fácil demais. Basta que cada sigmoide fique perto de 1, e para isso basta que todos os produtos escalares sejam muito grandes. O modelo pode simplesmente fazer todos os vetores crescerem até o infinito, todos apontando na mesma direção.
-        Nesse caso, qualquer par de palavras recebe probabilidade 1, inclusive (gato, cloreto). O modelo não distingue nada e os vetores não servem para nada. Por isso precisamos dos exemplos negativos.
+        Por que não dá para treinar só com os positivos? Porque a perda menos a soma dos logaritmos das sigmoides tem uma solução trivial: fazer todos os vetores iguais e enormes. Se todos apontam para a mesma direção e têm norma grande, o produto escalar de qualquer par é grande e positivo.
+        No exemplo, com todos os vetores iguais a $(10, 0)$, todo par tem escore 100 e a sigmoide dá praticamente 1. Reparem na tabela: o par real e o par falso recebem a mesma probabilidade, 1,000. O modelo não distingue mais nada --- é como decorar a resposta.
+        A perda vai a zero e os embeddings ficam inúteis. É por isso que precisamos de exemplos negativos: sem um par que o modelo deva rejeitar, não existe contrapeso.
     }
 \end{frame}
 
