@@ -288,7 +288,7 @@
     }
 \end{frame}
 
-\begin{frame}{Treino do GloVe (1/2): o algoritmo}
+\begin{frame}{Treino do GloVe: o algoritmo}
     \centering
     \begin{tikzpicture}[
         box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.9cm},
@@ -331,62 +331,6 @@
         Na caixa verde está o laço de treino. Começamos com todos os vetores e vieses aleatórios. Passo 1: sorteamos um minibatch de pares da lista. Passo 2: para cada par, medimos o erro, que é a previsão do modelo, o produto escalar mais os vieses, menos o log da contagem. Passo 3: corrigimos os vetores e os vieses na direção contrária ao gradiente da perda, o peso vezes o erro ao quadrado. E repetimos isso por várias épocas.
         Repare que dentro do laço o texto não aparece mais: só a lista de pares. É por isso que o tamanho do corpus deixa de importar depois da contagem.
         No fim, somamos os dois vetores de cada palavra para obter o vetor final; o motivo está no slide sobre simetria.
-    }
-\end{frame}
-
-\begin{frame}{Treino do GloVe (2/2): um passo, com números}
-    \begin{columns}[c]
-        \begin{column}{0.54\textwidth}
-            \small
-            Par (gato, miou), com $x_{ij} = 50$ (valores ilustrativos):
-            \vspace{0.1cm}
-
-            \centering
-            \footnotesize
-            \begin{tabular}{lr}
-                \toprule
-                Alvo: $\log 50$ & $3{,}91$ \\
-                Previsão: $\uu^\top \vv + b + c = 2{,}5 + 0{,}3 + 0{,}1$ & $2{,}90$ \\
-                Erro: $e = 2{,}90 - 3{,}91$ & {\color{dexpiRedDark}$\mathbf{-1{,}01}$} \\
-                Peso: $h(50)$ & $0{,}59$ \\
-                Perda do par: $h\, e^2$ & $0{,}61$ \\
-                \bottomrule
-            \end{tabular}
-
-            \vspace{0.15cm}
-            \raggedright
-            \begin{itemize}
-                \item Gradiente: $2\, h\, e\, \uu_{\text{miou}} = 2 \times 0{,}59 \times (-1{,}01)\, \uu_{\text{miou}} \approx -1{,}2\, \uu_{\text{miou}}$
-                \item Passo: $\vv_{\text{gato}} \leftarrow \vv_{\text{gato}} - \eta\, (-1{,}2\, \uu_{\text{miou}}) = \vv_{\text{gato}} + 1{,}2\, \eta\, \uu_{\text{miou}}$
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.44\textwidth}
-            \centering
-            \begin{tikzpicture}[scale=1.0]
-                \fill[black] (0,0) circle (1.2pt);
-                \draw[-{Stealth}, very thick, dexpiGreenDark] (0,0) -- (2,0.73) node[right, font=\scriptsize] {$\uu_{\text{miou}}$};
-                \draw[-{Stealth}, very thick, gray] (0,0) -- (0.35,2.0) node[left, font=\scriptsize] {$\vv_{\text{gato}}$ antes};
-                \draw[-{Stealth}, very thick, dexpiBlue] (0,0) -- (1.15,2.29) node[right, font=\scriptsize] {depois};
-                \draw[-{Stealth}, thick, dashed, dexpiRedDark] (0.35,2.0) -- (1.13,2.28);
-                \node[font=\tiny, text=dexpiRedDark] at (0.6,2.55) {$+1{,}2\, \eta\, \uu_{\text{miou}}$};
-            \end{tikzpicture}
-
-            \vspace{0.1cm}
-            {\scriptsize O ângulo entre os vetores \textbf{diminui}: o produto escalar sobe em direção a 3,91.}
-        \end{column}
-    \end{columns}
-    \vspace{0.15cm}
-    \begin{exampleblock}{A regra, em palavras}
-        \footnotesize
-        Erro \textbf{negativo} (subestimou): os vetores se \textbf{aproximam}. Erro \textbf{positivo} (superestimou): se \textbf{afastam}. O peso $h$ decide o \textbf{tamanho} do passo.
-    \end{exampleblock}
-
-    \note{
-        Agora um passo de treino com números, para ver o que acontece com os vetores. Os valores são ilustrativos. Imagine que ``gato'' e ``miou'' aparecem juntos 50 vezes.
-        O alvo é log de 50, cerca de 3,91. A previsão atual do modelo é o produto escalar, 2,5, mais os vieses, 0,3 e 0,1: total 2,90. O erro é a previsão menos o alvo: menos 1,01. O peso é $h(50)$, 0,59, e a perda desse par é o peso vezes o erro ao quadrado, cerca de 0,61.
-        O gradiente da perda em relação ao vetor de ``gato'' é 2 vezes o peso, vezes o erro, vezes o vetor de ``miou'': cerca de menos 1,2 vezes $\uu_{\text{miou}}$. O gradiente descendente subtrai o gradiente, então o vetor de ``gato'' ganha mais 1,2 vezes a taxa de aprendizado vezes $\uu_{\text{miou}}$.
-        É o que mostra o desenho: o vetor de ``gato'' antes, em cinza, recebe um pedaço do vetor de ``miou'', em vermelho, e termina na posição azul. O ângulo entre os dois diminui, então o produto escalar aumenta e a previsão se aproxima de 3,91.
-        A regra geral: se o modelo subestimou a contagem, o erro é negativo e os vetores se aproximam. Se superestimou, o erro é positivo e eles se afastam. O peso $h$ decide o tamanho do passo, e os vieses são corrigidos do mesmo jeito.
     }
 \end{frame}
 
