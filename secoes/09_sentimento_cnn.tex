@@ -7,91 +7,103 @@
 \section{Análise de sentimento com CNN}
 %------------------------------------------------
 
-\begin{frame}{Por que mais um modelo? RNN $\times$ CNN}
+\begin{frame}{A matemática da convolução 1D}
     \begin{columns}[c]
-        \begin{column}{0.53\textwidth}
-            \small
-            \begin{itemize}\setlength{\itemsep}{2pt}
-                \item A BiRNN resume a crítica inteira em \textbf{400 números}, montados a partir das duas pontas.
-                \item Mas a pista do sentimento costuma ser \textbf{local}: ``is so great'', ``waste of time''.
-                \item O \textbf{textCNN} \cite{kim2014convolutional} trata o texto como uma \destaque{imagem 1-D}: filtros deslizam sobre as palavras.
-                \item Sem recorrência: todas as janelas são calculadas \textbf{em paralelo}.
+        \begin{column}{0.44\textwidth}
+            \footnotesize
+            Uma \destaque{lupa de $k$ palavras} percorre a frase: em cada parada, ela multiplica o que vê pelo molde e soma.
+
+            \vspace{0.15cm}
+            \begin{itemize}\setlength{\itemsep}{3pt}
+                \item \textbf{Input}: o texto já é número --- cada célula, uma palavra.
+                \item \textbf{Kernel}: o \destaque{molde} de $k$ números que procura um n-grama.
+                \item \textbf{Output}: um número por parada --- o encaixe daquele pedaço.
+                \item Os números do kernel são \textbf{aprendidos}, não escolhidos.
             \end{itemize}
         \end{column}
-        \begin{column}{0.45\textwidth}
+        \begin{column}{0.54\textwidth}
             \centering
-            \begin{tikzpicture}[font=\scriptsize,
-                tok/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=1.1cm, minimum height=0.45cm, inner sep=0pt}]
-                \foreach \w [count=\i from 0] in {this, movie, is, so, great} {
-                    \node[tok] (t\i) at (1.2*\i,0) {\w};
-                }
-                \draw[decorate, decoration={brace, amplitude=4pt}, thick, dexpiBlue]
-                    ($(t0.north west)+(0,0.08)$) -- ($(t4.north east)+(0,0.08)$)
-                    node[midway, above=5pt, font=\tiny, text=dexpiBlue] {RNN: um resumo para a frase toda};
-                \draw[dexpiGreenDark, thick, rounded corners=2pt]
-                    ($(t2.north west)+(-0.06,0.07)$) rectangle ($(t4.south east)+(0.06,-0.07)$);
-                \node[font=\tiny, text=dexpiGreenDark] at (3.24,-0.55) {CNN: um detector de 3 palavras};
+            \begin{tikzpicture}[font=\small,
+                cel/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.85cm, minimum height=0.50cm, inner sep=0pt},
+                hl/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=0.85cm, minimum height=0.50cm, inner sep=0pt, font=\small\bfseries},
+                kn/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=0.85cm, minimum height=0.50cm, inner sep=0pt, font=\small\bfseries},
+                lbl/.style={anchor=east, font=\scriptsize\bfseries, text=dexpiBlue}]
+                \node[hl] (in0) at (0.425,0) {0};
+                \node[hl] (in1) at (1.275,0) {1};
+                \node[cel] (in2) at (2.125,0) {2};
+                \node[cel] (in3) at (2.975,0) {3};
+                \node[cel] (in4) at (3.825,0) {4};
+                \node[cel] (in5) at (4.675,0) {5};
+                \node[cel] (in6) at (5.525,0) {6};
+                \node[lbl] at (-0.12,0) {Input};
+
+                \node[kn] (k0) at (0.425,-1.05) {1};
+                \node[kn] (k1) at (1.275,-1.05) {2};
+                \node[lbl] at (-0.12,-1.05) {Kernel};
+                \draw[-{Stealth}, thick, dexpiRedDark] (2.10,-1.05) -- (3.20,-1.05);
+                \node[font=\scriptsize, text=dexpiRedDark, anchor=south] at (2.65,-1.05) {desliza};
+
+                \node[hl] (out0) at (0.85,-2.10) {2};
+                \node[cel] at (1.70,-2.10) {5};
+                \node[cel] at (2.55,-2.10) {8};
+                \node[cel] at (3.40,-2.10) {11};
+                \node[cel] at (4.25,-2.10) {14};
+                \node[cel] at (5.10,-2.10) {17};
+                \node[lbl] at (-0.12,-2.10) {Output};
+
+                \node[draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, inner sep=4pt, font=\small] (eq) at (1.70,-3.25)
+                    {${\color{dexpiBlue}0}\cdot{\color{dexpiGreenDark}1} + {\color{dexpiBlue}1}\cdot{\color{dexpiGreenDark}2} = {\color{dexpiGreenDark}\mathbf{2}}$};
+                \draw[-{Stealth}, thick, dexpiGreenDark] (eq.north) -- (out0.south);
             \end{tikzpicture}
+
+            \vspace{0.1cm}
+            {\scriptsize No texto real, cada célula é um vetor de 100 números e o kernel tem 100 números por palavra; aqui usamos escalares para ver a conta.\par}
         \end{column}
     \end{columns}
 
-    \vspace{0.15cm}
-    \begin{exampleblock}{A pergunta muda}
-        \footnotesize
-        A RNN quer o \textbf{resumo} da frase; a CNN quer saber \textbf{quais padrões locais} aparecem e qual é o \textbf{mais forte}.
-    \end{exampleblock}
-
     \note{
-        Até aqui, a análise de sentimento usou uma LSTM bidirecional, que lê a crítica inteira e resume tudo num vetor de 400 números. Funciona, mas tem dois custos: a recorrência é sequencial, então não dá para paralelizar ao longo do tempo, e o resumo final pode diluir uma pista que apareceu uma vez só.
-        A seção 16.3 troca a arquitetura e mantém o resto: mesmos dados do IMDb, mesmos embeddings do GloVe. A ideia é do textCNN, de Kim, 2014: tratar o texto como uma imagem de uma dimensão, em que a altura é a dimensão do embedding e a largura é a sequência de palavras. Filtros deslizam sobre janelas de três a cinco palavras e aprendem n-gramas.
-        A pergunta deixa de ser "qual é o resumo da frase?" e passa a ser "quais padrões locais aparecem, e qual é o mais forte?". Duas consequências práticas: todas as janelas são calculadas em paralelo, e uma pista local como "is so great" é detectada onde quer que ela apareça.
+        Pensem numa lupa de duas palavras que percorre a frase. O texto já é número: 0, 1, 2, e assim por diante. Em cada parada, a lupa multiplica o que vê pelos números do molde e soma. Aqui: 0 vezes 1 mais 1 vezes 2 dá 2, o primeiro número do output. Depois ela desliza uma casa e repete. O detalhe importante: os números do molde não são escolhidos por nós --- a rede os aprende, e eles passam a disparar quando o padrão aparece.
     }
 \end{frame}
 
-\begin{frame}{Convolução 1D: um detector de n-gramas}
-    \begin{equation*}
-        h_t = \mathrm{ReLU}\Big(\underbrace{\sum_{j=1}^{k} \mathbf{w}_j^\top \xx_{t+j-1}}_{\text{encaixe da janela}} + b\Big),
-        \qquad t = 1, \ldots, T-k+1
-    \end{equation*}
-
+\begin{frame}{A arquitetura textCNN na prática}
     \begin{columns}[c]
-        \begin{column}{0.47\textwidth}
+        \begin{column}{0.52\textwidth}
             \footnotesize
-            \begin{itemize}\setlength{\itemsep}{2pt}
-                \item O filtro $\mathbf{w} = (\mathbf{w}_1, \ldots, \mathbf{w}_k)$ é um \destaque{molde de $k$ palavras}, \textbf{aprendido}: a soma dos produtos internos mede o encaixe da janela.
-                \item A \textbf{ReLU} guarda os encaixes positivos e zera o resto.
-                \item Cada filtro devolve $T-k+1$ escores: \textbf{um por posição} da janela.
+            A mesma conta, agora dentro de um modelo de verdade \cite{kim2014convolutional}.
+
+            \vspace{0.15cm}
+            \begin{itemize}\setlength{\itemsep}{3pt}
+                \item A RNN lê \textbf{palavra por palavra}: o estado de hoje carrega o de ontem.
+                \item A CNN olha \textbf{pedaços} de 3, 4 e 5 palavras \textbf{ao mesmo tempo}.
+                \item \textbf{Fluxo}: GloVe $\to$ CNN $\to$ positivo/negativo.
+                \item \textbf{Expressões locais}: ``não é bom'' é um trigrama --- a CNN o detecta como padrão.
             \end{itemize}
         \end{column}
-        \begin{column}{0.51\textwidth}
+        \begin{column}{0.44\textwidth}
             \centering
             \begin{tikzpicture}[font=\scriptsize,
-                tok/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.98cm, minimum height=0.42cm, inner sep=0pt},
-                sc/.style={draw=dexpiBlue, fill=white, minimum width=0.85cm, minimum height=0.38cm, inner sep=0pt},
-                sch/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=0.85cm, minimum height=0.38cm, inner sep=0pt, font=\scriptsize\bfseries}]
-                \foreach \w [count=\i from 0] in {this, movie, is, so, great} {
-                    \node[tok] (t\i) at (1.08*\i,0) {\w};
-                }
-                \draw[dexpiGreenDark, thick, rounded corners=2pt]
-                    ($(t2.north west)+(-0.05,0.07)$) rectangle ($(t4.south east)+(0.05,-0.07)$);
-                \node[font=\tiny, text=dexpiGreenDark, anchor=south] at (3.24,0.32) {janela $k=3$};
-                \node[sc]  (h0) at (1.08,-1.05) {0,1};
-                \node[sc]  (h1) at (2.16,-1.05) {0,2};
-                \node[sch] (h2) at (3.24,-1.05) {9,1};
-                \draw[-{Stealth}, thick, dexpiGreenDark] (3.24,-0.32) -- (h2.north);
-                \node[font=\tiny, text=dexpiBlue, anchor=north] at (2.16,-1.32) {$T-k+1 = 3$ escores};
+                bx/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, minimum width=1.85cm, minimum height=1.35cm, inner sep=2pt},
+                mid/.style={draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, align=center, minimum width=1.85cm, minimum height=1.35cm, inner sep=2pt, font=\scriptsize\bfseries}]
+                \node[bx] (g) at (0,0) {Pré-treino\\{\tiny GloVe (15.5)}\\{\tiny 6 bi tokens}};
+                \node[mid] (m) at (2.4,0) {Arquitetura\\{\tiny CNN (16.3)}\\{\tiny conv + max}};
+                \node[bx] (a) at (4.8,0) {Aplicação\\{\tiny sentimento}\\{\tiny pos./neg.}};
+                \draw[-{Stealth}, line width=1.5pt, dexpiRedDark] (g) -- (m);
+                \draw[-{Stealth}, thick, dexpiBlue] (m) -- (a);
+                \node[font=\tiny, text=dexpiRedDark, align=center, anchor=south] at (1.20,0.85) {aqui entra a\\convolução};
+                \draw[dexpiRedDark, dashed, thick] (1.20,0.78) -- (1.20,0.06);
             \end{tikzpicture}
         \end{column}
     \end{columns}
 
     \vspace{0.1cm}
-    {\footnotesize No livro: $X=(0,1,\ldots,6)$ e $K=(1,2)$ dão $0\cdot1+1\cdot2=2$, depois $5,8,11,14,17$. Como no PyTorch, a conta é \textbf{correlação cruzada}: o filtro não é invertido.\par}
+    \begin{exampleblock}{Por que é mais rápida}
+        \footnotesize
+        Todas as janelas são calculadas \textbf{em paralelo}; a RNN não pode, porque cada passo espera o anterior.
+    \end{exampleblock}
 
     \note{
-        A convolução 1D é a operação que faz esse detector. Cada filtro tem k vetores de dimensão d, um por posição da janela, e um viés. Para cada posição t, multiplicamos os k vetores da janela pelos k vetores do filtro, somamos e passamos pela ReLU. O resultado é um escore: quanto essa janela se parece com o molde que o filtro aprendeu.
-        O molde não é escolhido por nós: é aprendido. Se um filtro se especializa em "is so great", ele dá escore alto onde essa sequência aparece e baixo no resto.
-        A conta de tamanho é a mesma da convolução de imagens: com T palavras e janela k, saem T menos k mais 1 escores. No exemplo do livro, sete posições com kernel de dois dão seis saídas: 2, 5, 8, 11, 14 e 17.
-        E não há um filtro só: a camada tem 100 canais por largura, então 100 detectores trabalham ao mesmo tempo, cada um atrás de um padrão diferente.
+        A RNN lê palavra por palavra: o estado de hoje depende do de ontem. A CNN não: ela olha pedaços de três, quatro e cinco palavras ao mesmo tempo, e todas as janelas são calculadas em paralelo --- é por isso que ela é mais rápida. O fluxo é o desta figura: o GloVe entrega os vetores prontos, a CNN os transforma em escores, e a camada final classifica. E onde ela brilha é no local: ``não é bom'' é um trigrama, e a CNN o detecta como um padrão.
     }
 \end{frame}
 
@@ -129,7 +141,7 @@
     \vspace{0.1cm}
     \begin{exampleblock}{O que o pooling compra}
         \footnotesize
-        Saída de tamanho \textbf{fixo}: $C$ números, um por canal, mesmo com frases de tamanhos diferentes --- é o que permite a camada densa seguinte.
+        Saída de tamanho \textbf{fixo}: $C$ números, um por canal, para qualquer $T$.
     \end{exampleblock}
 
     \note{
@@ -140,7 +152,7 @@
     }
 \end{frame}
 
-\begin{frame}{A arquitetura textCNN}
+\begin{frame}{Por dentro: camadas e formatos}
     \centering
     \begin{tikzpicture}[font=\scriptsize,
         b/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, inner sep=3pt, minimum height=0.95cm, text width=2.35cm},

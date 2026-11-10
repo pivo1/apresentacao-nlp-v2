@@ -29,8 +29,8 @@ Na seção de pré-treino (15.3–15.4), o bloco deixou de ter 9 slides:
   **exemplos** ganharam a escala (≈ 9 milhões de exemplos por época).
 
 O total caiu de 77 para **73 slides de conteúdo** (+2 no *backup*). Depois da
-revisão, foi acrescentada a seção 16.3 (ver abaixo), o que leva o total a
-**77 slides de conteúdo** (+2 no *backup*).
+revisão, foi acrescentada a seção 16.3 (ver abaixo) e o slide do GloVe 2/2 foi
+cortado no Overleaf, o que deixa **76 slides de conteúdo** (+2 no *backup*).
 
 ## Seção 16.3: análise de sentimento com CNN
 
@@ -40,12 +40,15 @@ CNN quer saber quais padrões locais aparecem e qual é o mais forte.
 
 | Slide | O que mostra |
 |---|---|
-| 1 | Por que mais um modelo: RNN $\times$ CNN, a pista local, o paralelismo |
-| 2 | Convolução 1D como detector de n-gramas: a fórmula, o molde aprendido, $T-k+1$ escores, o exemplo numérico do livro |
+| 1 | A matemática da convolução 1D: a lupa que desliza, input/kernel/output e a conta $0\cdot1+1\cdot2=2$ |
+| 2 | A arquitetura textCNN na prática: RNN $\times$ CNN, paralelismo e o fluxo GloVe $\to$ CNN $\to$ classificação |
 | 3 | Max-over-time: por que o pico e não a média, e a saída de tamanho fixo |
-| 4 | A arquitetura: duas tabelas de embedding, o `permute` (canais antes do tempo), três larguras |
+| 4 | Por dentro: duas tabelas de embedding, o `permute` (canais antes do tempo), três larguras |
 | 5 | O código do `TextCNN`, com o mapa "onde está cada ideia" |
 | 6 | Resultados CNN $\times$ BiRNN e o limite da janela, que puxa a atenção (BERT) |
+
+As figuras 16.3.1 e 16.3.2 do livro foram redesenhadas em TikZ, no mesmo traço
+das outras figuras do tema.
 
 Cada slide tem `\note`, no mesmo tom das seções 02–08. Foram acrescentadas as
 referências `kim2014convolutional` e `collobert2011natural`.
@@ -78,7 +81,7 @@ o passo intermediário de `git subtree pull/push` no `Mestrado_`.
 
 ## Plano para 60 minutos
 
-São **77 slides de conteúdo**, mais 2 de *backup* (depois do "obrigado"). Roteiro
+São **76 slides de conteúdo**, mais 2 de *backup* (depois do "obrigado"). Roteiro
 sugerido (numeração do PDF):
 
 | Slides | Bloco | Tempo |
@@ -87,20 +90,19 @@ sugerido (numeração do PDF):
 | 3–19 | Motivação, skip-gram e CBOW | 14 min |
 | 20–28 | Treinamento aproximado (15.2) | 7 min |
 | 29–34 | Pré-treino na prática (15.3–15.4) | 5 min |
-| 35–45 | GloVe (15.5) | 8 min |
-| 46–51 | Subword: fastText e BPE (15.6) | 4,5 min |
-| 52–53 | Similaridade e analogia (15.7) | 2,5 min |
-| 54–66 | BERT (15.8) | 10 min |
-| 67–73 | Análise de sentimento com RNN (16.2) | 5 min |
-| 74–79 | Análise de sentimento com CNN (16.3) | 4,5 min |
-| | **Total** | **~62 min** |
+| 35–44 | GloVe (15.5) | 7 min |
+| 45–50 | Subword: fastText e BPE (15.6) | 4,5 min |
+| 51–52 | Similaridade e analogia (15.7) | 2,5 min |
+| 53–65 | BERT (15.8) | 10 min |
+| 66–72 | Análise de sentimento com RNN (16.2) | 5 min |
+| 73–78 | Análise de sentimento com CNN (16.3) | 4,5 min |
+| | **Total** | **~61 min** |
 
-O bloco de 16.3 entra com ~4,5 min, e o roteiro passa a ~62 min. Se o limite
-for 60 min, os candidatos naturais a "passar rápido" continuam sendo o slide 19
-(código), o 44 (o passo do GloVe com números) e o 62 (MLM no código) — os três
-são de apoio, e a mensagem de cada um já aparece no slide vizinho. O slide 5 do
-bloco novo (código do textCNN) também pode ser só citado, porque a ideia já
-aparece no 4.
+O bloco de 16.3 entra com ~4,5 min; com o corte do slide do GloVe 2/2, o roteiro
+fica em ~61 min. Se o limite for 60 min, os candidatos naturais a "passar
+rápido" são o slide 19 (código) e o 61 (MLM no código) — os dois são de apoio, e
+a mensagem de cada um já aparece no slide vizinho. O slide 5 do bloco novo
+(código do textCNN) também pode ser só citado, porque a ideia já aparece no 4.
 
 Os dois slides de *backup* (minibatch e laço de treino) ficam depois do
 "obrigado" e só entram se alguém perguntar de implementação.
