@@ -335,8 +335,11 @@
     \end{exampleblock}
 \end{frame}
 
-\begin{frame}{Skip-gram passo a passo}
+\begin{frame}{Skip-gram e CBOW passo a passo}
     \centering
+    {\small\color{dexpiBlue}\textbf{Skip-gram}: a palavra do meio entra, o modelo adivinha o contexto}
+
+    \vspace{0.1cm}
     \begin{tikzpicture}[
         box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm},
         num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
@@ -356,20 +359,36 @@
         \node[num] at ($(r.north)+(0,0.3)$) {4};
     \end{tikzpicture}
 
-    \vspace{0.2cm}
-    \raggedright
-    \small
-    \begin{enumerate}
-        \item \textbf{Consulta}: pega o vetor de centro da palavra do meio.
-        \item \textbf{Compara}: o quanto ele combina com cada candidata (produto interno).
-        \item \textbf{Normaliza}: a softmax transforma os escores em probabilidades.
-        \item \textbf{Confere}: quanto de probabilidade o modelo deu a cada vizinho verdadeiro?
-    \end{enumerate}
+    \vspace{0.5cm}
+    {\small\color{dexpiBlue}\textbf{CBOW}: o contexto entra, o modelo adivinha a palavra do meio}
 
-    \begin{block}{Guarde para depois: o CBOW}
-        \small
-        Mesmo processo, mas \textbf{sem a média}: entra um vetor só e o palpite é conferido contra \textbf{vários} vizinhos.
-    \end{block}
+    \vspace{0.1cm}
+    \begin{tikzpicture}[
+        ctx/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, minimum width=1.2cm, minimum height=0.5cm, font=\scriptsize},
+        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm},
+        num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
+        arr/.style={-{Stealth}, thick, dexpiBlue}]
+        % passo 1
+        \foreach \t [count=\i from 0] in {the, man, his, son} {
+            \node[ctx] (c\i) at (0, 0.9-\i*0.6) {\t};
+            \node[box, minimum height=0.5cm, right=0.4cm of c\i] (v\i) {vetor};
+            \draw[arr] (c\i) -- (v\i);
+        }
+        % passo 2
+        \node[box, fill=dexpiLightBlue, minimum width=2.0cm] (m) at (5.2,0) {\textbf{média}\\``resumo do\\contexto''};
+        \foreach \i in {0,...,3} { \draw[arr] (v\i.east) -- (m.west); }
+        % passo 3
+        \node[box, minimum width=2.4cm] (s) at (8.6,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
+        \draw[arr] (m) -- (s);
+        % passo 4
+        \node[box, fill=dexpiGreenLight, draw=dexpiGreenDark, minimum width=2.2cm] (p) at (12.0,0) {\textbf{softmax}\\probabilidades\\$\Rightarrow$ ``loves''};
+        \draw[arr] (s) -- (p);
+        % números
+        \node[num] at (1.4,1.45) {1};
+        \node[num] at ($(m.north)+(0,0.3)$) {2};
+        \node[num] at ($(s.north)+(0,0.3)$) {3};
+        \node[num] at ($(p.north)+(0,0.3)$) {4};
+    \end{tikzpicture}
 \end{frame}
 
 
@@ -539,47 +558,6 @@
 %------------------------------------------------
 \section{O modelo CBOW}
 %------------------------------------------------
-
-\begin{frame}{CBOW passo a passo}
-    \centering
-    \begin{tikzpicture}[
-        ctx/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, minimum width=1.2cm, minimum height=0.5cm, font=\scriptsize},
-        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm},
-        num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
-        arr/.style={-{Stealth}, thick, dexpiBlue}]
-        % passo 1
-        \foreach \t [count=\i from 0] in {the, man, his, son} {
-            \node[ctx] (c\i) at (0, 0.9-\i*0.6) {\t};
-            \node[box, minimum height=0.5cm, right=0.4cm of c\i] (v\i) {vetor};
-            \draw[arr] (c\i) -- (v\i);
-        }
-        % passo 2
-        \node[box, fill=dexpiLightBlue, minimum width=2.0cm] (m) at (5.2,0) {\textbf{média}\\``resumo do\\contexto''};
-        \foreach \i in {0,...,3} { \draw[arr] (v\i.east) -- (m.west); }
-        % passo 3
-        \node[box, minimum width=2.4cm] (s) at (8.6,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
-        \draw[arr] (m) -- (s);
-        % passo 4
-        \node[box, fill=dexpiGreenLight, draw=dexpiGreenDark, minimum width=2.2cm] (p) at (12.0,0) {\textbf{softmax}\\probabilidades\\$\Rightarrow$ ``loves''};
-        \draw[arr] (s) -- (p);
-        % números
-        \node[num] at (1.4,1.45) {1};
-        \node[num] at ($(m.north)+(0,0.3)$) {2};
-        \node[num] at ($(s.north)+(0,0.3)$) {3};
-        \node[num] at ($(p.north)+(0,0.3)$) {4};
-    \end{tikzpicture}
-
-    \vspace{0.2cm}
-    \raggedright
-    \small
-    \begin{enumerate}
-        \item \textbf{Consulta}: pega o vetor de cada palavra do contexto na tabela de embeddings.
-        \item \textbf{Resume}: tira a média, um único vetor que ``representa o contexto''.
-        \item \textbf{Compara}: o quanto o resumo combina com cada candidata (produto interno).
-        \item \textbf{Normaliza}: a softmax transforma os escores em probabilidades.
-    \end{enumerate}
-\end{frame}
-
 
 \begin{frame}{A fórmula do CBOW}
     \begin{equation*}
