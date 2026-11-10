@@ -7,6 +7,37 @@
 \section{Motivação: como representar palavras?}
 %------------------------------------------------
 
+\begin{frame}{Por que estudar Processamento de Linguagem Natural?}
+    \begin{center}
+        {\large\color{dexpiBlue}\textbf{Grande parte dos dados do mundo está em forma de texto.}}
+    \end{center}
+
+    \begin{columns}[c]
+        \begin{column}{0.52\textwidth}
+            \begin{itemize}
+                \item Pessoas se comunicam por \destaque{linguagem natural}: e-mails, redes sociais, avaliações, notícias.
+                \item Esse texto é \destaque{não estruturado}: o computador não o analisa diretamente.
+                \item O \textbf{PLN} \destaque{processa a linguagem natural} para \destaque{obter dados} e \destaque{fazer análises}.
+                \item Aplicações (D2L): análise de sentimento, inferência, resposta a perguntas, tradução.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.44\textwidth}
+            \centering
+            \begin{tikzpicture}[
+                box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum width=3.6cm, minimum height=0.7cm, align=center, font=\small},
+                arr/.style={-{Stealth}, thick, dexpiBlue}]
+                \node[box] (t) {Texto\\{\scriptsize ``I loved this movie!''}};
+                \node[box, below=0.35cm of t, fill=dexpiLightBlue, very thick] (p) {\textbf{PLN}\\{\scriptsize processar a linguagem}};
+                \node[box, below=0.35cm of p] (d) {Dados estruturados\\{\scriptsize números, rótulos, vetores}};
+                \node[box, below=0.35cm of d] (a) {Análises\\{\scriptsize ex.: sentimento = positivo}};
+                \draw[arr] (t) -- (p);
+                \draw[arr] (p) -- (d);
+                \draw[arr] (d) -- (a);
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+\end{frame}
+
 \begin{frame}{Introdução: representação de palavras por vetores}
     \begin{center}
         {\large\color{dexpiBlue}\textbf{Se um computador só entende números como ele vai entender palavras?}}
