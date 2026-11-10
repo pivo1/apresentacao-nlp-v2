@@ -40,37 +40,41 @@
 
 \begin{frame}{Introdução: representação de palavras por vetores}
     \begin{center}
-        {\large\color{dexpiBlue}\textbf{Se um computador só entende números como ele vai entender palavras?}}
+        {\normalsize\color{dexpiBlue}\textbf{Se um computador só entende números como ele vai entender palavras?}}
     \end{center}
 
     \begin{columns}[c]
-        \begin{column}{0.58\textwidth}
+        \begin{column}{0.42\textwidth}
+            \small
             \begin{itemize}
-                \item O PLN resolve isso mapeando cada palavra para um \destaque{vetor de números reais} (\textbf{word embedding}).
-                \item Palavras com \destaque{significados parecidos} ficam \destaque{próximas} matematicamente.
-                \item Esses vetores são as \textit{features} de entrada que vão alimentar os nossos modelos.
+                \item \destaque{Cada palavra vira um endereço:} uma lista de números reais (\textbf{word embedding}).
+                \item \destaque{Perto = parecido:} palavras de significado semelhante ficam vizinhas no mapa.
+                \item O modelo lê essas coordenadas como \textit{features} de entrada.
             \end{itemize}
         \end{column}
-        \begin{column}{0.38\textwidth}
+        \begin{column}{0.54\textwidth}
             \centering
-            \begin{tikzpicture}[font=\scriptsize, dot/.style={circle, fill=dexpiBlue, inner sep=1.3pt}]
-                \draw[-{Stealth}, gray] (0,0) -- (3.6,0);
-                \draw[-{Stealth}, gray] (0,0) -- (0,2.1);
-                \draw[dexpiGreenDark, dashed, rounded corners] (0.3,1.05) rectangle (1.75,1.95);
-                \draw[dexpiRedDark, dashed, rounded corners] (2.0,0.15) rectangle (3.45,1.0);
-                \node[dot] at (0.6,1.6) {}; \node[right] at (0.6,1.6) {man};
-                \node[dot] at (0.75,1.25) {}; \node[right] at (0.75,1.25) {son};
-                \node[dot] at (2.3,0.75) {}; \node[right] at (2.3,0.75) {loves};
-                \node[dot] at (2.45,0.4) {}; \node[right] at (2.45,0.4) {likes};
-                \node[gray, anchor=north east] at (3.6,0) {$\mathbb{R}^d$};
+            \begin{tikzpicture}[scale=0.72, transform shape, font=\scriptsize, dot/.style={circle, inner sep=1.6pt}]
+                \draw[-{Stealth}, gray] (0,0) -- (5.2,0) node[below left] {dimensão 1};
+                \draw[-{Stealth}, gray] (0,0) -- (0,2.7) node[right] {dimensão 2};
+                \draw[dexpiGreenDark, dashed, rounded corners, fill=dexpiGreenDark!10] (0.3,1.3) rectangle (2.5,2.5);
+                \node[dexpiGreenDark, anchor=north west, font=\scriptsize\bfseries] at (0.35,2.5) {Pessoas};
+                \draw[dexpiRedDark, dashed, rounded corners, fill=dexpiRedDark!10] (2.8,0.2) rectangle (5.0,1.4);
+                \node[dexpiRedDark, anchor=north west, font=\scriptsize\bfseries] at (2.85,1.4) {Ações (verbos)};
+                \node[dot, fill=dexpiGreenDark] (man) at (1.0,1.8) {}; \node[right] at (man) {man};
+                \node[dot, fill=dexpiGreenDark] (son) at (1.5,1.5) {}; \node[right] at (son) {son};
+                \node[dot, fill=dexpiRedDark] (loves) at (3.6,0.55) {}; \node[below] at (loves) {loves};
+                \node[dot, fill=dexpiRedDark] (likes) at (4.3,0.85) {}; \node[right] at (likes) {likes};
+                \draw[gray, dotted, thick] (1.6,1.35) -- (3.5,0.7) node[midway, above, sloped] {longe};
+                \node[gray, anchor=south east] at (5.2,2.6) {$\mathbb{R}^d$};
             \end{tikzpicture}
         \end{column}
     \end{columns}
 
-    \vspace{0.2cm}
+    \vspace{-0.15cm}
     \centering
     \begin{tikzpicture}[
-        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum height=0.8cm, align=center, font=\small},
+        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum height=0.6cm, align=center, font=\footnotesize},
         arr/.style={-{Stealth}, thick, dexpiBlue}]
         \node[box] (t) {Texto\\{\scriptsize ``the man loves his son''}};
         \node[box, right=0.35cm of t] (k) {Tokens\\{\scriptsize the | man | loves | \ldots}};
@@ -81,6 +85,7 @@
         \draw[arr] (k) -- (i);
         \draw[arr] (i) -- (v);
         \draw[arr] (v) -- (m);
+        \draw[dexpiBlue, dashed, thick, -{Stealth}] (v.north) -- ++(0,0.3) node[above, font=\scriptsize, text=dexpiBlue, fill=white, inner sep=1pt] {aqui as palavras ganham posição no mapa};
         \node[below=0.15cm of v, font=\scriptsize, text=dexpiRedDark] {\textbf{Tema de hoje}};
     \end{tikzpicture}
 \end{frame}
