@@ -105,7 +105,9 @@
     \end{exampleblock}
 
     \note{
-        A RNN lê palavra por palavra: o estado de hoje depende do de ontem. A CNN não: ela olha pedaços de três, quatro e cinco palavras ao mesmo tempo, e todas as janelas são calculadas em paralelo --- é por isso que ela é mais rápida. O fluxo é o desta figura: o GloVe entrega os vetores prontos, a CNN os transforma em escores, e a camada final classifica. E onde ela brilha é no local: ``não é bom'' é um trigrama, e a CNN o detecta como um padrão.
+        A RNN lê palavra por palavra: o estado de hoje depende do de ontem. A CNN não: ela olha pedaços de três, quatro e cinco palavras ao mesmo tempo, e todas as janelas são calculadas em paralelo --- é por isso que ela é mais rápida. O fluxo é o desta figura: o GloVe entrega os vetores prontos, a CNN os transforma em escores, e a camada final classifica. E onde ela brilha é no local: ``não é bo
+        
+        m'' é um trigrama, e a CNN o detecta como um padrão.
     }
 \end{frame}
 
