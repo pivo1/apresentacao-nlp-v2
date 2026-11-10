@@ -40,12 +40,15 @@ CNN quer saber quais padrões locais aparecem e qual é o mais forte.
 
 | Slide | O que mostra |
 |---|---|
-| 1 | Por que mais um modelo: RNN $\times$ CNN, a pista local, o paralelismo |
-| 2 | Convolução 1D como detector de n-gramas: a fórmula, o molde aprendido, $T-k+1$ escores, o exemplo numérico do livro |
+| 1 | A matemática da convolução 1D: a lupa que desliza, input/kernel/output e a conta $0\cdot1+1\cdot2=2$ |
+| 2 | A arquitetura textCNN na prática: RNN $\times$ CNN, paralelismo e o fluxo GloVe $\to$ CNN $\to$ classificação |
 | 3 | Max-over-time: por que o pico e não a média, e a saída de tamanho fixo |
 | 4 | A arquitetura: duas tabelas de embedding, o `permute` (canais antes do tempo), três larguras |
 | 5 | O código do `TextCNN`, com o mapa "onde está cada ideia" |
 | 6 | Resultados CNN $\times$ BiRNN e o limite da janela, que puxa a atenção (BERT) |
+
+As figuras 16.3.1 e 16.3.2 do livro foram redesenhadas em TikZ, no mesmo traço
+das outras figuras do tema.
 
 Cada slide tem `\note`, no mesmo tom das seções 02–08. Foram acrescentadas as
 referências `kim2014convolutional` e `collobert2011natural`.
