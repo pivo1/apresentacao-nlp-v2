@@ -107,33 +107,34 @@
     }
 \end{frame}
 
-\begin{frame}{Max-over-time: vale o pico, não a média}
-    \begin{equation*}
-        y_i = \max_{1 \le t \le T-k+1} h_{t,i},
-        \qquad i = 1, \ldots, C
-    \end{equation*}
-
+\begin{frame}{Max-over-time: muitos números, um resumo}
     \begin{columns}[c]
         \begin{column}{0.50\textwidth}
             \footnotesize
-            \begin{itemize}\setlength{\itemsep}{2pt}
-                \item A pergunta é ``o padrão apareceu \textbf{em algum lugar}?''. Um encaixe forte já é evidência; a posição não importa.
-                \item A média \textbf{diluiria}: uma pista que aparece uma vez em 500 posições vale $1/500$ do total.
-                \item É o \textit{global max pooling} 1-D de Collobert et al. \cite{collobert2011natural}, que o textCNN adotou.
+            Depois da convolução, cada filtro deixa uma \textbf{sequência} de escores. Como resumir a frase?
+
+            \vspace{0.15cm}
+            \begin{itemize}\setlength{\itemsep}{1pt}
+                \item Para cada canal, guardamos \textbf{só o maior} escore: um número por filtro.
+                \item Onde ele apareceu não importa: o filtro de ``não é bom'' dá 8 no início, no meio ou no fim.
+                \item É um \destaque{filtro de importância}: o pico é a evidência de que o padrão existe.
+                \item A média \textbf{diluiria} --- uma pista que aparece uma vez em 500 posições vale $1/500$; daí o \textit{global max pooling} de Collobert et al. \cite{collobert2011natural}.
             \end{itemize}
         \end{column}
-        \begin{column}{0.47\textwidth}
+        \begin{column}{0.48\textwidth}
             \centering
-            \begin{tikzpicture}[font=\tiny, y=0.5cm, x=0.42cm]
-                \foreach \i/\h in {0/0.35, 1/0.6, 2/0.3, 3/0.45, 4/0.4, 5/0.55, 7/0.5, 8/0.9, 9/0.4, 10/0.6, 11/0.55} {
-                    \fill[dexpiBlue!35] (\i,0) rectangle ++(0.3,\h);
+            \begin{tikzpicture}[font=\scriptsize]
+                \foreach \v [count=\i from 0] in {1,5,2,8,3} {
+                    \ifnum\i=3
+                        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=0.72cm, minimum height=0.6cm, font=\scriptsize\bfseries] (v\i) at (0.95*\i,0) {\v};
+                    \else
+                        \node[draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.72cm, minimum height=0.6cm] (v\i) at (0.95*\i,0) {\v};
+                    \fi
                 }
-                \fill[dexpiGreenDark] (6,0) rectangle ++(0.3,4.0);
-                \draw[dashed, gray] (0,0.8) -- (11.4,0.8);
-                \node[anchor=west, text=gray] at (11.5,0.8) {média $=0{,}8$};
-                \node[anchor=south, text=dexpiGreenDark] at (6.15,4.02) {$\max = 4{,}0$};
-                \draw[-{Stealth}, gray] (0,0) -- (12.4,0);
-                \node[anchor=north, text=gray] at (6.2,-0.06) {posições da janela};
+                \node[font=\tiny, text=dexpiBlue, anchor=south] at (1.9,0.34) {escores de um filtro, um por posição};
+                \draw[-{Stealth}, thick, dexpiGreenDark] (v3.south) -- (2.85,-0.62);
+                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize, anchor=north] at (2.85,-0.62) {max $=8$};
+                \node[font=\tiny, text=gray, anchor=north] at (2.85,-1.18) {média $=3{,}8$};
             \end{tikzpicture}
         \end{column}
     \end{columns}
@@ -145,45 +146,113 @@
     \end{exampleblock}
 
     \note{
-        Depois da convolução, cada canal tem uma sequência de escores ao longo do tempo. O max-over-time pooling pega o maior deles. Por que o máximo e não a média? Porque a pergunta é binária: o padrão apareceu em algum lugar da crítica? Um único encaixe forte já é evidência suficiente.
-        A média diluiria. Numa crítica de 500 palavras, uma pista que aparece uma vez só contribui com um quinhentos do total: o sinal se perde. O máximo preserva o pico.
-        Isso também resolve o problema do tamanho variável. A saída do pooling tem sempre um número por canal, seja a frase curta ou longa, então a camada densa seguinte pode ser fixa. É o global max pooling de uma dimensão, que o Collobert e colegas já usavam em 2011 e o textCNN adotou.
-        Com três convoluções de 100 canais, o pooling devolve 300 números por crítica.
+        A convolução deixou uma sequência de escores por filtro: são muitos números. Para resumir, guardamos só o maior de cada canal. Reparem que a posição não importa: se o filtro procura ``não é bom'', o valor 8 diz ``achei em algum lugar'', seja no início, no meio ou no fim. É um filtro de importância. E por que não a média? Porque ela dilui: uma pista que aparece uma vez em quinhentas posições vale um quinhentos do total. O pico preserva o sinal.
     }
 \end{frame}
 
-\begin{frame}{Por dentro: camadas e formatos}
-    \centering
-    \begin{tikzpicture}[font=\scriptsize,
-        b/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, inner sep=3pt, minimum height=0.95cm, text width=2.35cm},
-        g/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, align=center, inner sep=3pt, minimum height=0.95cm, text width=2.35cm},
-        s/.style={-{Stealth}, thick, dexpiBlue}]
-        \node[b] (x) at (0,0) {índices\\{\tiny \texttt{(B, 500)}}};
-        \node[b] (e) at (3.0,0) {2 embeddings\\{\tiny \texttt{(B, 500, 200)}}};
-        \node[g] (c) at (6.0,0) {3 conv 1D\\{\tiny $k=3,4,5$; 100 canais}};
-        \node[g] (p) at (9.0,0) {max no tempo\\{\tiny \texttt{(B, 300)}}};
-        \node[b] (d) at (12.0,0) {Linear\\{\tiny \texttt{(B, 2)}}};
-        \draw[s] (x) -- (e);
-        \draw[s] (e) -- (c);
-        \draw[s] (c) -- (p);
-        \draw[s] (p) -- (d);
-        \node[font=\tiny, text=dexpiRedDark, anchor=north] at (6.0,-0.72) {\texttt{permute(0, 2, 1)}: canais antes do tempo};
-    \end{tikzpicture}
+\begin{frame}{A arquitetura completa do textCNN}
+    \begin{columns}[c]
+        \begin{column}{0.50\textwidth}
+            \footnotesize
+            O modelo de Kim (2014), de baixo para cima.
 
-    \vspace{0.2cm}
-    \raggedright
-    \footnotesize
-    \begin{itemize}\setlength{\itemsep}{2pt}
-        \item \textbf{Canais antes do tempo}: a \texttt{Conv1d} quer \texttt{(B, canais, tempo)} --- o inverso da LSTM, que queria o tempo primeiro.
-        \item \textbf{Três larguras} ($3$, $4$ e $5$) capturam n-gramas de tamanhos diferentes; cada uma com 100 detectores.
-        \item \textbf{200 canais}: uma tabela de embedding ajustável $+$ uma \textbf{congelada} com o GloVe.
-    \end{itemize}
+            \vspace{0.15cm}
+            \begin{itemize}\setlength{\itemsep}{3pt}
+                \item \textbf{Entrada}: a frase vira matriz --- 11 palavras $\times$ 6 dimensões no livro.
+                \item \textbf{Filtros de larguras diferentes}: 2 e 4 no livro (3, 4 e 5 no nosso código), cada um atrás de um n-grama.
+                \item \textbf{Pooling $+$ concatenação}: cada filtro vira 1 número; $4+5=9$ no exemplo.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \begin{tikzpicture}[font=\tiny]
+                \fill[dexpiBlueLight] (0,0) rectangle (2.2,1.2);
+                \draw[dexpiBlue!55, step=0.2] (0,0) grid (2.2,1.2);
+                \node[below, font=\tiny] at (1.1,0) {11 palavras $\times$ 6};
+
+                \fill[dexpiGreenLight] (0,1.9) rectangle (2.0,2.7);
+                \draw[dexpiGreenDark!60, step=0.2] (0,1.9) grid (2.0,2.7);
+                \fill[dexpiGreenLight] (2.4,1.7) rectangle (4.0,2.7);
+                \draw[dexpiGreenDark!60, step=0.2] (2.4,1.7) grid (4.0,2.7);
+                \node[anchor=east, font=\tiny, text=dexpiGreenDark] at (-0.05,2.3) {$k=2$};
+                \node[anchor=west, font=\tiny, text=dexpiGreenDark] at (4.05,2.3) {$k=4$};
+
+                \draw[-{Stealth}, thick, dexpiBlue] (1.0,1.2) -- (1.0,1.9);
+                \draw[-{Stealth}, thick, dexpiBlue] (2.0,1.2) -- (3.0,1.7);
+
+                \draw[-{Stealth}, dashed, thick, dexpiRedDark] (1.0,2.7) -- (1.0,3.1);
+                \draw[-{Stealth}, dashed, thick, dexpiRedDark] (3.2,2.7) -- (3.2,3.1);
+                \node[draw=dexpiRedDark, fill=dexpiRedLight, font=\scriptsize, minimum width=0.5cm] at (1.0,3.35) {4};
+                \node[draw=dexpiRedDark, fill=dexpiRedLight, font=\scriptsize, minimum width=0.5cm] at (3.2,3.35) {5};
+                \node[anchor=west, font=\tiny, text=dexpiRedDark] at (1.32,3.35) {max};
+                \node[anchor=west, font=\tiny, text=dexpiRedDark] at (3.52,3.35) {max};
+
+                \node[draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, font=\tiny, inner sep=3pt] (c) at (2.1,4.0) {concat $=9$ $\rightarrow$ densa $\rightarrow$ 2};
+                \draw[-{Stealth}, thick, dexpiBlue] (1.0,3.62) -- (1.55,3.82);
+                \draw[-{Stealth}, thick, dexpiBlue] (3.2,3.62) -- (2.65,3.82);
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
 
     \note{
-        A arquitetura inteira, da esquerda para a direita. A entrada é o lote de índices, 64 críticas de 500 tokens. Passa por duas tabelas de embedding e vira 200 canais por posição. Aí vem o detalhe que mais confunde: a convolução 1D do PyTorch quer os canais antes do tempo, então a gente transpõe. É o inverso da LSTM, que queria o tempo primeiro: cada camada tem a sua convenção.
-        As três convoluções têm larguras 3, 4 e 5 e 100 canais cada. Cada uma produz uma sequência de escores: 498, 497 e 496 posições, respectivamente. O pooling pega o máximo de cada canal, e concatenamos os 300 números. Um dropout de 0,5 e uma camada linear de 300 para 2 fecham o modelo.
-        Um ponto que o livro faz e vale destacar: são duas tabelas de embedding, uma ajustável e uma congelada com o GloVe. O modelo pode adaptar o sentido das palavras ao domínio do IMDb sem perder o que o GloVe já sabia de 6 bilhões de tokens.
-        Em números: as três convoluções somam 240.300 pesos, e a camada de saída, 602. O grosso dos parâmetros está nos embeddings, e metade deles fica parada, o que também segura o overfitting.
+        Vamos guiar o olhar de baixo para cima. Embaixo, a frase vira uma matriz: onze palavras por seis dimensões no exemplo do livro. Em cima dela, duas convoluções trabalham em paralelo: uma com filtros de duas palavras, outra com filtros de quatro. São tamanhos diferentes de propósito --- cada uma captura um n-grama diferente. As setas pontilhadas sobem para o pooling: cada canal vira um número. No fim, quatro mais cinco dão nove, que é o vetor que vai para a classificação.
+    }
+\end{frame}
+
+\begin{frame}{O fluxo de dados: de $T$ palavras a 2 números}
+    \begin{columns}[c]
+        \begin{column}{0.48\textwidth}
+            \footnotesize
+            Os tamanhos, sem susto.
+
+            \vspace{0.15cm}
+            \begin{itemize}\setlength{\itemsep}{3pt}
+                \item Convolução de largura $k$: a saída tem $T-k+1$ posições ($11-2+1=10$; $11-4+1=8$).
+                \item O pooling reduz cada canal a \textbf{1} número; a concatenação junta todos ($4+5=9$; no nosso, $3 \times 100=300$).
+                \item \textbf{Dropout} desliga neurônios ao acaso no treino; a camada densa mapeia o vetor para \textbf{2 logits}.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.50\textwidth}
+            \centering
+            \begin{tikzpicture}[font=\tiny]
+                \foreach \i in {0,...,8} {
+                    \ifnum\i<4
+                        \fill[dexpiGreenLight] ({0.30*\i},0) rectangle ++(0.27,0.27);
+                        \draw[dexpiGreenDark] ({0.30*\i},0) rectangle ++(0.27,0.27);
+                    \else
+                        \fill[dexpiBlueLight] ({0.30*\i},0) rectangle ++(0.27,0.27);
+                        \draw[dexpiBlue] ({0.30*\i},0) rectangle ++(0.27,0.27);
+                    \fi
+                }
+                \draw[decorate, decoration={brace, amplitude=3pt, mirror}] (0,-0.05) -- (1.2,-0.05) node[midway, below=4pt] {4};
+                \draw[decorate, decoration={brace, amplitude=3pt, mirror}] (1.2,-0.05) -- (2.7,-0.05) node[midway, below=4pt] {5};
+                \node[anchor=south, font=\tiny, text=dexpiBlue] at (1.35,0.35) {vetor concatenado};
+
+                \draw[-{Stealth}, thick, dexpiBlue] (2.75,0.13) -- (3.15,0.13);
+                \node[draw=dexpiRedDark, dashed, fill=white, font=\tiny, minimum width=0.95cm, minimum height=0.5cm, inner sep=1pt] at (3.7,0.13) {dropout};
+                \draw[-{Stealth}, thick, dexpiBlue] (4.2,0.13) -- (4.55,0.13);
+                \node[draw=dexpiBlue, fill=dexpiBlueLight, font=\tiny, minimum width=0.75cm, minimum height=0.5cm, inner sep=1pt] at (4.95,0.13) {densa};
+                \draw[-{Stealth}, thick, dexpiBlue] (5.35,0.13) -- (5.7,0.13);
+                \node[anchor=west, font=\tiny] at (5.75,0.13) {2 logits};
+            \end{tikzpicture}
+
+            \vspace{0.15cm}
+            {\scriptsize
+            \begin{tabular}{@{}ll@{}}
+                \toprule
+                etapa & forma \\
+                \midrule
+                entrada & $11 \times 6$ \\
+                conv $k=2$ / $k=4$ & $10 \times 4$ / $8 \times 5$ \\
+                pooling & $4+5=9$ \\
+                densa $+$ dropout & $2$ \\
+                \bottomrule
+            \end{tabular}\par}
+        \end{column}
+    \end{columns}
+
+    \note{
+        Agora os tamanhos, sem susto. Uma convolução de largura k sobre T palavras devolve T menos k mais um posições: onze com filtro dois dá dez; com filtro quatro, oito. O pooling reduz cada canal a um número só --- quatro mais cinco, nove. É esse vetor que entra na camada densa, passando antes pelo dropout, que desliga neurônios ao acaso no treino para o modelo não decorar. A saída são dois logits, positivo e negativo.
     }
 \end{frame}
 
