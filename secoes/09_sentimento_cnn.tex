@@ -4,6 +4,8 @@
 %========================================================================================
 
 %------------------------------------------------
+\newcommand{\badge}[2]{\tikz[baseline=(b.base)]\node[circle, fill=#1, text=white, inner sep=1.2pt, font=\tiny\bfseries] (b) {#2};}
+
 \section{Análise de sentimento com CNN}
 %------------------------------------------------
 
@@ -118,7 +120,7 @@
                 \item Para cada canal, guardamos \textbf{só o maior} escore: um número por filtro.
                 \item Onde ele apareceu não importa: o filtro de ``não é bom'' dá 8 no início, no meio ou no fim.
                 \item É um \destaque{filtro de importância}: o pico é a evidência de que o padrão existe.
-                \item A média \textbf{diluiria} --- uma pista que aparece uma vez em 500 posições vale $1/500$; daí o \textit{global max pooling} de Collobert et al. \cite{collobert2011natural}.
+                \item A média \textbf{diluiria}: uma pista que aparece uma vez em 500 posições vale $1/500$; daí o \textit{global max pooling} de Collobert et al. \cite{collobert2011natural}.
             \end{itemize}
         \end{column}
         \begin{column}{0.48\textwidth}
@@ -133,8 +135,8 @@
                 }
                 \node[font=\tiny, text=dexpiBlue, anchor=south] at (1.9,0.34) {escores de um filtro, um por posição};
                 \draw[-{Stealth}, thick, dexpiGreenDark] (v3.south) -- (2.85,-0.62);
-                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize, anchor=north] at (2.85,-0.62) {max $=8$};
-                \node[font=\tiny, text=gray, anchor=north] at (2.85,-1.18) {média $=3{,}8$};
+                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize\bfseries, anchor=north] at (2.85,-0.62) {Max Pooling: 8};
+                \node[font=\tiny, text=gray, anchor=north] at (2.85,-1.2) {a média daria $3{,}8$};
             \end{tikzpicture}
         \end{column}
     \end{columns}
@@ -146,198 +148,72 @@
     \end{exampleblock}
 
     \note{
-        A convolução deixou uma sequência de escores por filtro: são muitos números. Para resumir, guardamos só o maior de cada canal. Reparem que a posição não importa: se o filtro procura ``não é bom'', o valor 8 diz ``achei em algum lugar'', seja no início, no meio ou no fim. É um filtro de importância. E por que não a média? Porque ela dilui: uma pista que aparece uma vez em quinhentas posições vale um quinhentos do total. O pico preserva o sinal.
+        A convolução deixou uma sequência de escores por filtro: são muitos números. Para resumir a frase, guardamos só o maior de cada canal. Reparem que a posição não importa: se o filtro procura ``não é bom'', o valor 8 diz ``achei em algum lugar'', seja no início, no meio ou no fim da crítica. É um filtro de importância. E por que não a média? Porque ela dilui: uma pista que aparece uma vez em quinhentas posições vale um quinhentos do total. O pico preserva o sinal, e ainda nos dá uma saída de tamanho fixo, não importa o tamanho da frase.
     }
 \end{frame}
 
 \begin{frame}{A arquitetura completa do textCNN}
     \begin{columns}[c]
-        \begin{column}{0.50\textwidth}
+        \begin{column}{0.33\textwidth}
             \footnotesize
-            O modelo de Kim (2014), de baixo para cima.
+            O modelo de Kim (2014) \cite{kim2014convolutional}, \textbf{de baixo para cima}.
 
-            \vspace{0.15cm}
-            \begin{itemize}\setlength{\itemsep}{3pt}
-                \item \textbf{Entrada}: a frase vira matriz --- 11 palavras $\times$ 6 dimensões no livro.
-                \item \textbf{Filtros de larguras diferentes}: 2 e 4 no livro (3, 4 e 5 no nosso código), cada um atrás de um n-grama.
-                \item \textbf{Pooling $+$ concatenação}: cada filtro vira 1 número; $4+5=9$ no exemplo.
+            \vspace{0.2cm}
+            \begin{itemize}\setlength{\itemsep}{5pt}
+                \item \textbf{Entrada}: a frase vira uma matriz, 11 palavras $\times$ 6 dimensões.
+                \item \textbf{Convolução com filtros diferentes}: olhando \textcolor{dexpiGreenDark}{\textbf{2 palavras}} e \textcolor{dexpiRedDark}{\textbf{4 palavras}} ao mesmo tempo.
+                \item \textbf{Pooling $+$ concatenação}: cada canal vira 1 número, os resultados se juntam para a classificação.
             \end{itemize}
         \end{column}
-        \begin{column}{0.48\textwidth}
+        \begin{column}{0.65\textwidth}
             \centering
-            \begin{tikzpicture}[font=\tiny]
-                \fill[dexpiBlueLight] (0,0) rectangle (2.2,1.2);
-                \draw[dexpiBlue!55, step=0.2] (0,0) grid (2.2,1.2);
-                \node[below, font=\tiny] at (1.1,0) {11 palavras $\times$ 6};
-
-                \fill[dexpiGreenLight] (0,1.9) rectangle (2.0,2.7);
-                \draw[dexpiGreenDark!60, step=0.2] (0,1.9) grid (2.0,2.7);
-                \fill[dexpiGreenLight] (2.4,1.7) rectangle (4.0,2.7);
-                \draw[dexpiGreenDark!60, step=0.2] (2.4,1.7) grid (4.0,2.7);
-                \node[anchor=east, font=\tiny, text=dexpiGreenDark] at (-0.05,2.3) {$k=2$};
-                \node[anchor=west, font=\tiny, text=dexpiGreenDark] at (4.05,2.3) {$k=4$};
-
-                \draw[-{Stealth}, thick, dexpiBlue] (1.0,1.2) -- (1.0,1.9);
-                \draw[-{Stealth}, thick, dexpiBlue] (2.0,1.2) -- (3.0,1.7);
-
-                \draw[-{Stealth}, dashed, thick, dexpiRedDark] (1.0,2.7) -- (1.0,3.1);
-                \draw[-{Stealth}, dashed, thick, dexpiRedDark] (3.2,2.7) -- (3.2,3.1);
-                \node[draw=dexpiRedDark, fill=dexpiRedLight, font=\scriptsize, minimum width=0.5cm] at (1.0,3.35) {4};
-                \node[draw=dexpiRedDark, fill=dexpiRedLight, font=\scriptsize, minimum width=0.5cm] at (3.2,3.35) {5};
-                \node[anchor=west, font=\tiny, text=dexpiRedDark] at (1.32,3.35) {max};
-                \node[anchor=west, font=\tiny, text=dexpiRedDark] at (3.52,3.35) {max};
-
-                \node[draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, font=\tiny, inner sep=3pt] (c) at (2.1,4.0) {concat $=9$ $\rightarrow$ densa $\rightarrow$ 2};
-                \draw[-{Stealth}, thick, dexpiBlue] (1.0,3.62) -- (1.55,3.82);
-                \draw[-{Stealth}, thick, dexpiBlue] (3.2,3.62) -- (2.65,3.82);
+            \begin{tikzpicture}[x=0.00525cm, y=-0.00525cm]
+                \node[anchor=north west, inner sep=0] at (0,0) {\includegraphics[width=8.3cm]{img/d2l_textcnn.png}};
+                \draw[dexpiGreenDark, line width=1.8pt] (298,446) rectangle (792,648);
+                \draw[dexpiGreenDark, line width=1.4pt] (18,626) rectangle (290,674);
+                \draw[dexpiRedDark, line width=1.8pt] (856,396) rectangle (1252,648);
+                \draw[dexpiRedDark, line width=1.4pt] (1292,612) rectangle (1562,660);
             \end{tikzpicture}
         \end{column}
     \end{columns}
 
     \note{
-        Vamos guiar o olhar de baixo para cima. Embaixo, a frase vira uma matriz: onze palavras por seis dimensões no exemplo do livro. Em cima dela, duas convoluções trabalham em paralelo: uma com filtros de duas palavras, outra com filtros de quatro. São tamanhos diferentes de propósito --- cada uma captura um n-grama diferente. As setas pontilhadas sobem para o pooling: cada canal vira um número. No fim, quatro mais cinco dão nove, que é o vetor que vai para a classificação.
+        Vamos guiar o olhar de baixo para cima. Embaixo, a frase vira uma matriz: onze palavras por seis dimensões no exemplo do livro. Em cima dela, duas convoluções trabalham em paralelo: a verde, com filtros de largura dois, e a vermelha, com filtros de largura quatro. São tamanhos diferentes de propósito: um filtro de largura dois capta bigramas, como ``muito bom'', e um de largura quatro capta expressões maiores, como ``não é nada bom''. Quanto mais variedade de tamanhos, mais tipos de padrão o modelo enxerga. As setas pontilhadas sobem para o pooling: cada canal vira um número. No topo, os resultados são concatenados e seguem para a classificação.
     }
 \end{frame}
 
 \begin{frame}{O fluxo de dados: de $T$ palavras a 2 números}
     \begin{columns}[c]
-        \begin{column}{0.48\textwidth}
+        \begin{column}{0.36\textwidth}
             \footnotesize
             Os tamanhos, sem susto.
 
             \vspace{0.15cm}
-            \begin{itemize}\setlength{\itemsep}{3pt}
-                \item Convolução de largura $k$: a saída tem $T-k+1$ posições ($11-2+1=10$; $11-4+1=8$).
-                \item O pooling reduz cada canal a \textbf{1} número; a concatenação junta todos ($4+5=9$; no nosso, $3 \times 100=300$).
-                \item \textbf{Dropout} desliga neurônios ao acaso no treino; a camada densa mapeia o vetor para \textbf{2 logits}.
+            \begin{itemize}\setlength{\itemsep}{5pt}
+                \item[\badge{dexpiGreenDark}{1}] \textbf{Convolução}: com filtro de largura $k$, a saída tem $T-k+1$ posições ($11-2+1=10$ e $11-4+1=8$).
+                \item[\badge{dexpiBlue}{2}] \textbf{Pooling $+$ concatenação}: 1 número por canal, tudo num \textbf{único vetor} ($4+5=9$).
+                \item[\badge{dexpiRedDark}{3}] \textbf{Dropout $+$ MLP}: a camada densa mapeia o vetor para as 2 polaridades.
             \end{itemize}
         \end{column}
-        \begin{column}{0.50\textwidth}
+        \begin{column}{0.62\textwidth}
             \centering
-            \begin{tikzpicture}[font=\tiny]
-                \foreach \i in {0,...,8} {
-                    \ifnum\i<4
-                        \fill[dexpiGreenLight] ({0.30*\i},0) rectangle ++(0.27,0.27);
-                        \draw[dexpiGreenDark] ({0.30*\i},0) rectangle ++(0.27,0.27);
-                    \else
-                        \fill[dexpiBlueLight] ({0.30*\i},0) rectangle ++(0.27,0.27);
-                        \draw[dexpiBlue] ({0.30*\i},0) rectangle ++(0.27,0.27);
-                    \fi
-                }
-                \draw[decorate, decoration={brace, amplitude=3pt, mirror}] (0,-0.05) -- (1.2,-0.05) node[midway, below=4pt] {4};
-                \draw[decorate, decoration={brace, amplitude=3pt, mirror}] (1.2,-0.05) -- (2.7,-0.05) node[midway, below=4pt] {5};
-                \node[anchor=south, font=\tiny, text=dexpiBlue] at (1.35,0.35) {vetor concatenado};
-
-                \draw[-{Stealth}, thick, dexpiBlue] (2.75,0.13) -- (3.15,0.13);
-                \node[draw=dexpiRedDark, dashed, fill=white, font=\tiny, minimum width=0.95cm, minimum height=0.5cm, inner sep=1pt] at (3.7,0.13) {dropout};
-                \draw[-{Stealth}, thick, dexpiBlue] (4.2,0.13) -- (4.55,0.13);
-                \node[draw=dexpiBlue, fill=dexpiBlueLight, font=\tiny, minimum width=0.75cm, minimum height=0.5cm, inner sep=1pt] at (4.95,0.13) {densa};
-                \draw[-{Stealth}, thick, dexpiBlue] (5.35,0.13) -- (5.7,0.13);
-                \node[anchor=west, font=\tiny] at (5.75,0.13) {2 logits};
+            \begin{tikzpicture}[x=0.00535cm, y=-0.00535cm]
+                \node[anchor=north west, inner sep=0] at (0,0) {\includegraphics[width=8.45cm]{img/d2l_textcnn_topo.png}};
+                \node[circle, fill=dexpiGreenDark, text=white, inner sep=1.2pt, font=\scriptsize\bfseries] at (824,570) {1};
+                \node[circle, fill=dexpiBlue, text=white, inner sep=1.2pt, font=\scriptsize\bfseries] at (1064,262) {2};
+                \node[circle, fill=dexpiRedDark, text=white, inner sep=1.2pt, font=\scriptsize\bfseries] at (726,106) {3};
+                \node[draw=dexpiRedDark, dashed, fill=white, font=\tiny, inner sep=1.5pt] at (810,188) {dropout};
             \end{tikzpicture}
-
-            \vspace{0.15cm}
-            {\scriptsize
-            \begin{tabular}{@{}ll@{}}
-                \toprule
-                etapa & forma \\
-                \midrule
-                entrada & $11 \times 6$ \\
-                conv $k=2$ / $k=4$ & $10 \times 4$ / $8 \times 5$ \\
-                pooling & $4+5=9$ \\
-                densa $+$ dropout & $2$ \\
-                \bottomrule
-            \end{tabular}\par}
-        \end{column}
-    \end{columns}
-
-    \note{
-        Agora os tamanhos, sem susto. Uma convolução de largura k sobre T palavras devolve T menos k mais um posições: onze com filtro dois dá dez; com filtro quatro, oito. O pooling reduz cada canal a um número só --- quatro mais cinco, nove. É esse vetor que entra na camada densa, passando antes pelo dropout, que desliga neurônios ao acaso no treino para o modelo não decorar. A saída são dois logits, positivo e negativo.
-    }
-\end{frame}
-
-\begin{frame}[fragile]{O código do textCNN}
-\begin{columns}[c]
-    \begin{column}{0.62\textwidth}
-\begin{lstlisting}[basicstyle=\ttfamily\fontsize{6.1}{7.1}\selectfont,aboveskip=0pt,belowskip=0pt]
-class TextCNN(nn.Module):
-    def __init__(self, vocab, d, ks, cs):
-        super().__init__()
-        self.emb = nn.Embedding(vocab, d)        # ajustavel
-        self.fix = nn.Embedding(vocab, d)        # congelado
-        self.convs = nn.ModuleList(
-            [nn.Conv1d(2 * d, c, k) for c, k in zip(cs, ks)])
-        self.pool = nn.AdaptiveMaxPool1d(1)      # max no tempo
-        self.drop = nn.Dropout(0.5)
-        self.out = nn.Linear(sum(cs), 2)
-
-    def forward(self, inputs):                   # (B, T)
-        E = torch.cat((self.emb(inputs), self.fix(inputs)), dim=2)
-        E = E.permute(0, 2, 1)                   # (B, 200, T)
-        H = [self.pool(torch.relu(c(E))).squeeze(-1)
-             for c in self.convs]                # 3 x (B, 100)
-        return self.out(self.drop(torch.cat(H, dim=1)))  # (B, 2)
-
-d, ks, cs = 100, [3, 4, 5], [100, 100, 100]
-\end{lstlisting}
-    \end{column}
-    \begin{column}{0.34\textwidth}
-        \footnotesize
-        \textbf{Onde está cada ideia}
-        \begin{enumerate}\setlength{\itemsep}{2pt}
-            \item \texttt{emb} $+$ \texttt{fix}: os 200 canais.
-            \item \texttt{Conv1d}: um detector por canal e por largura.
-            \item \texttt{pool}: o máximo no tempo, um número por canal.
-            \item \texttt{cat} $+$ \texttt{out}: 300 números $\to$ 2 logits.
-        \end{enumerate}
-        \vspace{0.15cm}
-        {\scriptsize\color{dexpiRedDark} GloVe: \texttt{copy\_} nas duas tabelas e \texttt{requires\_grad = False} em \texttt{fix}.}
-    \end{column}
-\end{columns}
-
-\note{
-    Este é o código, com os nomes encurtados. No construtor, as duas tabelas, a lista de convoluções, o pooling, o dropout e a camada de saída. No forward: concatenamos as duas tabelas, transpomos, aplicamos cada convolução com ReLU e pooling, e concatenamos os resultados.
-    Uma observação para quem for comparar com o livro: o texto chama o pooling de max-over-time, mas o listing em PyTorch do D2L traz AdaptiveAvgPool1d, que faz média. Aqui usamos o máximo, que é o que o texto descreve; se você reproduzir o código do livro como está, vai treinar com média.
-    Os hiperparâmetros são os do livro: embedding de 100, larguras 3, 4 e 5, 100 canais, dropout 0,5, Adam com taxa 10 menos 3, 5 épocas.
-}
-\end{frame}
-
-\begin{frame}{Resultados: CNN $\times$ BiRNN, e os limites}
-    \begin{columns}[c]
-        \begin{column}{0.46\textwidth}
-            \centering
-            \footnotesize
-            \begin{tabular}{lcc}
-                \toprule
-                 & BiRNN & textCNN \\
-                \midrule
-                perda de treino & $\approx 0{,}49$ & $0{,}066$ \\
-                acurácia treino & $\approx 0{,}80$ & $0{,}979$ \\
-                acurácia teste & $\approx 0{,}83$ & $\mathbf{0{,}868}$ \\
-                \bottomrule
-            \end{tabular}
-            \vspace{0.15cm}
-            {\scriptsize IMDb; GloVe, $d = 100$; CNN: Adam, $\text{lr}=10^{-3}$, 5 épocas.}
-        \end{column}
-        \begin{column}{0.50\textwidth}
-            \footnotesize
-            \begin{itemize}\setlength{\itemsep}{2pt}
-                \item O teste sobe de $\approx 0{,}83$ para $\mathbf{0{,}868}$, com os mesmos dados e o mesmo GloVe; mudam a arquitetura e a taxa ($10^{-3}$ contra $10^{-2}$).
-                \item \textbf{O alarme}: treino $0{,}98$ contra teste $0{,}87$. A CNN decora mais --- \texttt{dropout} $0{,}5$ e metade dos embeddings congelada são as defesas.
-                \item \textbf{Por que funciona}: o \textit{max} ignora \textbf{onde} a pista está; ``is so great'' vale no começo ou no fim.
-            \end{itemize}
         \end{column}
     \end{columns}
 
     \vspace{0.1cm}
-    \begin{alertblock}{O limite da janela}
+    \begin{exampleblock}{Por que o Dropout?}
         \footnotesize
-        Um filtro de 3 palavras não liga ``apesar do começo lento'' a ``é ótimo'' no fim de uma crítica longa. Por isso Kim usa 3, 4 e 5; a evolução natural é a \textbf{atenção} (BERT, Seção 15.8), que liga qualquer posição a qualquer outra.
-    \end{alertblock}
+        No treino, ele desliga neurônios ao acaso ($p=0{,}5$): o modelo não pode apostar numa única pista e fica mais \textbf{robusto}, com menos \textit{overfitting}.
+    \end{exampleblock}
 
     \note{
-        Agora a comparação, com os números do livro. A BiRNN chega a cerca de 83 por cento de acurácia no teste, com perda de treino de 0,49. O textCNN chega a 86,8, com perda de 0,066. Os mesmos dados e os mesmos embeddings; mudam a arquitetura e a taxa de aprendizado, 10 menos 3 no lugar de 10 menos 2.
-        Mas olhem a distância entre treino e teste: 0,98 contra 0,87. A CNN decora boa parte do treino. As duas defesas estão no modelo: o dropout de 0,5 e a metade congelada dos embeddings. E vale lembrar que a acurácia de treino da RNN era medida ao longo da época, então a comparação de gap não é perfeitamente limpa; o que importa é o teste.
-        O limite é estrutural: um filtro de 3 palavras só vê 3 palavras. Ele não liga "apesar do começo lento" a "é ótimo" no fim de uma crítica longa. A solução de Kim é ter filtros de 3, 4 e 5; a solução seguinte, e a que domina hoje, é a atenção: cada posição olha todas as outras, que é exatamente o BERT que vimos na seção 15.8.
+        Agora os tamanhos, sem susto. Uma convolução de largura k sobre T palavras devolve T menos k mais um posições: onze com filtro dois dá dez; com filtro quatro, oito. O pooling reduz cada canal a um número só, e a concatenação junta tudo num único vetor: quatro mais cinco, nove. Esse vetor passa pela camada totalmente conectada, o MLP, que o mapeia para as duas polaridades, positiva e negativa. Antes dela entra o dropout: no treino, ele desliga neurônios ao acaso, então o modelo não pode depender de uma única pista e precisa espalhar a evidência. Isso o torna mais robusto. Na hora de usar o modelo, o dropout é desligado.
     }
 \end{frame}

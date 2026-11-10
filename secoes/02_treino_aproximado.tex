@@ -323,17 +323,17 @@
     \vspace{0.1cm}
     {\centering
     \begin{tikzpicture}[
-        cartao/.style={draw=#1, fill=#1!8, line width=0.8pt, rounded corners=4pt,
+        cartao/.style={line width=0.8pt, rounded corners=4pt,
                        text width=0.27\textwidth, minimum height=2.4cm, align=center, inner sep=4pt}]
-        \node[cartao=dexpiRedDark] (c1) {%
+        \node[cartao, draw=dexpiRedDark, fill=dexpiRedDark!8] (c1) {%
             {\color{dexpiRedDark}\Large\textbf{1.000.000}}\\[2pt]
             {\small\textbf{softmax completa}}\\[3pt]
             {\scriptsize $O(|\V|)$: olha o dicionário inteiro}};
-        \node[cartao=dexpiBlue, right=0.45cm of c1] (c2) {%
+        \node[cartao, draw=dexpiBlue, fill=dexpiBlue!8, right=0.45cm of c1] (c2) {%
             {\color{dexpiBlue}\Large\textbf{6}}\\[2pt]
             {\small\textbf{amostragem negativa}}\\[3pt]
             {\scriptsize $O(K)$: 1 positivo $+$ 5 negativos}};
-        \node[cartao=dexpiGreenDark, right=0.45cm of c2] (c3) {%
+        \node[cartao, draw=dexpiGreenDark, fill=dexpiGreenDark!8, right=0.45cm of c2] (c3) {%
             {\color{dexpiGreenDark}\Large\textbf{$\approx$ 20}}\\[2pt]
             {\small\textbf{softmax hierárquica}}\\[3pt]
             {\scriptsize $O(\log_2|\V|)$: a altura da árvore}};

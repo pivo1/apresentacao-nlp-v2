@@ -378,20 +378,20 @@
     \vspace{0.1cm}
     {\centering
     \begin{tikzpicture}[
-        passo/.style={draw=#1, fill=#1!10, line width=0.8pt, rounded corners=4pt,
+        passo/.style={line width=0.8pt, rounded corners=4pt,
                       text width=0.28\textwidth, minimum height=2.3cm, align=center, inner sep=3pt},
         seta/.style={-{Stealth[length=2.5mm]}, line width=1pt, dexpiBlueDark}]
-        \node[passo=dexpiBlue] (p1) {%
+        \node[passo, draw=dexpiBlue, fill=dexpiBlue!10] (p1) {%
             {\color{dexpiBlue}\large$\prod$\; \small\textbf{Passo 1: o produto}}\\[1pt]
             \footnotesize$\prod_{t}\prod_{j} P\big(w^{(t+j)} \mid w^{(t)}\big)$\\[1pt]
             \scriptsize Multiplica as probabilidades de \textbf{todos} os pares (centro $t$, vizinho $j$).\\[1pt]
             {\color{dexpiBlue}\scriptsize\textbf{maximizar}}};
-        \node[passo=dexpiGreenDark, right=0.45cm of p1] (p2) {%
+        \node[passo, draw=dexpiGreenDark, fill=dexpiGreenDark!10, right=0.45cm of p1] (p2) {%
             {\color{dexpiGreenDark}\large$\log$\; \small\textbf{Passo 2: o log}}\\[1pt]
             \footnotesize$\sum_{t}\sum_{j} \log P\big(w^{(t+j)} \mid w^{(t)}\big)$\\[1pt]
             \scriptsize Transforma multiplicação em \textbf{soma} e evita números minúsculos.\\[1pt]
             {\color{dexpiGreenDark}\scriptsize\textbf{maximizar} (mesmo ótimo)}};
-        \node[passo=dexpiRedDark, right=0.45cm of p2] (p3) {%
+        \node[passo, draw=dexpiRedDark, fill=dexpiRedDark!10, right=0.45cm of p2] (p3) {%
             {\color{dexpiRedDark}\large$-$\; \small\textbf{Passo 3: o negativo}}\\[1pt]
             \footnotesize$\mathcal{L} = -\sum_{t}\sum_{j} \log P\big(w^{(t+j)} \mid w^{(t)}\big)$\\[1pt]
             \scriptsize ``Maximizar o acerto'' vira ``\textbf{minimizar o erro}'' (= entropia cruzada).\\[1pt]
@@ -414,20 +414,20 @@
     \vspace{0.15cm}
     {\centering
     \begin{tikzpicture}[
-        carta/.style={draw=#1, fill=#1!8, line width=0.8pt, rounded corners=4pt,
+        carta/.style={line width=0.8pt, rounded corners=4pt,
                       text width=0.27\textwidth, minimum height=1.55cm, align=center, inner sep=3pt},
         seta/.style={-{Stealth[length=2.5mm]}, line width=1pt, dexpiBlueDark}]
-        \node[carta=dexpiBlue] (c1) {%
+        \node[carta, draw=dexpiBlue, fill=dexpiBlue!8] (c1) {%
             {\color{dexpiBlue}\large\textbf{1}}\;\; \small\textbf{um trecho}\\[1pt]
             {\footnotesize cada passo olha}\\[0pt]
             {\footnotesize um \textbf{lote} pequeno}\\[1pt]
             {\color{dexpiBlue}\scriptsize estocástico $=$ sorteado}};
-        \node[carta=dexpiGreenDark, right=0.45cm of c1] (c2) {%
+        \node[carta, draw=dexpiGreenDark, fill=dexpiGreenDark!8, right=0.45cm of c1] (c2) {%
             {\color{dexpiGreenDark}\large\textbf{2}}\;\; \small\textbf{um par}\\[1pt]
             {\footnotesize bastam \textbf{dois} vetores:}\\[0pt]
             {\footnotesize centro e vizinho}\\[1pt]
             {\color{dexpiGreenDark}\scriptsize $\log P(w_o \mid w_c)$}};
-        \node[carta=dexpiRedDark, right=0.45cm of c2] (c3) {%
+        \node[carta, draw=dexpiRedDark, fill=dexpiRedDark!8, right=0.45cm of c2] (c3) {%
             {\color{dexpiRedDark}\large\textbf{3}}\;\; \small\textbf{um passo}\\[1pt]
             {\footnotesize anda no sentido}\\[0pt]
             {\footnotesize que \textbf{diminui} a perda}\\[1pt]
@@ -624,16 +624,16 @@
     \vspace{0.2cm}
     {\centering
     \begin{tikzpicture}[
-        caixa/.style={draw=#1, fill=#1!8, rounded corners=3pt, line width=0.8pt,
+        caixa/.style={rounded corners=3pt, line width=0.8pt,
                       text width=0.26\textwidth, minimum height=1.45cm, align=center, inner sep=3pt},
         seta/.style={-{Stealth[length=2.5mm]}, line width=1pt, dexpiBlueDark}]
-        \node[caixa=dexpiBlue] (b1) {%
+        \node[caixa, draw=dexpiBlue, fill=dexpiBlue!8] (b1) {%
             \footnotesize$\bar{\vv}_o = \frac{1}{2m}\sum_{i=1}^{2m}\vv_{o_i}$\\[2pt]
             {\scriptsize resumo do contexto}};
-        \node[caixa=dexpiGreenDark, right=0.45cm of b1] (b2) {%
+        \node[caixa, draw=dexpiGreenDark, fill=dexpiGreenDark!8, right=0.45cm of b1] (b2) {%
             \footnotesize$\frac{\partial \bar{\vv}_o}{\partial \vv_{o_i}} = \frac{1}{2m}$\\[2pt]
             {\scriptsize cada palavra pesa $1/2m$}};
-        \node[caixa=dexpiRedDark, right=0.45cm of b2] (b3) {%
+        \node[caixa, draw=dexpiRedDark, fill=dexpiRedDark!8, right=0.45cm of b2] (b3) {%
             \footnotesize o ajuste chega \textbf{repartido}\\[2pt]
             {\scriptsize entre as $2m$ palavras do contexto}};
         \draw[seta] (b1) -- (b2);

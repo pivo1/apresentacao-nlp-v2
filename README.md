@@ -31,10 +31,13 @@ Na seção de pré-treino (15.3–15.4), o bloco deixou de ter 9 slides:
 O total caiu de 77 para **73 slides de conteúdo** (+2 no *backup*). Depois da
 revisão, foi acrescentada a seção 16.3 (ver abaixo) e o slide do GloVe 2/2 foi
 cortado no Overleaf, o que deixa **76 slides de conteúdo** (+2 no *backup*).
+Depois, a seção 16.3 foi enxugada no Overleaf (saíram o slide de camadas e
+formatos, o do código e o de resultados) e recebeu o pooling, a arquitetura
+completa e o fluxo de dados, o que deixa **75 slides de conteúdo** (+2 no *backup*).
 
 ## Seção 16.3: análise de sentimento com CNN
 
-Bloco novo, de 6 slides, colocado depois de 16.2 e antes das referências.
+Bloco de 5 slides, colocado depois de 16.2 e antes das referências.
 O fio condutor é um só: **a pergunta muda** — a RNN quer o resumo da frase, a
 CNN quer saber quais padrões locais aparecem e qual é o mais forte.
 
@@ -42,13 +45,14 @@ CNN quer saber quais padrões locais aparecem e qual é o mais forte.
 |---|---|
 | 1 | A matemática da convolução 1D: a lupa que desliza, input/kernel/output e a conta $0\cdot1+1\cdot2=2$ |
 | 2 | A arquitetura textCNN na prática: RNN $\times$ CNN, paralelismo e o fluxo GloVe $\to$ CNN $\to$ classificação |
-| 3 | Max-over-time: por que o pico e não a média, e a saída de tamanho fixo |
-| 4 | Por dentro: duas tabelas de embedding, o `permute` (canais antes do tempo), três larguras |
-| 5 | O código do `TextCNN`, com o mapa "onde está cada ideia" |
-| 6 | Resultados CNN $\times$ BiRNN e o limite da janela, que puxa a atenção (BERT) |
+| 3 | Max-over-time: muitos números, um resumo (o pico como "filtro de importância") |
+| 4 | A arquitetura completa do textCNN (Fig. 16.3.5), com as convoluções de largura 2 e 4 em destaque |
+| 5 | O fluxo de dados: $T-k+1$, a concatenação, o MLP e o Dropout, sobre o topo da Fig. 16.3.5 |
 
 As figuras 16.3.1 e 16.3.2 do livro foram redesenhadas em TikZ, no mesmo traço
-das outras figuras do tema.
+das outras figuras do tema. A Figura 16.3.5 é a **original** do D2L, em PNG
+(`img/d2l_textcnn.png` e o recorte `img/d2l_textcnn_topo.png`), com os destaques
+e os números desenhados por cima em TikZ.
 
 Cada slide tem `\note`, no mesmo tom das seções 02–08. Foram acrescentadas as
 referências `kim2014convolutional` e `collobert2011natural`.
@@ -65,23 +69,20 @@ referências `kim2014convolutional` e `collobert2011natural`.
 
 ## Como esta pasta se liga ao GitHub e ao Overleaf
 
-Esta pasta **é um clone** do repositório
-[`apresentacao-nlp-v2`](https://github.com/pivo1/apresentacao-nlp-v2). O
-repositório `Mestrado_` **ignora** esta pasta (está no `.gitignore` dele), então
-não existe mais `git subtree`: o versionamento é git normal, dentro da pasta.
+Esta pasta é uma **git subtree** do repositório `Mestrado_`, ligada ao
+repositório [`apresentacao-nlp-v2`](https://github.com/pivo1/apresentacao-nlp-v2)
+(remote `apresentacao-nlp-v2`), que por sua vez está ligado ao Overleaf. Os
+comandos rodam **na raiz do `Mestrado_`**:
 
 | Quero… | O que faço |
 |---|---|
-| Trazer o que mudou no Overleaf | No Overleaf: *Integrations → GitHub → Push Overleaf changes to GitHub*. Aqui: `git pull` **dentro desta pasta** |
-| Mandar o que mudei aqui | `git add`, `git commit` e `git push` **dentro desta pasta**; depois, no Overleaf: *Pull GitHub changes into Overleaf* |
-| Ver o histórico | `git log --oneline` dentro desta pasta |
-
-O Overleaf continua ligado ao repositório do GitHub, como antes — só não há mais
-o passo intermediário de `git subtree pull/push` no `Mestrado_`.
+| Trazer o que mudou no Overleaf | `git subtree pull --prefix="CPE727 - APRENDIZADO PROFUNDO/Apresentacao NLP V2" apresentacao-nlp-v2 main` |
+| Mandar o que mudei aqui | `git subtree push --prefix="CPE727 - APRENDIZADO PROFUNDO/Apresentacao NLP V2" apresentacao-nlp-v2 main`; depois, no Overleaf: *Pull GitHub changes into Overleaf* |
+| Ver o histórico | `git log --oneline -- "CPE727 - APRENDIZADO PROFUNDO/Apresentacao NLP V2"` |
 
 ## Plano para 60 minutos
 
-São **76 slides de conteúdo**, mais 2 de *backup* (depois do "obrigado"). Roteiro
+São **75 slides de conteúdo**, mais 2 de *backup* (depois do "obrigado"). Roteiro
 sugerido (numeração do PDF):
 
 | Slides | Bloco | Tempo |
@@ -95,14 +96,13 @@ sugerido (numeração do PDF):
 | 51–52 | Similaridade e analogia (15.7) | 2,5 min |
 | 53–65 | BERT (15.8) | 10 min |
 | 66–72 | Análise de sentimento com RNN (16.2) | 5 min |
-| 73–78 | Análise de sentimento com CNN (16.3) | 4,5 min |
-| | **Total** | **~61 min** |
+| 73–77 | Análise de sentimento com CNN (16.3) | 4 min |
+| | **Total** | **~60 min** |
 
-O bloco de 16.3 entra com ~4,5 min; com o corte do slide do GloVe 2/2, o roteiro
-fica em ~61 min. Se o limite for 60 min, os candidatos naturais a "passar
-rápido" são o slide 19 (código) e o 61 (MLM no código) — os dois são de apoio, e
-a mensagem de cada um já aparece no slide vizinho. O slide 5 do bloco novo
-(código do textCNN) também pode ser só citado, porque a ideia já aparece no 4.
+O bloco de 16.3 entra com ~4 min, e o roteiro fica em ~60 min. Se o limite for
+apertado, os candidatos naturais a "passar rápido" são o slide 19 (código) e o
+61 (MLM no código) — os dois são de apoio, e a mensagem de cada um já aparece
+no slide vizinho.
 
 Os dois slides de *backup* (minibatch e laço de treino) ficam depois do
 "obrigado" e só entram se alguém perguntar de implementação.
