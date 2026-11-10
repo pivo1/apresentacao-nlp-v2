@@ -28,7 +28,27 @@ Na seção de pré-treino (15.3–15.4), o bloco deixou de ter 9 slides:
 - a **subamostragem** ganhou a régua numérica (f = 10⁻² ⇒ 90% de descarte) e os
   **exemplos** ganharam a escala (≈ 9 milhões de exemplos por época).
 
-O total caiu de 77 para **73 slides de conteúdo** (+2 no *backup*).
+O total caiu de 77 para **73 slides de conteúdo** (+2 no *backup*). Depois da
+revisão, foi acrescentada a seção 16.3 (ver abaixo), o que leva o total a
+**77 slides de conteúdo** (+2 no *backup*).
+
+## Seção 16.3: análise de sentimento com CNN
+
+Bloco novo, de 6 slides, colocado depois de 16.2 e antes das referências.
+O fio condutor é um só: **a pergunta muda** — a RNN quer o resumo da frase, a
+CNN quer saber quais padrões locais aparecem e qual é o mais forte.
+
+| Slide | O que mostra |
+|---|---|
+| 1 | Por que mais um modelo: RNN $\times$ CNN, a pista local, o paralelismo |
+| 2 | Convolução 1D como detector de n-gramas: a fórmula, o molde aprendido, $T-k+1$ escores, o exemplo numérico do livro |
+| 3 | Max-over-time: por que o pico e não a média, e a saída de tamanho fixo |
+| 4 | A arquitetura: duas tabelas de embedding, o `permute` (canais antes do tempo), três larguras |
+| 5 | O código do `TextCNN`, com o mapa "onde está cada ideia" |
+| 6 | Resultados CNN $\times$ BiRNN e o limite da janela, que puxa a atenção (BERT) |
+
+Cada slide tem `\note`, no mesmo tom das seções 02–08. Foram acrescentadas as
+referências `kim2014convolutional` e `collobert2011natural`.
 
 ## Compilar no Overleaf
 
@@ -58,7 +78,7 @@ o passo intermediário de `git subtree pull/push` no `Mestrado_`.
 
 ## Plano para 60 minutos
 
-São **73 slides de conteúdo**, mais 2 de *backup* (depois do "obrigado"). Roteiro
+São **77 slides de conteúdo**, mais 2 de *backup* (depois do "obrigado"). Roteiro
 sugerido (numeração do PDF):
 
 | Slides | Bloco | Tempo |
@@ -71,12 +91,16 @@ sugerido (numeração do PDF):
 | 46–51 | Subword: fastText e BPE (15.6) | 4,5 min |
 | 52–53 | Similaridade e analogia (15.7) | 2,5 min |
 | 54–66 | BERT (15.8) | 10 min |
-| 67–73 | Análise de sentimento (16.2) | 5 min |
-| | **Total** | **~57,5 min** |
+| 67–73 | Análise de sentimento com RNN (16.2) | 5 min |
+| 74–79 | Análise de sentimento com CNN (16.3) | 4,5 min |
+| | **Total** | **~62 min** |
 
-Se o tempo apertar, os candidatos naturais a "passar rápido" são o slide 19
-(código), o 44 (o passo do GloVe com números) e o 62 (MLM no código): os três são
-de apoio, e a mensagem de cada um já aparece no slide vizinho.
+O bloco de 16.3 entra com ~4,5 min, e o roteiro passa a ~62 min. Se o limite
+for 60 min, os candidatos naturais a "passar rápido" continuam sendo o slide 19
+(código), o 44 (o passo do GloVe com números) e o 62 (MLM no código) — os três
+são de apoio, e a mensagem de cada um já aparece no slide vizinho. O slide 5 do
+bloco novo (código do textCNN) também pode ser só citado, porque a ideia já
+aparece no 4.
 
 Os dois slides de *backup* (minibatch e laço de treino) ficam depois do
 "obrigado" e só entram se alguém perguntar de implementação.
