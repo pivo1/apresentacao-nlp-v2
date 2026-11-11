@@ -587,41 +587,6 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Treinando o CBOW}
-    \small
-    \begin{itemize}\setlength{\itemsep}{1pt}
-        \item O mesmo método de antes: \destaque{máxima verossimilhança}.
-        \item O que muda é \textbf{quantos termos} cada posição do texto gera.
-    \end{itemize}
-
-    \vspace{0.1cm}
-    \begin{columns}[c]
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Skip-gram: $2m$ termos}
-                \footnotesize
-                $\mathcal{L} = -\sum_{t}\sum_{j \neq 0} \log P(w^{(t+j)}\mid w^{(t)})$
-                \\[2pt]
-                Um termo para \textbf{cada vizinho} da janela ($-m \le j \le m$, $j \neq 0$): com $m = 2$, são \destaque{4} termos.
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{block}{CBOW: \textbf{1} termo}
-                \footnotesize
-                $\mathcal{L} = -\sum_{t} \log P(w^{(t)}\mid C^{(t)})$
-                \\[2pt]
-                O contexto $C^{(t)}$ entra todo \textbf{junto}, como um saco de palavras: com $m = 2$, é \destaque{1} termo.
-            \end{block}
-        \end{column}
-    \end{columns}
-
-    \vspace{0.15cm}
-    \begin{exampleblock}{Vantagens e Desvantagens}
-        \footnotesize
-        \textbf{Vantagens}: menos termos por posição $\Rightarrow$ treino mais rápido. \quad
-        \textbf{Desvantagens}: a média ignora a ordem das palavras --- é o preço do ``saco de palavras''.
-    \end{exampleblock}
-\end{frame}
-
 \begin{frame}{O gradiente do CBOW: o mesmo, dividido por $2m$}
     \small
     \begin{itemize}\setlength{\itemsep}{1pt}
