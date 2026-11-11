@@ -559,174 +559,106 @@
 \section{O modelo CBOW}
 %------------------------------------------------
 
-\begin{frame}{CBOW: adivinhar a palavra do meio}
-    \begin{center}
-        {\normalsize\color{dexpiBlue}\textbf{Ideia: o modelo lê os vizinhos, tira uma média deles e chuta qual palavra está no meio.}}
-    \end{center}
-
-    \footnotesize
-    Exemplo: ``the man \textbf{loves} his son'' com $m = 2$. O contexto de ``loves'' tem $2m = 4$ palavras.
-
-    \vspace{0.15cm}
-    {\renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}p{0.15\textwidth}p{0.8\textwidth}@{}}
-        \textbf{Símbolo} & \textbf{O que significa} \\ \hline
-        $m$ & Tamanho da janela: quantas palavras olhamos de cada lado. Aqui, $m = 2$. \\
-        $2m$ & Quantas palavras formam o contexto. Aqui, 4: the, man, his, son. \\
-        $\vv_{o_i}$ & O vetor da $i$-ésima palavra do contexto (a \textbf{entrada}). Ex.: $\vv_{\text{the}}$. \\
-        $\bar{\vv}_o$ & A \textbf{média} dos $2m$ vetores: o ``resumo do contexto''. \\
-        $\uu_c$ & O vetor da palavra do meio que queremos acertar (``loves''): a \textbf{candidata}. \\
-        $\uu_i$ & O vetor de \textbf{cada} palavra $i$ do vocabulário $\V$, candidatas ou não. \\
-    \end{tabular}}
-
-    \vspace{0.1cm}
-    \begin{block}{Atenção às letras}
-        \scriptsize No CBOW, $\vv$ é o \textbf{contexto} (entrada) e $\uu$ é o \textbf{centro} (saída). No skip-gram é o contrário.
-    \end{block}
-\end{frame}
-
-\begin{frame}{A fórmula do CBOW, como uma receita}
+\begin{frame}{A fórmula do CBOW}
     \begin{equation*}
         P(\text{centro} \mid \text{contexto}) =
-        \frac{\overbrace{\exp\left({\color{dexpiBlue}\uu_c}^\top {\color{dexpiGreenDark}\bar{\vv}_o}\right)}^{\text{numerador}}}
-             {\underbrace{{\color{dexpiRedDark}\sum_{i \in \V}} \exp\left(\uu_i^\top {\color{dexpiGreenDark}\bar{\vv}_o}\right)}_{\text{denominador}}}
-        \qquad {\color{dexpiGreenDark}\bar{\vv}_o} = \frac{1}{2m}\sum_{i=1}^{2m}\vv_{o_i}
+        \frac{\exp\left({\color{dexpiBlue}\uu_c}^\top {\color{dexpiGreenDark}\bar{\vv}_o}\right)}
+             {{\color{dexpiRedDark}\sum_{i \in \V}} \exp\left(\uu_i^\top {\color{dexpiGreenDark}\bar{\vv}_o}\right)}
+        \qquad \text{com} \quad {\color{dexpiGreenDark}\bar{\vv}_o} = \frac{\vv_{o_1} + \cdots + \vv_{o_{2m}}}{2m}
     \end{equation*}
 
-    \small
-    \begin{enumerate}\setlength{\itemsep}{2pt}
-        \item {\color{dexpiGreenDark}\textbf{Misture:}} some os $2m$ vetores e divida por $2m$. Cada vizinho entra com uma fatia igual do ``bolo''.
-        \item {\color{dexpiBlue}\textbf{Dê uma nota:}} $\uu_c^\top\bar{\vv}_o$ (produto interno) mede o quanto a candidata combina com o resumo.
-        \item \textbf{Deixe positiva:} o $\exp$ transforma qualquer nota em um número maior que zero.
-        \item {\color{dexpiRedDark}\textbf{Divida pelo total:}} o denominador soma a nota de \textbf{todas} as palavras. A divisão dá a \textbf{fatia da torta} da candidata, e as fatias somam 1.
-    \end{enumerate}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Lendo a fórmula}
+                \small
+                \begin{itemize}
+                    \item {\color{dexpiGreenDark}$\bar{\vv}_o$}: o resumo do contexto (passo 2).
+                    \item {\color{dexpiBlue}$\uu_c$}: o vetor da candidata; o produto dá o escore (passo 3).
+                    \item {\color{dexpiRedDark}$\sum$}: soma sobre todas as palavras = softmax (passo 4).
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Mesma fórmula, notação trocada}
+                \footnotesize
+                No CBOW, $\vv$ são as palavras de \textbf{contexto} (a entrada) e $\uu_c$ é o \textbf{centro} previsto: o D2L \textbf{inverte as letras}.
+            \end{block}
+        \end{column}
+    \end{columns}
 \end{frame}
 
-\begin{frame}{CBOW na prática: uma conta com vetores de 2 dimensões}
-    \footnotesize
-    \textbf{1. Média.} Contexto de ``loves'': $\vv_{\text{the}}=(1,0)$, $\vv_{\text{man}}=(1,2)$, $\vv_{\text{his}}=(1,1)$, $\vv_{\text{son}}=(1,1)$.\\[2pt]
-    \hspace*{1em}$\bar{\vv}_o = \dfrac{(1,0)+(1,2)+(1,1)+(1,1)}{4} = \dfrac{(4,4)}{4} = (1,1)$
-
-    \vspace{0.15cm}
-    \textbf{2 a 4. Notas, $\exp$ e fatias.} Vocabulário reduzido a 3 candidatas:
+\begin{frame}{Treinando o CBOW}
+    \small
+    \begin{itemize}\setlength{\itemsep}{1pt}
+        \item O mesmo método de antes: \destaque{máxima verossimilhança}.
+        \item O que muda é \textbf{quantos termos} cada posição do texto gera.
+    \end{itemize}
 
     \vspace{0.1cm}
-    {\centering
-    \renewcommand{\arraystretch}{1.25}
-    \begin{tabular}{lcccc}
-        \toprule
-        Candidata & $\uu$ & Nota $\uu^\top\bar{\vv}_o$ & $\exp(\text{nota})$ & Probabilidade \\
-        \midrule
-        {\color{dexpiBlue}loves}  & $(1,1)$  & $1+1 = 2$  & $7{,}39$ & $\mathbf{0{,}71}$ \\
-        likes  & $(1,0)$  & $1$   & $2{,}72$ & $0{,}26$ \\
-        sleeps & $(-1,0)$ & $-1$  & $0{,}37$ & $0{,}04$ \\
-        \midrule
-        \multicolumn{3}{r}{Total (denominador)} & $10{,}48$ & $\approx 1$ \\
-        \bottomrule
-    \end{tabular}\par}
+    \begin{columns}[c]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Skip-gram: $2m$ termos}
+                \footnotesize
+                $\mathcal{L} = -\sum_{t}\sum_{j \neq 0} \log P(w^{(t+j)}\mid w^{(t)})$
+                \\[2pt]
+                Um termo para \textbf{cada vizinho} da janela ($-m \le j \le m$, $j \neq 0$): com $m = 2$, são \destaque{4} termos.
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{CBOW: \textbf{1} termo}
+                \footnotesize
+                $\mathcal{L} = -\sum_{t} \log P(w^{(t)}\mid C^{(t)})$
+                \\[2pt]
+                O contexto $C^{(t)}$ entra todo \textbf{junto}, como um saco de palavras: com $m = 2$, é \destaque{1} termo.
+            \end{block}
+        \end{column}
+    \end{columns}
 
     \vspace{0.15cm}
-    \begin{exampleblock}{Leitura}
-        \scriptsize
-        O modelo dá \textbf{71\%} para ``loves'': acertou, mas ainda sobram 29\% de erro. O gradiente (próximos slides) diz como diminuir esse erro. As probabilidades estão arredondadas.
+    \begin{exampleblock}{Vantagens e Desvantagens}
+        \footnotesize
+        \textbf{Vantagens}: menos termos por posição $\Rightarrow$ treino mais rápido. \quad
+        \textbf{Desvantagens}: a média ignora a ordem das palavras --- é o preço do ``saco de palavras''.
     \end{exampleblock}
 \end{frame}
 
-\begin{frame}{Gradiente do CBOW: como corrigir o erro}
-    \begin{center}
-        {\normalsize\color{dexpiBlue}\textbf{Ideia: medimos o erro no resumo e o repartimos entre as palavras do contexto.}}
-    \end{center}
+\begin{frame}{O gradiente do CBOW: o mesmo, dividido por $2m$}
+    \small
+    \begin{itemize}\setlength{\itemsep}{1pt}
+        \item O log do CBOW é o do skip-gram trocando $\vv_c$ por $\bar{\vv}_o$; então a derivada também é a mesma. A novidade é derivar a \textbf{média} (aqui $C$ é o contexto da posição).
+    \end{itemize}
+    \vspace{0.05cm}
+    {\centering
+    $\frac{\partial \log P(w_c \mid C)}{\partial \vv_{o_i}} =
+     \frac{1}{2m}\Big(
+     \underbrace{{\color{dexpiBlue}\uu_c}}_{\text{observado}} -
+     \underbrace{{\color{dexpiRedDark}\sum_{j \in \V} P(w_j \mid C)\,\uu_j}}_{\text{esperado pelo modelo}}\Big)$
+    \par}
 
-    \footnotesize
-    {\renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}p{0.2\textwidth}p{0.75\textwidth}@{}}
-        \textbf{Símbolo} & \textbf{O que significa} \\ \hline
-        $\dfrac{\partial \log P}{\partial \vv_{o_i}}$ & Se eu mexer um pouquinho na palavra $o_i$ do contexto, quanto sobe a chance de acertar? É o ``empurrão'' que ela recebe. \\
-        {\color{dexpiBlue}$\uu_c$} & \textbf{Observado}: o vetor da palavra que de fato apareceu no meio (``loves''). \\
-        {\color{dexpiRedDark}$\sum_{j \in \V} P(w_j \mid C)\,\uu_j$} & \textbf{Esperado}: média dos vetores $\uu_j$ de todas as candidatas, ponderada pelas probabilidades do modelo. \\
-        $C$ & O contexto da posição: the, man, his, son. \\
-        $\dfrac{1}{2m}$ & A \textbf{fatia} de cada palavra. Com $m = 2$, é $\frac{1}{4}$. \\
-    \end{tabular}}
-
-    \vspace{0.1cm}
-    \begin{block}{Ponto de partida}
-        \scriptsize O log do CBOW é o do skip-gram, trocando $\vv_c$ por $\bar{\vv}_o$. Por isso o erro ``observado menos esperado'' é o mesmo.
-    \end{block}
-\end{frame}
-
-\begin{frame}{Da média à atualização: sem pular etapas}
-    \footnotesize
+    \vspace{0.2cm}
     {\centering
     \begin{tikzpicture}[
         caixa/.style={rounded corners=3pt, line width=0.8pt,
-                      text width=0.21\textwidth, minimum height=1.9cm, align=center, inner sep=3pt},
+                      text width=0.26\textwidth, minimum height=1.45cm, align=center, inner sep=3pt},
         seta/.style={-{Stealth[length=2.5mm]}, line width=1pt, dexpiBlueDark}]
         \node[caixa, draw=dexpiBlue, fill=dexpiBlue!8] (b1) {%
-            {\color{dexpiBlue}\textbf{1. O erro}}\\[2pt]
-            \scriptsize $\uu_c - \sum_j P(w_j\mid C)\,\uu_j$\\[2pt]
-            \scriptsize \textbf{puxa} o resumo para o observado e \textbf{empurra} para longe do esperado};
-        \node[caixa, draw=dexpiGreenDark, fill=dexpiGreenDark!8, right=0.3cm of b1] (b2) {%
-            {\color{dexpiGreenDark}\textbf{2. Fatiar}}\\[2pt]
-            \scriptsize $\bar{\vv}_o = \frac{1}{2m}\sum\vv_{o_i}$\\[2pt]
-            \scriptsize cada palavra pesa $\frac{1}{2m}$ na média, então recebe $\frac{1}{2m}$ do erro};
-        \node[caixa, draw=dexpiRedDark, fill=dexpiRedDark!8, right=0.3cm of b2] (b3) {%
-            {\color{dexpiRedDark}\textbf{3. Gradiente}}\\[2pt]
-            \scriptsize $\dfrac{1}{2m}\big(\uu_c - \sum_j P(w_j\mid C)\,\uu_j\big)$\\[2pt]
-            \scriptsize o mesmo erro, dividido por $2m$};
-        \node[caixa, draw=dexpiBlueDark, fill=dexpiBlueDark!8, right=0.3cm of b3] (b4) {%
-            {\color{dexpiBlueDark}\textbf{4. Atualizar}}\\[2pt]
-            \scriptsize $\vv_{o_i} \leftarrow \vv_{o_i} + \eta\cdot$ gradiente\\[2pt]
-            \scriptsize as $2m$ palavras andam \textbf{na mesma direção}};
+            \footnotesize$\bar{\vv}_o = \frac{1}{2m}\sum_{i=1}^{2m}\vv_{o_i}$\\[2pt]
+            {\scriptsize resumo do contexto}};
+        \node[caixa, draw=dexpiGreenDark, fill=dexpiGreenDark!8, right=0.45cm of b1] (b2) {%
+            \footnotesize$\frac{\partial \bar{\vv}_o}{\partial \vv_{o_i}} = \frac{1}{2m}$\\[2pt]
+            {\scriptsize cada palavra pesa $1/2m$}};
+        \node[caixa, draw=dexpiRedDark, fill=dexpiRedDark!8, right=0.45cm of b2] (b3) {%
+            \footnotesize o ajuste chega \textbf{repartido}\\[2pt]
+            {\scriptsize entre as $2m$ palavras do contexto}};
         \draw[seta] (b1) -- (b2);
         \draw[seta] (b2) -- (b3);
-        \draw[seta] (b3) -- (b4);
     \end{tikzpicture}\par}
 
-    \vspace{0.25cm}
-    \begin{block}{Por que dividir por $2m$?}
-        \scriptsize
-        A derivada da média em relação a uma palavra é $\frac{\partial \bar{\vv}_o}{\partial \vv_{o_i}} = \frac{1}{2m}$ (regra da cadeia). Como o resumo é a soma dividida por $2m$, mover uma só palavra mexe no resumo apenas $\frac{1}{2m}$ do que moveria se ele fosse a própria palavra.
-    \end{block}
-\end{frame}
-
-\begin{frame}{Gradiente do CBOW na prática: os mesmos números}
-    \footnotesize
-    Do slide anterior: probabilidades $(0{,}71;\ 0{,}26;\ 0{,}04)$ para loves, likes, sleeps, e $m = 2$ (fatia $\frac{1}{4}$).
-
-    \vspace{0.1cm}
-    \textbf{1. Esperado} $= 0{,}71\,(1,1) + 0{,}26\,(1,0) + 0{,}04\,(-1,0) \approx (0{,}93;\ 0{,}71)$\\[2pt]
-    \textbf{2. Erro} $=$ observado $-$ esperado $= (1,1) - (0{,}93;\ 0{,}71) \approx (0{,}07;\ 0{,}29)$\\[2pt]
-    \textbf{3. Fatia} $= \frac{1}{4}\,(0{,}07;\ 0{,}29) \approx (0{,}02;\ 0{,}07)$ \quad para \textbf{cada} palavra do contexto.\\[2pt]
-    \textbf{4. Atualização} com $\eta = 1$: \; $\vv_{o_i} \leftarrow \vv_{o_i} + (0{,}02;\ 0{,}07)$
-
     \vspace{0.15cm}
-    {\centering
-    \renewcommand{\arraystretch}{1.2}
-    \begin{tabular}{lcc}
-        \toprule
-        Palavra do contexto & Vetor antes & Vetor depois \\
-        \midrule
-        the & $(1,\ 0)$ & $(1{,}02;\ 0{,}07)$ \\
-        man & $(1,\ 2)$ & $(1{,}02;\ 2{,}07)$ \\
-        his & $(1,\ 1)$ & $(1{,}02;\ 1{,}07)$ \\
-        son & $(1,\ 1)$ & $(1{,}02;\ 1{,}07)$ \\
-        \bottomrule
-    \end{tabular}\par}
-
-    \vspace{0.1cm}
-    \scriptsize Todas andam o mesmo passo, para onde o resumo ficaria mais perto de ``loves''.
-\end{frame}
-
-\begin{frame}{O que levar para a prova: CBOW $\times$ skip-gram}
-    \begin{block}{1. Quem entra e quem sai}
-        \small \textbf{Skip-gram:} 1 palavra do centro prevê os vizinhos. \textbf{CBOW:} a média dos $2m$ vizinhos prevê 1 palavra do centro.
-    \end{block}
-    \begin{block}{2. As letras trocam}
-        \small \textbf{Skip-gram:} $\vv$ = centro, $\uu$ = vizinho. \textbf{CBOW:} $\vv$ = contexto (entrada), $\uu$ = centro (saída). A fórmula é a mesma, só a notação muda.
-    \end{block}
-    \begin{block}{3. Por que o CBOW dilui palavras raras}
-        \small No CBOW, cada palavra do contexto recebe só $\frac{1}{2m}$ do erro e sempre misturada em uma média. No skip-gram, cada par (centro, vizinho) é um passo próprio com o erro inteiro. Uma palavra rara tem poucas chances de aprender no CBOW.
-    \end{block}
+    \begin{exampleblock}{O que isso muda na prática}
+        \footnotesize
+        Todas as palavras do contexto são puxadas \textbf{na mesma direção}, com um passo menor. É por isso que o CBOW dilui palavras raras: elas aparecem poucas vezes e sempre dentro de uma média.
+    \end{exampleblock}
 \end{frame}
 
 %------------------------------------------------
