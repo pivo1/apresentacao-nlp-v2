@@ -575,7 +575,7 @@
         \begin{column}{0.48\textwidth}
             \begin{block}{Mesma fórmula, notação trocada}
                 \footnotesize
-                No CBOW, $\vv$ são as palavras de \textbf{contexto} (a entrada) e $\uu_c$ é o \textbf{centro} previsto: o D2L \textbf{inverte as letras}.
+                No CBOW, $\vv$ são as palavras de \textbf{contexto} (a entrada) e $\uu_c$ é o \textbf{centro} previsto.
             \end{block}
         \end{column}
     \end{columns}
@@ -620,44 +620,3 @@
     \end{exampleblock}
 \end{frame}
 
-%------------------------------------------------
-\section{Implementação e resumo}
-%------------------------------------------------
-
-\begin{frame}[fragile]{Implementação mínima em PyTorch (softmax completa)}
-\begin{columns}[T]
-    \begin{column}{0.62\textwidth}
-\begin{lstlisting}[basicstyle=\ttfamily\fontsize{7}{8}\selectfont,aboveskip=0pt,belowskip=0pt]
-class SkipGram(nn.Module):
-    def __init__(self, vocab, dim):
-        super().__init__()
-        self.V = nn.Embedding(vocab, dim)  # centro
-        self.U = nn.Embedding(vocab, dim)  # contexto
-
-    def forward(self, center):
-        v = self.V(center)          # (B, d)
-        return v @ self.U.weight.T  # (B, N)
-
-model = SkipGram(10_000, 100)
-opt = torch.optim.SGD(model.parameters(), 0.01)
-
-logits = model(center)
-loss = F.cross_entropy(logits, context)
-loss.backward(); opt.step()
-emb = model.V.weight            # vetor final
-\end{lstlisting}
-    \end{column}
-    \begin{column}{0.34\textwidth}
-        \footnotesize
-        \textbf{Onde está cada passo}\\[2pt]
-        \begin{enumerate}\setlength{\itemsep}{2pt}
-            \item \textbf{Consulta}: \texttt{self.V(center)}.
-            \item \textbf{Compara}: \texttt{v @ U.weight.T} mede a afinidade com as $N$ palavras.
-            \item \textbf{Normaliza}: a \texttt{cross\_entropy} já aplica a softmax e o $-\log$.
-            \item \textbf{Confere}: o alvo \texttt{context} é o vizinho real.
-        \end{enumerate}
-        \vspace{0.1cm}
-        {\scriptsize\color{dexpiRedDark} \textbf{O gargalo:} $N = 10^4$ já são $10^4$ contas por par. É o que a próxima seção resolve.}
-    \end{column}
-\end{columns}
-\end{frame}
