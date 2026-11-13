@@ -174,7 +174,11 @@
         \item O GloVe adiciona um viés para a palavra central, $b_i$, e outro para a de contexto, $c_j$:
     \end{itemize}
     \begin{equation*}
-        \boxed{\;\uu_j^\top \vv_i + b_i + c_j - \log x_{ij}\;}
+        \underbrace{\uu_j^\top \vv_i}_{\text{\scriptsize afinidade semântica}}
+        \;+\;
+        \underbrace{b_i + c_j}_{\text{\scriptsize popularidade individual}}
+        \;\approx\;
+        \underbrace{\log x_{ij}}_{\text{\scriptsize total de vezes que aparecem juntas}}
     \end{equation*}
     \begin{exampleblock}{O que os vieses fazem}
         \small
