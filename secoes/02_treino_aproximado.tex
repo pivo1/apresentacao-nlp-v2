@@ -19,7 +19,10 @@
         \begin{column}{0.48\textwidth}
             \begin{block}{Amostragem negativa}
                 \footnotesize
-                Compara a palavra certa (exemplo positivo) com apenas um pequeno grupo de palavras erradas sorteadas ao acaso (exemplos negativos), em vez de olhar o dicionário inteiro.
+               Ao invés de olhar o dicionário inteiro, Compara a palavra certa (exemplo positivo) com apenas um pequeno grupo de palavras erradas sorteadas ao acaso(exemplos negativos). \\\\\\
+               \vspace{-0.1cm}
+\textbf{Exemplos Positivos D = 1 
+\\Exemplos Negativos D = 0.}
             \end{block}
         \end{column}
         \begin{column}{0.48\textwidth}
@@ -35,51 +38,6 @@
         Para calcular a probabilidade de ``miou'' dado ``gato'', o numerador é barato: um único produto escalar. O problema é o denominador, que soma a exponencial do escore de \textit{todas} as palavras do dicionário. Com um vocabulário de 100 mil a 1 milhão de palavras, isso significa 100 mil a 1 milhão de produtos escalares para um único par.
         E isso se repete para cada vizinho de cada posição do corpus, que tem bilhões de palavras. É inviável.
         A Seção 15.2 do livro apresenta duas formas de aproximar esse cálculo: a amostragem negativa, que compara a palavra certa só com algumas palavras sorteadas, e a softmax hierárquica, que organiza o dicionário numa árvore. Vamos ver as duas.
-    }
-\end{frame}
-
-\begin{frame}{Amostragem negativa}
-    \small
-    \begin{itemize}
-        \item O modelo aprende a distinguir a palavra correta de $K$ \textbf{palavras de ruído} sorteadas ao acaso.
-    \end{itemize}
-    \centering
-    \begin{tikzpicture}[
-        w/.style={draw=dexpiBlue, rounded corners=2pt, minimum width=1.6cm, minimum height=0.6cm, font=\small},
-        real/.style={w, fill=dexpiGreenLight, draw=dexpiGreenDark},
-        neg/.style={w, fill=dexpiRedLight, draw=dexpiRedDark},
-        cen/.style={w, fill=dexpiBlue, text=white, font=\small\bfseries}]
-        \node[real] (p) at (0,0) {miou};
-        \node[cen] (c) at (3.2,0) {gato};
-        \node[neg] (n1) at (6.4,0) {avião};
-        \node[neg] (n2) at (8.6,0) {cloreto};
-        \draw[-{Stealth}, thick, dexpiGreenDark] (c) -- node[above, font=\scriptsize] {$D = 1$} (p);
-        \draw[-{Stealth}, thick, dexpiRedDark, dashed] (c) -- node[above, font=\scriptsize] {$D = 0$} (n1);
-        \draw[-{Stealth}, thick, dexpiRedDark, dashed] (c.south) to[bend right=18] node[below, font=\scriptsize] {$D = 0$} (n2.south);
-    \end{tikzpicture}
-
-    \vspace{0.1cm}
-    \raggedright
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{exampleblock}{1 exemplo positivo ($D = 1$)}
-                \footnotesize
-                A palavra \textbf{real} do contexto. Ex.: (gato, miou).
-            \end{exampleblock}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{alertblock}{$K$ exemplos negativos ($D = 0$)}
-                \footnotesize
-                Ruído que \textbf{não} está no contexto. Ex.: (gato, avião), (gato, cloreto). Em geral, $2 \le K \le 20$.
-            \end{alertblock}
-        \end{column}
-    \end{columns}
-
-    \note{
-        A ideia da amostragem negativa é mudar a pergunta. Em vez de perguntar ``qual das 1 milhão de palavras é a vizinha de gato?'', que é um problema com 1 milhão de classes, perguntamos ``este par de palavras aparece junto de verdade, ou é ruído?''. É uma classificação binária: sim ou não.
-        Para cada par real do texto, como (gato, miou), temos um exemplo positivo, que marcamos com $D = 1$.
-        Além dele, sorteamos ao acaso $K$ palavras de ruído, que não estão no contexto, como ``avião'' e ``cloreto''. Os pares (gato, avião) e (gato, cloreto) são exemplos negativos, marcados com $D = 0$.
-        O modelo aprende a dizer ``sim'' para o par real e ``não'' para os pares de ruído. Na prática, $K$ fica entre 2 e 20: muito menos que o tamanho do dicionário.
     }
 \end{frame}
 
@@ -179,12 +137,12 @@
         {\color{dexpiRedDark}\underbrace{P\left(D = 0 \mid w^{(t)}, w_k\right)}_{\text{cada negativo é falso}}}
     \end{equation*}
     \begin{itemize}
-        \item Para essa probabilidade ser alta, o modelo precisa acertar \textbf{as duas coisas}:
+        \item \textbf {Para maximizar a probabilidade total, o modelo tem de acertar as duas tarefas em simultâneo:}
         \begin{itemize}
-            \item dizer ``sim'' para (gato, miou);
-            \item dizer ``não'' para (gato, avião) e (gato, cloreto).
+            \item Dizer "Sim" ($D=1$) para pares verdadeiros como (gato, miou).;
+            \item Dizer "Não" ($D=0$) para pares aleatórios/falsos como (gato, avião) e (gato, cloreto).
         \end{itemize}
-        \item Agora fazer todos os vetores enormes \textbf{não funciona mais}: os negativos seriam penalizados.
+        \item Agora fazer todos os vetores na mesma direção \textbf{não funciona mais}: os negativos seriam penalizados.
     \end{itemize}
 
     \note{
@@ -195,7 +153,7 @@
     }
 \end{frame}
 
-\begin{frame}{Interpretando os dois termos e a vantagem}
+\begin{frame}{Negative Sampling e a Função de Perda}
     \vspace{-0.2cm}
     \begin{equation*}
         \mathcal{L} =
@@ -204,8 +162,8 @@
     \end{equation*}
     \footnotesize
     \begin{itemize}
-        \item {\color{dexpiGreenDark}\textbf{Primeiro termo}} ($-\log \sigma$): tenta \textbf{aproximar} ao máximo os vetores das palavras que realmente aparecem juntas no texto (\destaque{exemplo positivo}). Fica pequeno quando o produto escalar é grande.
-        \item {\color{dexpiRedDark}\textbf{Segundo termo}} ($\sum -\log \sigma(-x)$): tenta \textbf{afastar} ao máximo o vetor da palavra central das $K$ palavras de ruído sorteadas (\destaque{exemplos negativos}). Fica pequeno quando cada produto escalar é bem negativo.
+        \item {\color{dexpiGreenDark}\textbf{Primeiro termo}}: tenta \textbf{aproximar} ao máximo os vetores das palavras que realmente aparecem juntas no texto (\destaque{exemplo positivo}). Fica pequeno quando o produto escalar é grande.
+        \item {\color{dexpiRedDark}\textbf{Segundo termo}}: tenta \textbf{afastar} ao máximo o vetor da palavra central das $K$ palavras de ruído sorteadas (\destaque{exemplos negativos}). Fica pequeno quando cada produto escalar é bem negativo.
     \end{itemize}
     \begin{exampleblock}{Vantagem: o custo deixa de depender do dicionário}
         \small
@@ -220,7 +178,7 @@
     }
 \end{frame}
 
-\begin{frame}{Softmax hierárquica: o dicionário vira uma árvore}
+\begin{frame}{Softmax hierárquica}
     \begin{columns}[c]
         \begin{column}{0.48\textwidth}
             \small
