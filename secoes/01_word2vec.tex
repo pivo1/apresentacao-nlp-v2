@@ -38,6 +38,41 @@
     \end{columns}
 \end{frame}
 
+\begin{frame}{Resumo: do word2vec ao BERT}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        m/.style={fill=white, rounded corners=2pt, align=center, minimum width=1.75cm, minimum height=0.8cm, inner sep=2pt},
+        s/.style={-{Stealth}, thick, gray}]
+        \node[m, draw=dexpiRedDark] (w) at (0,0) {\textbf{word2vec}\\{\tiny 2013}};
+        \node[m, draw=dexpiRedDark] (g) at (2.2,0) {\textbf{GloVe}\\{\tiny 2014}};
+        \node[m, draw=dexpiRedDark] (f) at (4.4,0) {\textbf{fastText}\\{\tiny 2017}};
+        \node[m, draw=dexpiGreenDark] (e) at (6.6,0) {\textbf{ELMo}\\{\tiny 2018}};
+        \node[m, draw=dexpiGreenDark] (p) at (8.8,0) {\textbf{GPT}\\{\tiny 2018}};
+        \node[m, draw=dexpiBlue, fill=dexpiBlueLight, very thick] (b) at (11.0,0) {\textbf{BERT}\\{\tiny 2018}};
+        \foreach \a/\c in {w/g, g/f, f/e, e/p, p/b} \draw[s] (\a) -- (\c);
+        \draw[decorate, decoration={brace, mirror, amplitude=5pt}, dexpiRedDark] (-0.85,-0.55) -- (5.25,-0.55) node[midway, below=6pt, text=dexpiRedDark] {um vetor fixo por palavra};
+        \draw[decorate, decoration={brace, mirror, amplitude=5pt}, dexpiGreenDark] (5.75,-0.55) -- (11.85,-0.55) node[midway, below=6pt, text=dexpiGreenDark] {um vetor por palavra \textbf{em cada contexto}};
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    \raggedright
+    \footnotesize
+    \begin{itemize}
+        \item \textbf{2013--2017}: word2vec, GloVe e fastText aprendem o significado de uma palavra a partir das palavras que aparecem \textbf{perto} dela.
+        \item \textbf{Limite}: o vetor é o mesmo em qualquer frase.
+        \item \textbf{2018}: ELMo, GPT e BERT geram o vetor \textbf{a partir do contexto}.
+        \item \textbf{Hoje vamos ver}: como treinar o word2vec, o GloVe e o fastText, e como o BERT chega ao vetor contextual.
+    \end{itemize}
+
+    \note{
+        Antes de entrar nos detalhes, vamos olhar o caminho todo, que é o roteiro da apresentação.
+        Começamos com o word2vec, em 2013, passamos pelo GloVe, em 2014, e pelo fastText, em 2017. Esses três dão um vetor fixo por palavra, o mesmo em qualquer frase.
+        Em 2018 veio a virada: ELMo, GPT e BERT, que dão um vetor diferente para cada palavra em cada contexto.
+        A ideia que atravessa tudo, desde o word2vec, é a mesma: aprender o significado de uma palavra a partir das palavras que aparecem perto dela. O que muda é que, a partir de 2018, o vetor passa a depender da frase.
+        Hoje vamos ver como treinar o word2vec, o GloVe e o fastText, e depois como o BERT chega ao vetor contextual.
+    }
+\end{frame}
+
 \begin{frame}{Introdução: representação de palavras por vetores}
     \begin{center}
         {\normalsize\color{dexpiBlue}\textbf{Se um computador só entende números como ele vai entender palavras?}}

@@ -481,39 +481,3 @@ def forward(self, tokens, segments, valid_lens=None,
         No treino, a perda total é a soma das duas perdas: a do MLM mais a da NSP. O modelo é otimizado para as duas tarefas ao mesmo tempo, e o encoder, que é compartilhado, aprende com as duas.
     }
 \end{frame}
-
-\begin{frame}{Resumo: do word2vec ao BERT}
-    \centering
-    \begin{tikzpicture}[font=\scriptsize,
-        m/.style={fill=white, rounded corners=2pt, align=center, minimum width=1.75cm, minimum height=0.8cm, inner sep=2pt},
-        s/.style={-{Stealth}, thick, gray}]
-        \node[m, draw=dexpiRedDark] (w) at (0,0) {\textbf{word2vec}\\{\tiny 2013}};
-        \node[m, draw=dexpiRedDark] (g) at (2.2,0) {\textbf{GloVe}\\{\tiny 2014}};
-        \node[m, draw=dexpiRedDark] (f) at (4.4,0) {\textbf{fastText}\\{\tiny 2017}};
-        \node[m, draw=dexpiGreenDark] (e) at (6.6,0) {\textbf{ELMo}\\{\tiny 2018}};
-        \node[m, draw=dexpiGreenDark] (p) at (8.8,0) {\textbf{GPT}\\{\tiny 2018}};
-        \node[m, draw=dexpiBlue, fill=dexpiBlueLight, very thick] (b) at (11.0,0) {\textbf{BERT}\\{\tiny 2018}};
-        \foreach \a/\c in {w/g, g/f, f/e, e/p, p/b} \draw[s] (\a) -- (\c);
-        \draw[decorate, decoration={brace, mirror, amplitude=5pt}, dexpiRedDark] (-0.85,-0.55) -- (5.25,-0.55) node[midway, below=6pt, text=dexpiRedDark] {um vetor fixo por palavra};
-        \draw[decorate, decoration={brace, mirror, amplitude=5pt}, dexpiGreenDark] (5.75,-0.55) -- (11.85,-0.55) node[midway, below=6pt, text=dexpiGreenDark] {um vetor por palavra \textbf{em cada contexto}};
-    \end{tikzpicture}
-
-    \vspace{0.3cm}
-    \raggedright
-    \footnotesize
-    \begin{itemize}
-        \item \textbf{Arquitetura}: Transformer \textit{encoder} bidirecional; para cada tarefa, só uma camada de saída nova.
-        \item \textbf{Entrada}: \texttt{<cls>} e \texttt{<sep>}; cada posição é token $+$ segmento $+$ posição.
-        \item \textbf{Pré-treino}: MLM (adivinhar palavras escondidas, 80/10/10) $+$ NSP (as frases são vizinhas?).
-        \item \textbf{Dados}: auto-supervisionados, BookCorpus $+$ Wikipédia, sem anotação humana.
-        \item \textbf{Uso}: ajuste fino de todos os parâmetros na tarefa desejada.
-    \end{itemize}
-
-    \note{
-        Para fechar a seção, vamos olhar o caminho todo.
-        Começamos com o word2vec, em 2013, passamos pelo GloVe, em 2014, e pelo fastText, em 2017. Esses três dão um vetor fixo por palavra, o mesmo em qualquer frase.
-        Em 2018 veio a virada: ELMo, GPT e BERT, que dão um vetor diferente para cada palavra em cada contexto.
-        O BERT, em resumo: é um Transformer encoder bidirecional, que se adapta a qualquer tarefa com só uma camada de saída nova. Lê a entrada com os tokens \texttt{<cls>} e \texttt{<sep>}, e cada posição é a soma de três embeddings: token, segmento e posição. É pré-treinado com duas tarefas ao mesmo tempo: o MLM, que adivinha palavras escondidas com a regra 80, 10, 10, e a NSP, que diz se duas frases são vizinhas. Os dados são auto-supervisionados, tirados de livros e da Wikipédia sem nenhuma anotação humana. E, para usar, fazemos o ajuste fino de todos os parâmetros na tarefa que queremos.
-        A ideia que atravessa tudo, desde o word2vec, é a mesma: aprender o significado de uma palavra a partir das palavras que aparecem perto dela.
-    }
-\end{frame}
