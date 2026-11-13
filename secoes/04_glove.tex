@@ -190,7 +190,7 @@
 
 \begin{frame}{Mudança 3: a função de peso $h(x_{ij})$}
     \small
-    Para resolver os \textbf{eventos raros} e o custo de calcular todos os pares, o GloVe usa um peso:
+O GloVe usa um peso para dosar a importância de cada ocorrência dos pares de palavras. 
     \begin{equation*}
         h(x) = \begin{cases}
             (x / c)^{\alpha}, & x < c \\
@@ -198,9 +198,9 @@
         \end{cases}
     \end{equation*}
     \begin{itemize}
-        \item \textbf{$x = 0$} (nunca aparecem juntos): $h(0) = 0$ e o termo \textbf{some}. Como a matriz de coocorrência é esparsa, isso economiza muito: no minibatch, só amostramos pares com $x_{ij} \neq 0$.
-        \item \textbf{$x$ pequeno} (aparecem poucas vezes): o peso é \textbf{baixo}, e o modelo não se estressa com o par.
-        \item \textbf{$x$ grande} (aparecem muito): o peso para de crescer em $c$ (ex.: 100). Isso evita que pares como ``de a'' dominem a perda e façam os vetores \textbf{explodirem}.
+        \item \textbf{x = 0 (nunca ocorrem juntas):} \textbf{h(0) = 0}. Pares ausentes saem da conta, acelerando muito o treino.  
+        \item x $<$ c (pares raros): Peso cresce devagar. Poucos exemplos geram pouca confiança.  
+        \item \textbf{$x \ge c$ (pares muito frequentes): Peso trava em $1$ }(ex.: $c = 100$). Evita o monopólio de palavras gramaticais.
     \end{itemize}
 
     \note{
@@ -211,58 +211,6 @@
     }
 \end{frame}
 
-\begin{frame}{A função $h(x)$ em números}
-    \begin{columns}[c]
-        \begin{column}{0.50\textwidth}
-            \begin{equation*}
-                h(x) = \begin{cases}
-                    (x / c)^{\alpha}, & x < c \\
-                    1, & x \ge c
-                \end{cases}
-            \end{equation*}
-            \small
-            Com $c = 100$ e $\alpha = 0{,}75$:
-            \vspace{0.1cm}
-
-            \centering
-            \begin{tabular}{lccccc}
-                \toprule
-                $x_{ij}$ & 0 & 1 & 10 & 50 & $\ge 100$ \\
-                \midrule
-                $h(x_{ij})$ & 0 & 0,03 & 0,18 & 0,59 & 1 \\
-                \bottomrule
-            \end{tabular}
-        \end{column}
-        \begin{column}{0.46\textwidth}
-            \centering
-            \begin{tikzpicture}
-                \begin{axis}[
-                    width=6.0cm, height=4.2cm,
-                    xmin=0, xmax=160, ymin=0, ymax=1.2,
-                    axis lines=left, xtick={0,100}, xticklabels={0,$c = 100$}, ytick={0,1},
-                    tick label style={font=\tiny},
-                    xlabel={\scriptsize contagem $x_{ij}$}, ylabel={\scriptsize peso $h(x_{ij})$}]
-                    \addplot[very thick, dexpiBlue, domain=0:100, samples=60] {(x/100)^0.75};
-                    \addplot[very thick, dexpiBlue, domain=100:160] {1};
-                    \addplot[dashed, gray] coordinates {(100,0) (100,1)};
-                \end{axis}
-            \end{tikzpicture}
-        \end{column}
-    \end{columns}
-    \vspace{0.2cm}
-    \footnotesize
-    \begin{itemize}
-        \item $h(0) = 0$: pares que \textbf{nunca} aparecem juntos saem da soma (e evitamos $\log 0$).
-        \item Contagens pequenas (ruído) pesam \textbf{pouco}; pares muito comuns têm peso \textbf{travado} em 1, para não dominarem o treino.
-    \end{itemize}
-
-    \note{
-        Vamos ver a função $h$ com números, usando os valores do artigo: $c = 100$ e $\alpha = 0{,}75$. Ela depende só da contagem do par.
-        Pela tabela: um par que nunca aparece junto tem peso zero e sai da soma. Isso também evita o log de zero. Um par que aparece uma única vez, possivelmente por acaso, tem peso 0,03: quase não influencia. Com 10 ocorrências, 0,18; com 50, 0,59. A partir de 100 ocorrências, o peso trava em 1.
-        O travamento também importa: sem ele, pares extremamente comuns, como ``of the'' em inglês, teriam peso enorme e dominariam o treino.
-        Com isso, temos as três peças da equação final: o log das contagens, os vieses e o peso $h$.
-    }
-\end{frame}
 
 \begin{frame}{A equação final}
     \begin{itemize}
