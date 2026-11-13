@@ -210,56 +210,9 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{Representação de entrada: os tokens especiais}
-    \begin{columns}[t]
-        \begin{column}{0.46\textwidth}
-            \footnotesize
-            \begin{itemize}
-                \item Algumas tarefas têm \textbf{um texto} (ex.: sentimento), outras têm \textbf{dois} (ex.: inferência: a frase B decorre da A?).
-                \item \texttt{<cls>} (\textit{classification}): sempre no \textbf{início}. Seu vetor final resume a sequência e é usado para \textbf{classificar}.
-                \item \texttt{<sep>} (\textit{separator}): marca o \textbf{fim} de cada texto.
-                \item Segmento: \textbf{0} para o texto A, \textbf{1} para o texto B.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.52\textwidth}
-\begin{lstlisting}[basicstyle=\ttfamily\fontsize{6.2}{7.2}\selectfont]
-def get_tokens_and_segments(tokens_a, tokens_b=None):
-    tokens = ['<cls>'] + tokens_a + ['<sep>']
-    segments = [0] * (len(tokens_a) + 2)        # texto A -> 0
-    if tokens_b is not None:
-        tokens += tokens_b + ['<sep>']
-        segments += [1] * (len(tokens_b) + 1)   # texto B -> 1
-    return tokens, segments
-\end{lstlisting}
-        \end{column}
-    \end{columns}
-    \vspace{0.05cm}
-    \centering
-    \begin{tikzpicture}[font=\tiny,
-        t/.style={draw, minimum width=1.0cm, minimum height=0.45cm, inner sep=0pt},
-        esp/.style={t, draw=dexpiGreenDark, fill=dexpiGreenLight},
-        ta/.style={t, draw=dexpiBlue, fill=dexpiBlueLight},
-        tb/.style={t, draw=dexpiRedDark, fill=dexpiRedLight}]
-        \node[font=\scriptsize\bfseries, anchor=east] at (-0.6,0) {tokens};
-        \node[font=\scriptsize\bfseries, anchor=east] at (-0.6,-0.6) {segmentos};
-        \foreach \w/\s/\st [count=\k from 0] in {<cls>/0/esp, this/0/ta, movie/0/ta, is/0/ta, great/0/ta, <sep>/0/esp, i/1/tb, like/1/tb, it/1/tb, <sep>/1/esp} {
-            \node[\st] at ({1.1*\k},0) {\texttt{\w}};
-            \node[font=\scriptsize] at ({1.1*\k},-0.6) {\s};
-        }
-        \draw[decorate, decoration={brace, mirror, amplitude=3pt}, dexpiBlue] (-0.5,-0.82) -- (6.0,-0.82) node[midway, below=2pt, font=\scriptsize, text=dexpiBlue] {texto A};
-        \draw[decorate, decoration={brace, mirror, amplitude=3pt}, dexpiRedDark] (6.1,-0.82) -- (10.4,-0.82) node[midway, below=2pt, font=\scriptsize, text=dexpiRedDark] {texto B};
-    \end{tikzpicture}
 
-    \note{
-        Agora vamos ver como o BERT lê o texto, a chamada representação de entrada.
-        O primeiro ponto é que algumas tarefas recebem um texto só, como a análise de sentimento, e outras recebem dois textos, como a inferência de linguagem natural, em que perguntamos se a frase B decorre da frase A. O BERT precisa aceitar os dois formatos com a mesma entrada.
-        Para isso ele usa dois tokens especiais. O \texttt{<cls>}, de classification, vai sempre no início. Como o encoder é bidirecional, o vetor final desse token acaba resumindo a sequência toda, e é ele que usamos para classificar. O \texttt{<sep>}, de separator, marca o fim de cada texto.
-        Além dos tokens, cada posição recebe um número de segmento: 0 para tudo que pertence ao texto A, incluindo o \texttt{<cls>} e o primeiro \texttt{<sep>}, e 1 para o texto B e o \texttt{<sep>} final.
-        A figura mostra o exemplo do livro: ``this movie is great'' como texto A e ``i like it'' como texto B. O código, à direita, é a função do D2L que monta isso: põe o \texttt{<cls>} e o \texttt{<sep>}, e cria a lista de segmentos com zeros para A e uns para B.
-    }
-\end{frame}
 
-\begin{frame}{Representação de entrada: a soma de três embeddings}
+\begin{frame}{Representação de entrada}
     \centering
     \begin{tikzpicture}[font=\tiny,
         t/.style={minimum width=1.0cm, minimum height=0.42cm, inner sep=0pt},
@@ -387,61 +340,6 @@ def get_tokens_and_segments(tokens_a, tokens_b=None):
     }
 \end{frame}
 
-\begin{frame}[fragile]{MLM no código: a classe \texttt{MaskLM}}
-    \begin{columns}[c]
-        \begin{column}{0.60\textwidth}
-\begin{lstlisting}[basicstyle=\ttfamily\fontsize{5.9}{6.9}\selectfont]
-class MaskLM(nn.Module):
-    def __init__(self, vocab_size, num_hiddens, **kwargs):
-        super().__init__(**kwargs)
-        self.mlp = nn.Sequential(nn.LazyLinear(num_hiddens), nn.ReLU(),
-                                 nn.LayerNorm(num_hiddens),
-                                 nn.LazyLinear(vocab_size))
-
-    def forward(self, X, pred_positions):              # X: (B, T, d)
-        B, P = pred_positions.shape
-        batch_idx = torch.arange(B).repeat_interleave(P)
-        masked_X = X[batch_idx, pred_positions.reshape(-1)]
-        masked_X = masked_X.reshape((B, P, -1))       # (B, P, d)
-        return self.mlp(masked_X)                     # (B, P, |V|)
-
-mlm = MaskLM(vocab_size=10000, num_hiddens=768)
-mlm_positions = torch.tensor([[1, 5, 2], [6, 1, 5]])
-mlm_Y_hat = mlm(encoded_X, mlm_positions)   # torch.Size([2, 3, 10000])
-mlm_Y = torch.tensor([[7, 8, 9], [10, 20, 30]])  # palavras verdadeiras
-loss = nn.CrossEntropyLoss(reduction='none')
-mlm_l = loss(mlm_Y_hat.reshape((-1, 10000)), mlm_Y.reshape(-1))
-\end{lstlisting}
-            {\scriptsize (forward resumido; o D2L faz o mesmo em mais linhas)}
-        \end{column}
-        \begin{column}{0.38\textwidth}
-            \centering
-            \begin{tikzpicture}[font=\scriptsize,
-                p/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum width=4.4cm, align=center, inner sep=3pt},
-                s/.style={-{Stealth}, thick, dexpiBlue},
-                dim/.style={font=\tiny, text=dexpiRedDark, anchor=west}]
-                \node[p] (n1) at (0,0) {saída do \textit{encoder}: \texttt{encoded\_X}};
-                \node[p] (n2) at (0,-1.1) {pega só as posições mascaradas};
-                \node[p, fill=dexpiGreenLight, draw=dexpiGreenDark] (n3) at (0,-2.2) {MLP: Linear $\to$ ReLU $\to$\\LayerNorm $\to$ Linear};
-                \node[p] (n4) at (0,-3.45) {um escore por palavra\\do vocabulário};
-                \node[p, fill=dexpiRedLight, draw=dexpiRedDark] (n5) at (0,-4.6) {entropia cruzada com \texttt{mlm\_Y}};
-                \draw[s] (n1) -- node[dim, right=1pt] {(2, 8, 768)} (n2);
-                \draw[s] (n2) -- node[dim, right=1pt] {(2, 3, 768)} (n3);
-                \draw[s] (n3) -- node[dim, right=1pt] {(2, 3, 10000)} (n4);
-                \draw[s] (n4) -- node[dim, right=1pt] {6 perdas} (n5);
-            \end{tikzpicture}
-        \end{column}
-    \end{columns}
-
-    \note{
-        Agora o código do livro para o MLM. A classe MaskLM é a cabeça de saída dessa tarefa.
-        Ela recebe duas coisas: a saída do encoder, \texttt{encoded\_X}, que tem um vetor de contexto para cada posição, e as posições que foram mascaradas, \texttt{pred\_positions}. No exemplo, o lote tem 2 sequências de 8 tokens, com vetores de dimensão 768.
-        O forward primeiro pega só os vetores das posições mascaradas. O livro escolhe as posições 1, 5 e 2 da primeira sequência e 6, 1 e 5 da segunda. Ficamos com um tensor 2 por 3 por 768: duas sequências, três previsões por sequência.
-        Esses vetores passam por um MLP com uma camada oculta: linear, ReLU, LayerNorm e uma linear final do tamanho do vocabulário. A saída não é uma palavra: é um escore para cada uma das 10 mil palavras do vocabulário, que a softmax transforma em probabilidades. Por isso o formato é 2 por 3 por 10 mil.
-        Para a perda, \texttt{mlm\_Y} guarda os índices das palavras verdadeiras que estavam escondidas. A entropia cruzada compara as previsões com essas respostas. Com \texttt{reduction='none'}, ela devolve uma perda para cada uma das 6 previsões. Esse erro é que atualiza os pesos do BERT.
-        É a mesma entropia cruzada que vimos no word2vec: no fundo, é uma classificação com tantas classes quanto palavras no vocabulário.
-    }
-\end{frame}
 
 \begin{frame}{Tarefa de pré-treino 2: \textit{Next Sentence Prediction} (NSP)}
     \begin{columns}[c]
