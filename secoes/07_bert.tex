@@ -9,18 +9,9 @@
 
 \begin{frame}{Do vetor fixo ao vetor com contexto}
     \begin{columns}[c]
-        \begin{column}{0.46\textwidth}
-            \footnotesize
-            \begin{itemize}
-                \item word2vec, GloVe e fastText dão \textbf{um vetor por palavra}, qualquer que seja a frase: $f(x)$.
-                \item Mas o sentido depende do contexto. ``Crane'' pode ser um \textbf{grou} (a ave) ou um \textbf{guindaste}.
-                \item Ideia: o vetor depende da palavra \textbf{e} do contexto, $f(x, c(x))$.
-                \item \textbf{ELMo} (2018): uma LSTM bidirecional pré-treinada lê a frase inteira e gera o vetor de cada palavra.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.52\textwidth}
+        \begin{column}{0.9\textwidth}
             \centering
-            \begin{tikzpicture}[font=\scriptsize,
+            \begin{tikzpicture}[scale=1.15, transform shape, font=\scriptsize,
                 frase/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, inner sep=3pt},
                 vet/.style={circle, inner sep=2.2pt}]
                 % estatico
