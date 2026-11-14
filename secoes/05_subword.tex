@@ -51,16 +51,16 @@
     }
 \end{frame}
 
-\begin{frame}{fastText: a palavra como um saco de n-gramas}
-    \small
+\begin{frame}{fastText: a palavra como a soma dos seus n-gramas \cite{bojanowski2017enriching}}
+    \footnotesize
     \begin{itemize}
-        \item fastText \cite{bojanowski2017enriching}: marca o início e o fim com \texttt{<} e \texttt{>} e quebra a palavra em \textbf{n-gramas de caracteres}.
+        \item Marca o início e o fim com \texttt{<} e \texttt{>} e quebra a palavra em \textbf{n-gramas de caracteres}.
     \end{itemize}
-    \vspace{0.1cm}
+    \vspace{-0.1cm}
     \centering
-    \begin{tikzpicture}[
-        ch/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.6cm, minimum height=0.6cm, font=\small\ttfamily, inner sep=0pt},
-        ng/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\footnotesize\ttfamily, minimum height=0.55cm, inner sep=3pt}]
+    \begin{tikzpicture}[scale=0.72, transform shape,
+        ch/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.6cm, minimum height=0.55cm, font=\small\ttfamily, inner sep=0pt},
+        ng/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\footnotesize\ttfamily, minimum height=0.5cm, inner sep=3pt}]
         \foreach \c [count=\k] in {<,w,h,e,r,e,>} {
             \node[ch] (c\k) at (0.6*\k,0) {\c};
         }
@@ -69,33 +69,49 @@
         \node[font=\tiny, text=dexpiGreenDark] at ($(c2.south)+(0,-0.45)$) {janela de 3};
         \node[font=\tiny, text=dexpiRedDark] at ($(c3.north)+(0,0.45)$) {desliza 1 casa};
 
-        \node[ng] (g1) at (6.6,0.55) {<wh};
+        \node[ng] (g1) at (6.6,0.5) {<wh};
         \node[ng, right=0.15cm of g1] (g2) {whe};
         \node[ng, right=0.15cm of g2] (g3) {her};
         \node[ng, right=0.15cm of g3] (g4) {ere};
         \node[ng, right=0.15cm of g4] (g5) {re>};
-        \node[ng, fill=dexpiLightBlue, draw=dexpiBlue, below=0.35cm of g3] (g6) {<where>};
+        \node[ng, fill=dexpiLightBlue, draw=dexpiBlue, below=0.3cm of g3] (g6) {<where>};
         \node[font=\tiny, anchor=west] at (g6.east) {\;+ a palavra inteira};
         \draw[-{Stealth}, thick, dexpiBlue] (4.6,0) -- (5.9,0.4);
     \end{tikzpicture}
 
-    \vspace{0.3cm}
+    \vspace{-0.25cm}
     \raggedright
+    \scriptsize
     \begin{itemize}
-        \item Os marcadores separam prefixos e sufixos: o n-grama \texttt{her} (dentro de ``where'') é \textbf{diferente} da palavra \texttt{<her>}.
-        \item Na prática, usam-se todos os n-gramas com $3 \le n \le 6$.
+        \item Cada subpalavra $g$ tem seu vetor $\mathbf{z}_g$ e, com $\mathcal{G}_w$ = subpalavras de $w$, o vetor da palavra \textbf{é a soma};
     \end{itemize}
-    \begin{exampleblock}{Por que ajuda}
-        \footnotesize
-        ``gato'' e ``gatos'' compartilham \texttt{<ga}, \texttt{gat}, \texttt{ato}: os dois vetores passam a ter \textbf{partes em comum}.
-    \end{exampleblock}
+    \vspace{-0.15cm}
+    \begin{equation*}
+        \boxed{\;\vv_w = \sum_{g \in \mathcal{G}_w} \mathbf{z}_g\;}
+        \qquad
+        \text{ex.: } \vv_{\text{where}} = \mathbf{z}_{\texttt{<wh}} + \mathbf{z}_{\texttt{whe}} + \cdots + \mathbf{z}_{\texttt{<where>}}
+    \end{equation*}
+    \vspace{-0.3cm}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{Ganho}
+                \scriptsize
+                ``gato'' e ``gatos'' compartilham \texttt{<ga}, \texttt{gat}, \texttt{ato}: treinar ``gatos'' melhora ``gato''. Palavra \textbf{nova} (``gatinhos''): soma de n-gramas já treinados.
+            \end{exampleblock}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{Custo}
+                \scriptsize
+                Há \textbf{muito mais} subpalavras que palavras: mais parâmetros e mais conta por palavra.
+            \end{alertblock}
+        \end{column}
+    \end{columns}
 
     \note{
         O fastText, de Bojanowski e colegas, de 2017, é a primeira solução. Ele trata cada palavra como um conjunto de pedaços de caracteres, os n-gramas.
-        Primeiro, colocamos um marcador de início, o sinal de menor, e um de fim, o sinal de maior. Depois, deslizamos uma janela de tamanho 3 pela palavra. Para ``where'', saem os n-gramas: menor-w-h, w-h-e, h-e-r, e-r-e e r-e-maior. Também incluímos a palavra inteira, com os marcadores, como um item especial.
-        Os marcadores importam: o n-grama ``her'', que aparece no meio de ``where'', é diferente da palavra ``her'' sozinha, que vira menor-h-e-r-maior. Assim o modelo distingue prefixos, sufixos e o meio da palavra.
-        Na prática, não usamos só n-gramas de tamanho 3: usamos todos os tamanhos de 3 a 6.
-        E por que isso ajuda? Porque ``gato'' e ``gatos'' compartilham vários n-gramas, como menor-g-a, g-a-t e a-t-o. Então os vetores das duas palavras passam a ter partes em comum.
+        Primeiro, colocamos um marcador de início, o sinal de menor, e um de fim, o sinal de maior. Depois, deslizamos uma janela de tamanho 3 pela palavra. Para ``where'', saem os n-gramas: menor-w-h, w-h-e, h-e-r, e-r-e e r-e-maior. Também incluímos a palavra inteira, com os marcadores, como um item especial. Os marcadores importam: o n-grama ``her'', que aparece no meio de ``where'', é diferente da palavra ``her'' sozinha, que vira menor-h-e-r-maior. Na prática, usamos todos os tamanhos de 3 a 6.
+        Como o fastText usa esses pedaços? Cada subpalavra $g$ ganha o seu próprio vetor, $\mathbf{z}_g$. O vetor de uma palavra deixa de ser um parâmetro independente: passa a ser a soma dos vetores das suas subpalavras. O resto do modelo é o skip-gram que já conhecemos; só trocamos o vetor da palavra central por essa soma.
+        Como o vetor é uma soma, o gradiente chega em cada pedaço. Quando o modelo treina com ``gatos'', ele também ajusta os pedaços que ``gatos'' divide com ``gato'': palavras parecidas aprendem juntas. O ganho principal: uma palavra que nunca apareceu no treino, como ``gatinhos'', ainda ganha um vetor. O custo: existem muito mais subpalavras do que palavras, então há mais parâmetros e mais conta por palavra.
     }
 \end{frame}
 
