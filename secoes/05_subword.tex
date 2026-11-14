@@ -9,39 +9,27 @@
 
 \begin{frame}{Subword Embedding: olhando para dentro das palavras}
     {\footnotesize\color{gray}(cada palavra possui uma estrutura morfológica)}
-    \begin{columns}[c]
+    \vspace{0.2cm}
+    \begin{exampleblock}{ideia da seção (ex.: fastText)}
+        \small
+        Representar palavras pela \textbf{soma dos vetores dos seus pedaços} (ex.: $\vec{\text{gat}} + \vec{\text{inho}} + \vec{\text{s}}$). Palavras parecidas ou inéditas reaproveitam o conhecimento das partes, permitindo criar representações mesmo para termos \textbf{nunca vistos antes} no treino.
+    \end{exampleblock}
+
+    \vspace{0.3cm}
+    \begin{columns}[t]
         \begin{column}{0.49\textwidth}
-            \footnotesize
-            \begin{itemize}
-                \item \textbf{Raízes e sufixos são compartilhados e possuem significado próprio:}
-                \begin{itemize}
-                    \item \textbf{ajud}-ar $\to$ \textbf{ajud}-ou $\to$ \textbf{ajud}-ando
-                \end{itemize}
-                \item \textbf{A relação morfológica se repete sistematicamente em pares:}
-            \end{itemize}
-            \vspace{0.1cm}
-            \centering
-            \footnotesize
-            \begin{tabular}{rcl}
-                gat-o $\to$ gat-os & $\approx$ & cã-o $\to$ cã-es {\tiny (plural)} \\
-                gat-o $\to$ gat-inho & $\approx$ & cão $\to$ cão-zinho {\tiny (diminutivo)} \\
-            \end{tabular}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{alertblock}{modelos anteriores (word2vec, GloVe) ignoram isso}
-                \scriptsize
+            \begin{alertblock}{modelos anteriores (word2vec, GloVe)}
+                \small
                 Cada palavra recebe um vetor totalmente \textbf{independente}. Para o modelo, ``gato'' e ``gatinho'' são tão distantes quanto ``gato'' e ``avião''.
             \end{alertblock}
+        \end{column}
+        \begin{column}{0.49\textwidth}
             \begin{alertblock}{consequência prática}
-                \scriptsize
+                \small
                 Palavras raras têm vetores de baixa qualidade, e palavras \textbf{fora do vocabulário} (ex.: ``desajudar'') não possuem representação vetorial.
             \end{alertblock}
         \end{column}
     \end{columns}
-    \begin{exampleblock}{ideia da seção (ex.: fastText)}
-        \scriptsize
-        Representar palavras pela \textbf{soma dos vetores dos seus pedaços} (ex.: $\vec{\text{gat}} + \vec{\text{inho}} + \vec{\text{s}}$). Palavras parecidas ou inéditas reaproveitam o conhecimento das partes.
-    \end{exampleblock}
 
     \note{
         Os modelos que vimos até agora, word2vec e GloVe, tratam cada palavra como um bloco indivisível. Mas as palavras têm estrutura morfológica. Raízes e sufixos são compartilhados e têm significado próprio: ``ajudar'', ``ajudou'' e ``ajudando'' são a mesma ação em tempos verbais diferentes. E a relação se repete em pares: de ``gato'' para ``gatos'' é a mesma relação que de ``cão'' para ``cães'' (plural); de ``gato'' para ``gatinho'', a mesma que de ``cão'' para ``cãozinho'' (diminutivo).
