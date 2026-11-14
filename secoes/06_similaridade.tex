@@ -3,55 +3,6 @@
 %  https://d2l.ai/chapter_natural-language-processing-pretraining/similarity-analogy.html
 %========================================================================================
 
-%------------------------------------------------
-\section{Similaridade e analogia}
-%------------------------------------------------
-
-\begin{frame}{Usando vetores pré-treinados: similaridade}
-    \begin{columns}[c]
-        \begin{column}{0.50\textwidth}
-            \footnotesize
-            \begin{itemize}
-                \item Sem treinar: baixamos vetores \textbf{pré-treinados} (GloVe ou fastText).
-                \item O D2L usa o \textbf{GloVe 6B}: 6 bilhões de \textit{tokens} da Wikipédia, 400 mil palavras, $d = 50$.
-                \item Palavras parecidas com $w$: as $k$ de \textbf{maior cosseno} com $\xx_w$ (vizinhos mais próximos).
-            \end{itemize}
-            \begin{equation*}
-                \cos(\xx_a, \xx_b) = \frac{\xx_a^\top \xx_b}{\|\xx_a\|\,\|\xx_b\|}
-            \end{equation*}
-        \end{column}
-        \begin{column}{0.46\textwidth}
-            \centering
-            \footnotesize
-            \begin{tabular}{lll}
-                \toprule
-                \textbf{chip} & \textbf{baby} & \textbf{beautiful} \\
-                \midrule
-                chips {\scriptsize 0,856} & babies {\scriptsize 0,839} & lovely {\scriptsize 0,921} \\
-                intel {\scriptsize 0,749} & boy {\scriptsize 0,800} & gorgeous {\scriptsize 0,893} \\
-                electronics {\scriptsize 0,749} & girl {\scriptsize 0,792} & wonderful {\scriptsize 0,830} \\
-                \bottomrule
-            \end{tabular}
-
-            \vspace{0.1cm}
-            {\scriptsize As 3 palavras mais parecidas (cosseno), no GloVe 6B com $d = 50$.}
-        \end{column}
-    \end{columns}
-    \vspace{0.2cm}
-    \begin{exampleblock}{O que isso mostra}
-        \footnotesize
-        Os vizinhos fazem sentido: \textbf{plural} (chips, babies), \textbf{tema} (intel, electronics), \textbf{sinônimos} (lovely, gorgeous). No word2vec do PTB, ``chip'' dava microprocessor, mips e intel.
-    \end{exampleblock}
-
-    \note{
-        A Seção 15.7 mostra como usar os vetores depois de prontos. E a primeira observação é prática: na maioria das vezes, não precisamos treinar nada. Existem vetores pré-treinados, de GloVe e de fastText, disponíveis para download.
-        O livro usa o GloVe 6B, treinado em 6 bilhões de tokens da Wikipédia, com um vocabulário de 400 mil palavras. Ele usa a versão com vetores de dimensão 50.
-        A primeira aplicação é a similaridade: dada uma palavra, encontrar as mais parecidas. É uma busca de vizinhos mais próximos: calculamos o cosseno entre o vetor da palavra e o de todas as outras 400 mil, e ficamos com as maiores.
-        Os resultados do livro, na tabela: para ``chip'', as mais parecidas são ``chips'', ``intel'' e ``electronics''. Para ``baby'', ``babies'', ``boy'' e ``girl''. Para ``beautiful'', ``lovely'', ``gorgeous'' e ``wonderful''.
-        Reparem nos tipos de relação que aparecem: o plural da própria palavra, palavras do mesmo tema e sinônimos. E comparem com o word2vec que treinamos no PTB: lá, ``chip'' dava microprocessor, mips e intel. Com um corpus muito maior, os vizinhos ficam mais gerais e mais limpos.
-    }
-\end{frame}
-
 \begin{frame}{Analogias: aritmética de vetores}
     \begin{columns}[c]
         \begin{column}{0.56\textwidth}
