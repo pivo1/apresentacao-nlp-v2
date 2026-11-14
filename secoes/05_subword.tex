@@ -142,90 +142,72 @@
 \end{frame}
 
 \begin{frame}{Byte Pair Encoding (BPE)}
-    \small
-    \begin{itemize}
-        \item No fastText, os pedaços têm tamanho \textbf{fixo} ($3$ a $6$) e todos entram no vocabulário.
-        \item BPE \cite{sennrich2016neural}: deixa os \textbf{dados} decidirem quais pedaços valem a pena, com tamanhos \textbf{variáveis}.
-    \end{itemize}
-    \begin{block}{O algoritmo}
-        \footnotesize
-        \begin{enumerate}
-            \item Comece com o vocabulário de \textbf{caracteres} (mais \texttt{\_} para o fim da palavra).
-            \item Conte, no corpus, cada \textbf{par de símbolos vizinhos}.
-            \item \textbf{Junte} o par mais frequente num símbolo novo.
-            \item Repita os passos 2 e 3 um número fixo de vezes.
-        \end{enumerate}
-    \end{block}
-    \begin{exampleblock}{Resultado}
-        \footnotesize
-        Pedaços frequentes viram símbolos; palavras raras se quebram em pedaços menores. Usado no GPT-2 e no RoBERTa.
+    \footnotesize
+    No fastText, os pedaços têm tamanho \textbf{fixo} ($3$ a $6$). O BPE \cite{sennrich2016neural} deixa os \textbf{dados} decidirem quais pedaços valem a pena, com tamanhos \textbf{variáveis}.
+    \vspace{0.1cm}
+    \begin{columns}[t]
+        \begin{column}{0.44\textwidth}
+            \begin{block}{O algoritmo}
+                \scriptsize
+                \begin{enumerate}\setlength{\itemsep}{0pt}
+                    \item Comece com os \textbf{caracteres} (mais \texttt{\_} para o fim da palavra).
+                    \item Conte cada \textbf{par de símbolos vizinhos}.
+                    \item \textbf{Junte} o par mais frequente num símbolo novo.
+                    \item Repita 2 e 3 um número fixo de vezes.
+                \end{enumerate}
+            \end{block}
+            \centering
+            \scriptsize
+            \textbf{Corpus} (símbolos e frequência):
+            \begin{tabular}{lc}
+                \toprule
+                símbolos & freq. \
+                \midrule
+                \texttt{f a s t \_} & 4 \
+                \texttt{f a s t e r \_} & 3 \
+                \texttt{t a l l \_} & 5 \
+                \texttt{t a l l e r \_} & 4 \
+                \bottomrule
+            \end{tabular}
+
+            \raggedright
+            Par (\texttt{t}, \texttt{a}): em ``tall'' e ``taller'', $5 + 4 = \textbf{9}$.
+        \end{column}
+        \begin{column}{0.54\textwidth}
+            \centering
+            \scriptsize
+            \begin{tabular}{clcl}
+                \toprule
+                junção & par & freq. & novo símbolo \
+                \midrule
+                1 & (\texttt{t}, \texttt{a}) & 9 & \nz{\texttt{ta}} \
+                2 & (\texttt{ta}, \texttt{l}) & 9 & \nz{\texttt{tal}} \
+                3 & (\texttt{tal}, \texttt{l}) & 9 & \nz{\texttt{tall}} \
+                4 & (\texttt{f}, \texttt{a}) & 7 & \nz{\texttt{fa}} \
+                5 & (\texttt{fa}, \texttt{s}) & 7 & \nz{\texttt{fas}} \
+                6 & (\texttt{fas}, \texttt{t}) & 7 & \nz{\texttt{fast}} \
+                7 & (\texttt{e}, \texttt{r}) & 7 & \nz{\texttt{er}} \
+                8 & (\texttt{er}, \texttt{\_}) & 7 & \nz{\texttt{er\_}} \
+                9 & (\texttt{tall}, \texttt{\_}) & 5 & \nz{\texttt{tall\_}} \
+                10 & (\texttt{fast}, \texttt{\_}) & 4 & \nz{\texttt{fast\_}} \
+                \bottomrule
+            \end{tabular}
+        \end{column}
+    \end{columns}
+    \vspace{0.1cm}
+    \begin{exampleblock}{Depois de 10 junções}
+        \scriptsize
+        \texttt{fast\_} \quad \texttt{fast er\_} \quad \texttt{tall\_} \quad \texttt{tall er\_}
+        \hfill o sufixo \texttt{er\_} virou um símbolo próprio. Usado no GPT-2 e no RoBERTa.
     \end{exampleblock}
 
     \note{
         O fastText usa pedaços de tamanho fixo, de 3 a 6 caracteres, e todos eles entram no vocabulário, o que deixa o vocabulário enorme. O Byte Pair Encoding, ou BPE, de Sennrich e colegas, faz diferente: deixa os dados decidirem quais pedaços valem a pena, e os pedaços podem ter qualquer tamanho.
         O algoritmo é simples. Começamos com um vocabulário de caracteres, mais um símbolo especial, o sublinhado, que marca o fim da palavra. Contamos, no corpus inteiro, quantas vezes cada par de símbolos aparece um ao lado do outro. Juntamos o par mais frequente num símbolo novo. E repetimos isso um número fixo de vezes.
-        O resultado: os pedaços que aparecem muito viram símbolos próprios, e as palavras raras se quebram em pedaços menores. É o método usado em modelos de linguagem pré-treinados como o GPT-2 e o RoBERTa.
-    }
-\end{frame}
-
-\begin{frame}{BPE com números: as primeiras junções}
-    \begin{columns}[c]
-        \begin{column}{0.42\textwidth}
-            \small
-            \textbf{Corpus} (palavra: frequência):
-            \vspace{0.1cm}
-
-            \centering
-            \footnotesize
-            \begin{tabular}{lc}
-                \toprule
-                símbolos & freq. \\
-                \midrule
-                \texttt{f a s t \_} & 4 \\
-                \texttt{f a s t e r \_} & 3 \\
-                \texttt{t a l l \_} & 5 \\
-                \texttt{t a l l e r \_} & 4 \\
-                \bottomrule
-            \end{tabular}
-
-            \vspace{0.2cm}
-            \raggedright
-            Contagem do par (\texttt{t}, \texttt{a}): aparece em ``tall'' e ``taller'':
-            $5 + 4 = \textbf{9}$.
-        \end{column}
-        \begin{column}{0.54\textwidth}
-            \centering
-            \footnotesize
-            \begin{tabular}{clcl}
-                \toprule
-                junção & par & freq. & novo símbolo \\
-                \midrule
-                1 & (\texttt{t}, \texttt{a}) & 9 & \nz{\texttt{ta}} \\
-                2 & (\texttt{ta}, \texttt{l}) & 9 & \nz{\texttt{tal}} \\
-                3 & (\texttt{tal}, \texttt{l}) & 9 & \nz{\texttt{tall}} \\
-                4 & (\texttt{f}, \texttt{a}) & 7 & \nz{\texttt{fa}} \\
-                5 & (\texttt{fa}, \texttt{s}) & 7 & \nz{\texttt{fas}} \\
-                6 & (\texttt{fas}, \texttt{t}) & 7 & \nz{\texttt{fast}} \\
-                7 & (\texttt{e}, \texttt{r}) & 7 & \nz{\texttt{er}} \\
-                8 & (\texttt{er}, \texttt{\_}) & 7 & \nz{\texttt{er\_}} \\
-                9 & (\texttt{tall}, \texttt{\_}) & 5 & \nz{\texttt{tall\_}} \\
-                10 & (\texttt{fast}, \texttt{\_}) & 4 & \nz{\texttt{fast\_}} \\
-                \bottomrule
-            \end{tabular}
-        \end{column}
-    \end{columns}
-    \vspace{0.3cm}
-    \begin{exampleblock}{Depois de 10 junções}
-        \small
-        \texttt{fast\_} \quad \texttt{fast er\_} \quad \texttt{tall\_} \quad \texttt{tall er\_}
-        \hfill {\footnotesize o sufixo \texttt{er\_} virou um símbolo próprio}
-    \end{exampleblock}
-
-    \note{
-        Vamos rodar o BPE num exemplo do livro. O corpus tem quatro palavras: ``fast'' aparece 4 vezes, ``faster'' 3, ``tall'' 5 e ``taller'' 4. Cada palavra começa quebrada em caracteres, com o sublinhado no fim.
+        Vamos rodar num exemplo do livro. O corpus tem quatro palavras: ``fast'' aparece 4 vezes, ``faster'' 3, ``tall'' 5 e ``taller'' 4. Cada palavra começa quebrada em caracteres, com o sublinhado no fim.
         Contamos os pares vizinhos, levando em conta a frequência das palavras. O par t-a aparece em ``tall'' e em ``taller'', então a contagem é 5 mais 4, 9. É o par mais frequente, e vira o símbolo ``ta''.
-        Recontamos e repetimos. Na tabela, as dez junções em ordem: primeiro se forma ``tall'', com frequência 9; depois ``fast'', com 7; depois o sufixo ``er'' e ``er'' com o fim de palavra, também com 7; e por fim ``tall'' e ``fast'' com o fim de palavra.
-        Depois das dez junções, as palavras ficam assim: ``fast'' vira um símbolo só, ``faster'' vira ``fast'' mais ``er'', ``tall'' vira um símbolo só, e ``taller'' vira ``tall'' mais ``er''. Repare que o sufixo ``er'' virou um símbolo próprio: o algoritmo descobriu sozinho um pedaço com significado.
+        Na tabela, as dez junções em ordem: primeiro se forma ``tall'', com frequência 9; depois ``fast'', com 7; depois o sufixo ``er'' e ``er'' com o fim de palavra, também com 7; e por fim ``tall'' e ``fast'' com o fim de palavra.
+        Depois das dez junções, ``fast'' vira um símbolo só, ``faster'' vira ``fast'' mais ``er'', ``tall'' vira um símbolo só, e ``taller'' vira ``tall'' mais ``er''. O sufixo ``er'' virou um símbolo próprio: o algoritmo descobriu sozinho um pedaço com significado. É o método usado em modelos como o GPT-2 e o RoBERTa.
     }
 \end{frame}
 
