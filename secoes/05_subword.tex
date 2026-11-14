@@ -10,7 +10,7 @@
 \begin{frame}{Subword Embedding: olhando para dentro das palavras}
     {\footnotesize\color{gray}(cada palavra possui uma estrutura morfológica)}
     \vspace{0.2cm}
-    \begin{exampleblock}{ideia da seção (ex.: fastText)}
+    \begin{exampleblock}{Ideia Central (ex.: fastText)}
         \small
         Representar palavras pela \textbf{soma dos vetores dos seus pedaços} (ex.: $\vec{\text{gat}} + \vec{\text{inho}} + \vec{\text{s}}$). Palavras parecidas ou inéditas reaproveitam o conhecimento das partes, permitindo criar representações mesmo para termos \textbf{nunca vistos antes} no treino.
     \end{exampleblock}
@@ -40,13 +40,14 @@
 \end{frame}
 
 \begin{frame}{fastText: a palavra como a soma dos seus n-gramas \cite{bojanowski2017enriching}}
+\vspace{-0.08cm}
     \footnotesize
     \begin{itemize}
         \item Marca o início e o fim com \texttt{<} e \texttt{>} e quebra a palavra em \textbf{n-gramas de caracteres}.
     \end{itemize}
-    \vspace{-0.1cm}
+    \vspace{0.2cm}
     \centering
-    \begin{tikzpicture}[scale=0.72, transform shape,
+    \begin{tikzpicture}[scale=0.6, transform shape,
         ch/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.6cm, minimum height=0.55cm, font=\small\ttfamily, inner sep=0pt},
         ng/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\footnotesize\ttfamily, minimum height=0.5cm, inner sep=3pt}]
         \foreach \c [count=\k] in {<,w,h,e,r,e,>} {
@@ -67,13 +68,13 @@
         \draw[-{Stealth}, thick, dexpiBlue] (4.6,0) -- (5.9,0.4);
     \end{tikzpicture}
 
-    \vspace{-0.25cm}
+    \vspace{-0.05cm}
     \raggedright
     \scriptsize
     \begin{itemize}
         \item o vetor da palavra \textbf{é a soma} o de todos os vetores;
     \end{itemize}
-    \vspace{-0.15cm}
+    \vspace{0.1cm}
     \begin{equation*}
         \boxed{\;\vv_w = \sum_{g \in \mathcal{G}_w} \mathbf{z}_g\;}
         \qquad
