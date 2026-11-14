@@ -71,7 +71,7 @@
     \raggedright
     \scriptsize
     \begin{itemize}
-        \item Cada subpalavra $g$ tem seu vetor $\mathbf{z}_g$ e, com $\mathcal{G}_w$ = subpalavras de $w$, o vetor da palavra \textbf{é a soma};
+        \item o vetor da palavra \textbf{é a soma} o de todos os vetores;
     \end{itemize}
     \vspace{-0.15cm}
     \begin{equation*}
@@ -103,43 +103,7 @@
     }
 \end{frame}
 
-\begin{frame}{fastText: o vetor da palavra é a soma dos pedaços}
-    \small
-    \begin{itemize}
-        \item Cada subpalavra $g$ tem seu próprio vetor $\mathbf{z}_g$. Com $\mathcal{G}_w$ = subpalavras de $w$:
-    \end{itemize}
-    \begin{equation*}
-        \boxed{\;\vv_w = \sum_{g \in \mathcal{G}_w} \mathbf{z}_g\;}
-        \qquad
-        \text{ex.: } \vv_{\text{where}} = \mathbf{z}_{\texttt{<wh}} + \mathbf{z}_{\texttt{whe}} + \cdots + \mathbf{z}_{\texttt{<where>}}
-    \end{equation*}
-    \begin{itemize}
-        \item O resto é o \textbf{skip-gram} de sempre: só trocamos $\vv_w$ por essa soma.
-        \item O gradiente chega em cada $\mathbf{z}_g$: treinar ``gatos'' também melhora ``gato''.
-    \end{itemize}
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{exampleblock}{Ganho}
-                \footnotesize
-                Palavra \textbf{nova} (``gatinhos''): somamos os vetores dos n-gramas dela, que já foram treinados em outras palavras.
-            \end{exampleblock}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{alertblock}{Custo}
-                \footnotesize
-                Há \textbf{muito mais} subpalavras que palavras: mais parâmetros e mais conta por palavra.
-            \end{alertblock}
-        \end{column}
-    \end{columns}
 
-    \note{
-        Como o fastText usa esses pedaços? Cada subpalavra $g$ ganha o seu próprio vetor, $\mathbf{z}_g$. O vetor de uma palavra deixa de ser um parâmetro independente: ele passa a ser a soma dos vetores das suas subpalavras. Por exemplo, o vetor de ``where'' é o vetor de menor-w-h, mais o de w-h-e, e assim por diante, mais o da palavra inteira.
-        O resto do modelo é o skip-gram que já conhecemos. Só trocamos o vetor da palavra central por essa soma.
-        Como o vetor é uma soma, o gradiente chega em cada pedaço. Então, quando o modelo treina com ``gatos'', ele também ajusta os pedaços que ``gatos'' divide com ``gato''. As palavras parecidas aprendem juntas.
-        O ganho principal: uma palavra que nunca apareceu no treino, como ``gatinhos'', ainda ganha um vetor, somando os vetores dos seus n-gramas, que já foram treinados em outras palavras.
-        O custo: existem muito mais subpalavras do que palavras. O modelo tem mais parâmetros, e calcular o vetor de cada palavra exige somar vários pedaços.
-    }
-\end{frame}
 
 \begin{frame}{Byte Pair Encoding (BPE)}
     \small
@@ -147,15 +111,7 @@
         \item No fastText, os pedaços têm tamanho \textbf{fixo} ($3$ a $6$) e todos entram no vocabulário.
         \item BPE \cite{sennrich2016neural}: deixa os \textbf{dados} decidirem quais pedaços valem a pena, com tamanhos \textbf{variáveis}.
     \end{itemize}
-    \begin{block}{O algoritmo}
-        \footnotesize
-        \begin{enumerate}
-            \item Comece com o vocabulário de \textbf{caracteres} (mais \texttt{\_} para o fim da palavra).
-            \item Conte, no corpus, cada \textbf{par de símbolos vizinhos}.
-            \item \textbf{Junte} o par mais frequente num símbolo novo.
-            \item Repita os passos 2 e 3 um número fixo de vezes.
-        \end{enumerate}
-    \end{block}
+
     \begin{exampleblock}{Resultado}
         \footnotesize
         Pedaços frequentes viram símbolos; palavras raras se quebram em pedaços menores. Usado no GPT-2 e no RoBERTa.
