@@ -6,46 +6,12 @@
 % Entrada não nula da matriz de coocorrência
 \newcommand{\nz}[1]{\textbf{\color{dexpiBlue}#1}}
 
-%------------------------------------------------
-\section{GloVe: vetores globais}
-%------------------------------------------------
 
-\begin{frame}{Evolução para o modelo GloVe}
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{block}{word2vec}
-                \small
-                Passa pelo texto \textbf{janela por janela}. O par (gato, miou) é visto e atualizado \textbf{cada vez} que aparece.
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{exampleblock}{GloVe \cite{pennington2014glove}}
-                \small
-                Primeiro \textbf{conta} quantas vezes cada par aparece junto no corpus inteiro. Depois treina com essas \textbf{contagens globais}.
-            \end{exampleblock}
-        \end{column}
-    \end{columns}
-
-    \vspace{0.3cm}
-    \raggedright
-    \begin{exampleblock}{Analogia}
-        \small
-        Em vez de reler o livro inteiro várias vezes, fazemos um \textbf{resumo} (as contagens) e estudamos só o resumo.
-    \end{exampleblock}
-
-    \note{
-        A grande sacada do GloVe, de Pennington, Socher e Manning, de 2014, é usar a estatística global de todo o corpus, em vez de passar pelo texto janela por janela como faz o word2vec. O nome vem daí: \textit{Global Vectors}.
-        No word2vec, se o par (gato, miou) aparece 500 vezes no texto, o modelo vê esse par 500 vezes, em 500 janelas diferentes.
-        O GloVe faz diferente: percorre o corpus uma única vez e conta quantas vezes cada par de palavras aparece junto. Isso forma a matriz de coocorrência. O treino depois usa só essas contagens.
-        Uma analogia: o word2vec é como estudar relendo o livro inteiro várias vezes. O GloVe primeiro faz um resumo do livro, as contagens, e depois estuda só o resumo.
-    }
-\end{frame}
-
-\begin{frame}{A matriz de coocorrência}
+\begin{frame}{Modelo GloVe e a matriz de coocorrência}
     \begin{columns}[c]
         \begin{column}{0.40\textwidth}
             \small
-            \textbf{Corpus de brinquedo} (janela $= 1$):
+            \textbf{(janela $= 1$)}:
             \begin{itemize}
                 \item o gato miou
                 \item o gato dormiu
@@ -148,15 +114,10 @@
     \begin{equation*}
         \boxed{\;\left(\uu_j^\top \vv_i - \log x_{ij}\right)^2\;}
     \end{equation*}
-    \begin{exampleblock}{Intuição}
-        \footnotesize
-        Se ``gelo'' e ``sólido'' aparecem juntos 1000 vezes, o modelo quer $\uu_j^\top \vv_i = \log 1000 \approx 6{,}9$.
-        Se o produto escalar for $2{,}0$ (vetores meio distantes), o erro é $(2{,}0 - 6{,}9)^2 = 24{,}01$,
-        e o gradiente empurra os vetores para \textbf{aumentar} o produto escalar.
-    \end{exampleblock}
+
     \begin{block}{Ganho}
         \footnotesize
-        Some o denominador da softmax: cada termo custa $O(1)$ em vez de $O(|\V|)$.
+        Ao eliminar a softmax, o custo por par cai de $O(\vert{}V\vert{})$ para $O(1)$, pois o erro passa a depender apenas dos dois vetores envolvidos, sem precisar consultar o vocabulário inteiro.
     \end{block}
 
     \note{
@@ -167,51 +128,43 @@
     }
 \end{frame}
 
-\begin{frame}{Mudança 2: os vieses $b_i$ e $c_j$}
-    \small
-    \begin{itemize}
-        \item Algumas palavras são muito frequentes por pura \textbf{gramática} (``de'', ``a'', ``o''), não por relação semântica.
-        \item O GloVe adiciona um viés para a palavra central, $b_i$, e outro para a de contexto, $c_j$:
-    \end{itemize}
-    \begin{equation*}
-        \underbrace{\uu_j^\top \vv_i}_{\text{\scriptsize afinidade semântica}}
-        \;+\;
-        \underbrace{b_i + c_j}_{\text{\scriptsize popularidade individual}}
-        \;\approx\;
-        \underbrace{\log x_{ij}}_{\text{\scriptsize total de vezes que aparecem juntas}}
-    \end{equation*}
-    \begin{exampleblock}{O que os vieses fazem}
-        \small
-        O viés \textbf{absorve} a frequência bruta da palavra. Assim, os vetores $\uu$ e $\vv$ ficam livres para aprender só a \textbf{semântica}, sem se preocupar se a palavra é comum ou rara.
-    \end{exampleblock}
+\begin{frame}{Mudanças 2 e 3: os vieses e a função de peso}
+    \footnotesize
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Mudança 2: vieses $b_i$ e $c_j$}
+                \scriptsize
+                O GloVe soma um viés à palavra central, $b_i$, e outro à de contexto, $c_j$:
+                \begin{equation*}
+                    \underbrace{\uu_j^\top \vv_i}_{\text{\tiny afinidade semântica}}
+                    + \underbrace{b_i + c_j}_{\text{\tiny popularidade}}
+                    \approx \underbrace{\log x_{ij}}_{\text{\tiny vezes juntas}}
+                \end{equation*}
+                O viés \textbf{absorve} a frequência bruta: $\uu$ e $\vv$ ficam livres para aprender só a \textbf{semântica}.
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Mudança 3: função de peso $h(x_{ij})$}
+                \scriptsize
+                Um peso define a importância de cada par de palavras:
+                \begin{equation*}
+                    h(x) = \begin{cases}
+                        (x / c)^{\alpha}, & x < c \\
+                        1, & x \ge c
+                    \end{cases}
+                \end{equation*}
+                \begin{itemize}\setlength{\itemsep}{1pt}
+                    \item $x = 0$: $h(0) = 0$. Pares ausentes saem da conta, acelerando muito o treino.
+                    \item $x < c$ (raros): peso cresce devagar; poucos exemplos, pouca confiança.
+                    \item $x \ge c$ (muito frequentes, ex.: $c = 100$): peso trava em $1$, evitando o monopólio das palavras gramaticais.
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
 
     \note{
-        A segunda mudança são os vieses. Algumas palavras aparecem muito por pura gramática, como ``de'', ``a'' e ``o'', e não porque têm alguma relação de significado com as vizinhas.
-        Se só tivéssemos o produto escalar, os vetores dessas palavras teriam que crescer para dar conta dessas contagens enormes. Por isso o GloVe adiciona dois números aprendidos: um viés $b_i$ para a palavra central e um viés $c_j$ para a palavra de contexto.
-        O viés absorve o quanto a palavra é frequente. Com isso, os vetores $\uu$ e $\vv$ ficam livres para representar só o significado, sem se preocupar se a palavra é comum ou rara.
-    }
-\end{frame}
-
-\begin{frame}{Mudança 3: a função de peso $h(x_{ij})$}
-    \small
-O GloVe usa um peso para dosar a importância de cada ocorrência dos pares de palavras. 
-    \begin{equation*}
-        h(x) = \begin{cases}
-            (x / c)^{\alpha}, & x < c \\
-            1, & x \ge c
-        \end{cases}
-    \end{equation*}
-    \begin{itemize}
-        \item \textbf{x = 0 (nunca ocorrem juntas):} \textbf{h(0) = 0}. Pares ausentes saem da conta, acelerando muito o treino.  
-        \item x $<$ c (pares raros): Peso cresce devagar. Poucos exemplos geram pouca confiança.  
-        \item \textbf{$x \ge c$ (pares muito frequentes): Peso trava em $1$ }(ex.: $c = 100$). Evita o monopólio de palavras gramaticais.
-    \end{itemize}
-
-    \note{
-        A terceira mudança é a função de peso $h$. Ela resolve dois problemas de uma vez: os eventos raros e o custo de passar por todos os pares.
-        Se as duas palavras nunca aparecem juntas, $x$ é zero, $h$ de zero é zero e o termo inteiro some. Isso economiza um processamento gigantesco, porque a matriz de coocorrência é esparsa: a maioria das palavras nunca aparece junto com a maioria das outras. Por isso, no treino por minibatch, o livro só amostra pares com contagem diferente de zero.
-        Se $x$ é pequeno, o par apareceu poucas vezes, talvez por acaso, e o peso é baixo: o modelo não se estressa com ele.
-        Se $x$ é grande, o peso para de crescer ao chegar em $c$, por exemplo 100. Isso evita que pares como ``de'' e ``a'', que aparecem juntos um número enorme de vezes, dominem a função de perda e façam os vetores explodirem.
+        A segunda mudança são os vieses. Algumas palavras aparecem muito por pura gramática, como ``de'', ``a'' e ``o'', e não porque têm alguma relação de significado com as vizinhas. Se só tivéssemos o produto escalar, os vetores dessas palavras teriam que crescer para dar conta dessas contagens enormes. Por isso o GloVe adiciona dois números aprendidos: um viés $b_i$ para a palavra central e um viés $c_j$ para a palavra de contexto. O viés absorve o quanto a palavra é frequente, e os vetores ficam livres para representar só o significado.
+        A terceira mudança é a função de peso $h$. Ela resolve dois problemas de uma vez: os eventos raros e o custo de passar por todos os pares. Se as duas palavras nunca aparecem juntas, $x$ é zero, $h$ de zero é zero e o termo inteiro some. Isso economiza um processamento gigantesco, porque a matriz de coocorrência é esparsa. Se $x$ é pequeno, o par apareceu poucas vezes, talvez por acaso, e o peso é baixo. Se $x$ é grande, o peso para de crescer ao chegar em $c$, por exemplo 100, o que evita que pares como ``de'' e ``a'' dominem a função de perda e façam os vetores explodirem.
     }
 \end{frame}
 
@@ -229,16 +182,28 @@ O GloVe usa um peso para dosar a importância de cada ocorrência dos pares de p
         {\color{dexpiRedDark}\underbrace{\log x_{ij}}_{\substack{\text{a estatística real}\\ \text{do texto}}}}
         \Big)^2
     \end{equation*}
-    \begin{exampleblock}{Objetivo}
-        \small
-        Minimizar essa soma: um \textbf{erro quadrático ponderado}.
-    \end{exampleblock}
+    \begin{columns}[t]
+        \begin{column}{0.40\textwidth}
+            \begin{exampleblock}{Objetivo}
+                \footnotesize
+                Minimizar essa soma: um \textbf{erro quadrático ponderado}.
+            \end{exampleblock}
+        \end{column}
+        \begin{column}{0.56\textwidth}
+            \begin{block}{O GloVe é simétrico}
+                \scriptsize
+                $x_{ij} = x_{ji}$: o vetor central $\vv_i$ e o de contexto $\uu_i$ são \textbf{equivalentes} (no skip-gram, a probabilidade de $A$ perto de $B$ difere da de $B$ perto de $A$). 
+            \end{block}
+        \end{column}
+    \end{columns}
 
     \note{
         A equação final, a 15.5.4 do livro, junta as três mudanças. Em verde, o peso $h$, que ignora os pares raros e limita os frequentes. Em azul, o que o modelo prevê: o produto escalar mais os dois vieses. Em vermelho, a estatística real do texto: o log da contagem.
         O objetivo do treino é minimizar essa soma, um erro quadrático ponderado.
+        Um detalhe interessante: o GloVe é simétrico. No skip-gram, a probabilidade de $A$ aparecer perto de $B$ é calculada de forma diferente da de $B$ perto de $A$, porque o denominador depende de quem é a palavra central. No GloVe a contagem é simétrica, então os papéis de central e de contexto são equivalentes e os dois vetores de uma palavra deveriam ser iguais. Na prática, como começam aleatórios e diferentes, terminam ligeiramente diferentes. A recomendação dos autores é somar os dois no fim do treino e usar a soma como o vetor definitivo.
     }
 \end{frame}
+
 
 \begin{frame}{Treino do GloVe: o algoritmo}
     \centering
@@ -283,39 +248,6 @@ O GloVe usa um peso para dosar a importância de cada ocorrência dos pares de p
         Na caixa verde está o laço de treino. Começamos com todos os vetores e vieses aleatórios. Passo 1: sorteamos um minibatch de pares da lista. Passo 2: para cada par, medimos o erro, que é a previsão do modelo, o produto escalar mais os vieses, menos o log da contagem. Passo 3: corrigimos os vetores e os vieses na direção contrária ao gradiente da perda, o peso vezes o erro ao quadrado. E repetimos isso por várias épocas.
         Repare que dentro do laço o texto não aparece mais: só a lista de pares. É por isso que o tamanho do corpus deixa de importar depois da contagem.
         No fim, somamos os dois vetores de cada palavra para obter o vetor final; o motivo está no slide sobre simetria.
-    }
-\end{frame}
-
-\begin{frame}{Detalhe importante: o GloVe é simétrico}
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{block}{word2vec (skip-gram)}
-                \small
-                A probabilidade de $A$ perto de $B$ é calculada de forma \textbf{diferente} da de $B$ perto de $A$ (o denominador muda).
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{exampleblock}{GloVe}
-                \small
-                A contagem é \textbf{simétrica}: $x_{ij} = x_{ji}$. Se ``gato'' está perto de ``miou'', ``miou'' está perto de ``gato''.
-            \end{exampleblock}
-        \end{column}
-    \end{columns}
-    \vspace{0.3cm}
-    \begin{itemize}
-        \item Por isso, matematicamente, o vetor central $\vv_i$ e o de contexto $\uu_i$ de uma palavra são \textbf{equivalentes}.
-        \item Na prática, começam com valores aleatórios diferentes e terminam \textbf{ligeiramente diferentes}.
-    \end{itemize}
-    \begin{block}{Recomendação dos autores}
-        \centering
-        Vetor final da palavra $= \uu_i + \vv_i$
-    \end{block}
-
-    \note{
-        Um detalhe interessante: o GloVe é simétrico.
-        No skip-gram, a probabilidade de $A$ aparecer perto de $B$ é calculada de forma diferente da de $B$ aparecer perto de $A$, porque o denominador da softmax depende de quem é a palavra central.
-        No GloVe, a contagem é simétrica: se ``gato'' aparece na janela de ``miou'' 500 vezes, ``miou'' aparece na janela de ``gato'' as mesmas 500 vezes. Então os papéis de palavra central e de contexto são equivalentes, e os dois vetores de uma palavra deveriam ser iguais. Na prática, como começam com valores aleatórios diferentes, terminam ligeiramente diferentes.
-        A recomendação dos autores é somar os dois vetores no fim do treino e usar a soma como o vetor definitivo da palavra.
     }
 \end{frame}
 
