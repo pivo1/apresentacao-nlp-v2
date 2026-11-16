@@ -1,0 +1,316 @@
+%========================================================================================
+%  Seção 16.5 do D2L -- Natural Language Inference: Using Attention (Decomposable Attention)
+%  https://d2l.ai/chapter_natural-language-processing-applications/natural-language-inference-attention.html
+%========================================================================================
+
+%------------------------------------------------
+\section{Inferência de linguagem natural com atenção}
+%------------------------------------------------
+
+\begin{frame}{Inferência de linguagem natural: a tarefa}
+    \small
+    Dada uma \textbf{premissa} e uma \textbf{hipótese}, a hipótese decorre da premissa?
+    \vspace{0.15cm}
+    \begin{block}{Premissa}
+        \centering ``Um homem toca violão.''
+    \end{block}
+    \vspace{0.1cm}
+    {\centering
+    \footnotesize
+    \begin{tabular}{@{}lll@{}}
+        \toprule
+        Hipótese & Relação & Classe \\
+        \midrule
+        ``Alguém está fazendo música.''  & {\color{dexpiGreenDark}\textbf{implica}}     & \textit{entailment} \\
+        ``O homem está dormindo.''       & {\color{dexpiRedDark}\textbf{contradiz}}     & \textit{contradiction} \\
+        ``O homem é famoso.''            & {\color{dexpiBlue}\textbf{não dá para saber}} & \textit{neutral} \\
+        \bottomrule
+    \end{tabular}\par}
+
+    \vspace{0.2cm}
+    \begin{exampleblock}{Ideia central: alinhar, não ler em sequência}
+        \footnotesize
+        Para decidir, basta \textbf{alinhar} cada palavra de um lado com as do outro (``toca violão'' $\leftrightarrow$ ``fazendo música'') e checar se os trechos alinhados concordam. Nenhuma RNN pesada é necessária.
+    \end{exampleblock}
+
+    \note{
+        A tarefa de inferência de linguagem natural, ou NLI, recebe duas frases: a premissa e a hipótese. A pergunta é se, assumindo a premissa verdadeira, a hipótese também é verdadeira.
+        Tomando como premissa ``um homem toca violão'', há três respostas possíveis. ``Alguém está fazendo música'' é uma implicação, em inglês \textit{entailment}. ``O homem está dormindo'' é uma contradição. E ``o homem é famoso'' é neutra: a premissa não permite concluir nem uma coisa nem outra.
+        A ideia do modelo desta seção, a \textit{decomposable attention} \cite{parikh2016decomposable}, é que, para decidir isso, não precisamos ler as frases em sequência com uma RNN. Basta alinhar as palavras de uma frase com as da outra, e verificar se os trechos alinhados concordam, se contradizem ou se não têm relação.
+    }
+\end{frame}
+
+\begin{frame}{Visão geral: três etapas treinadas em conjunto}
+    \centering
+    \begin{tikzpicture}[
+        ent/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.9cm, minimum width=1.6cm},
+        etapa/.style={draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, align=center, font=\scriptsize\bfseries, minimum height=1.1cm, minimum width=2.3cm},
+        res/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.9cm, minimum width=1.6cm},
+        arr/.style={-{Stealth}, thick, dexpiBlue}]
+        \node[ent] (a) at (0,0.65) {premissa $A$\\$m$ tokens};
+        \node[ent] (b) at (0,-0.65) {hipótese $B$\\$n$ tokens};
+        \node[etapa] (att) at (3.0,0) {1. Attending\\{\scriptsize\mdseries alinha (MLP $f$)}};
+        \node[etapa] (cmp) at (6.0,0) {2. Comparing\\{\scriptsize\mdseries compara (MLP $g$)}};
+        \node[etapa] (agg) at (9.0,0) {3. Aggregating\\{\scriptsize\mdseries resume (MLP $h$)}};
+        \node[res] (y) at (11.6,0) {3 classes\\{\tiny ent./contr./neutra}};
+        \draw[arr] (a.east) -- (att.west |- a.east);
+        \draw[arr] (b.east) -- (att.west |- b.east);
+        \draw[arr] (att) -- (cmp);
+        \draw[arr] (cmp) -- (agg);
+        \draw[arr] (agg) -- (y);
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    \raggedright
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{O que cada etapa responde}
+                \footnotesize
+                \begin{itemize}\setlength{\itemsep}{1pt}
+                    \item \textbf{Attending}: a qual palavra do outro lado cada palavra corresponde?
+                    \item \textbf{Comparing}: o par alinhado concorda ou contradiz?
+                    \item \textbf{Aggregating}: somando as comparações, qual a classe?
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{Vantagem: a decomposição}
+                \footnotesize
+                Comparar todos os pares exigiria aplicar uma MLP $m \times n$ vezes. Aqui, $f$ roda uma vez por token: $m + n$ aplicações. O custo cresce de forma \textbf{linear}, e não quadrática, com o tamanho das frases.
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+
+    \note{
+        O modelo tem três etapas, treinadas em conjunto, de ponta a ponta. A entrada são as duas sequências: a premissa $A$, com $m$ tokens, e a hipótese $B$, com $n$ tokens.
+        A primeira etapa, \textit{attending}, alinha suavemente cada token de uma frase com os tokens da outra. A segunda, \textit{comparing}, compara cada token com o resumo do que foi alinhado a ele. A terceira, \textit{aggregating}, soma essas comparações e classifica em três classes.
+        O ganho computacional vem de um truque na primeira etapa. Em vez de passar cada par de tokens por uma MLP, o que daria $m$ vezes $n$ aplicações, a MLP $f$ é aplicada separadamente a cada token, em $m$ mais $n$ aplicações, e depois só fazemos produtos escalares entre os resultados. O custo passa de quadrático para linear no comprimento das frases.
+    }
+\end{frame}
+
+\begin{frame}{Etapa 1 --- Attending: a matriz de afinidade}
+    \small
+    \begin{itemize}
+        \item $A = (\mathbf{a}_1, \dots, \mathbf{a}_m)$ e $B = (\mathbf{b}_1, \dots, \mathbf{b}_n)$, com $\mathbf{a}_i, \mathbf{b}_j \in \mathbb{R}^d$ (embeddings).
+        \item Uma MLP $f$ \textbf{compartilhada} (mesmos pesos para $A$ e $B$) transforma cada token. A afinidade entre $\mathbf{a}_i$ e $\mathbf{b}_j$ é o produto escalar:
+    \end{itemize}
+    \begin{equation*}
+        \boxed{\;e_{ij} = f(\mathbf{a}_i)^\top f(\mathbf{b}_j)\;}, \qquad e_{ij} \in \mathbb{R},\quad E \in \mathbb{R}^{m \times n}
+    \end{equation*}
+    \begin{columns}[t]
+        \begin{column}{0.52\textwidth}
+            \begin{exampleblock}{Por que decompor $f(\mathbf{a}_i)$ e $f(\mathbf{b}_j)$?}
+                \footnotesize
+                A versão ingênua seria $f([\mathbf{a}_i, \mathbf{b}_j])$ para cada par: $m \times n$ chamadas de $f$. Decomposta, são $m + n$ chamadas, e os $mn$ pares viram uma multiplicação de matrizes: $E = f(A)\, f(B)^\top$.
+            \end{exampleblock}
+        \end{column}
+        \begin{column}{0.44\textwidth}
+            \begin{block}{Intuição}
+                \footnotesize
+                $e_{ij}$ grande $\Rightarrow$ as palavras são \textbf{parecidas} ou se complementam. Ex.: ``violão'' e ``música''.
+            \end{block}
+        \end{column}
+    \end{columns}
+
+    \note{
+        Vamos aos detalhes. Usamos $A$ para a premissa e $B$ para a hipótese, cada uma como uma sequência de vetores de embedding de dimensão $d$.
+        A afinidade entre o token $i$ da premissa e o token $j$ da hipótese é o produto escalar das saídas de uma MLP $f$. A mesma MLP é usada para as duas frases: os pesos são compartilhados.
+        Por que decompor? A versão ingênua passaria o par concatenado por $f$, o que exige uma chamada por par, $m$ vezes $n$. Decomposta, chamamos $f$ uma vez por token, $m$ mais $n$ chamadas, e o resto é uma multiplicação de matrizes, que roda bem em GPU. A matriz $E$ tem tamanho $m$ por $n$.
+        Intuitivamente, $e_{ij}$ é alto quando as duas palavras são parecidas ou se complementam, como violão e música.
+    }
+\end{frame}
+
+\begin{frame}{Etapa 1 --- Attending: alinhamento suave com softmax}
+    \small
+    Normalizando $E$ em cada direção, cada token ganha um \textbf{resumo ponderado} da outra frase:
+    \begin{equation*}
+        \boldsymbol{\beta}_i = \sum_{j=1}^{n} \underbrace{\frac{\exp(e_{ij})}{\sum_{k=1}^{n}\exp(e_{ik})}}_{\text{softmax na linha } i}\, \mathbf{b}_j,
+        \qquad
+        \boldsymbol{\alpha}_j = \sum_{i=1}^{m} \underbrace{\frac{\exp(e_{ij})}{\sum_{k=1}^{m}\exp(e_{kj})}}_{\text{softmax na coluna } j}\, \mathbf{a}_i
+    \end{equation*}
+    \begin{columns}[c]
+        \begin{column}{0.50\textwidth}
+            \footnotesize
+            \begin{itemize}\setlength{\itemsep}{2pt}
+                \item $\boldsymbol{\beta}_i \in \mathbb{R}^d$: a parte da \textbf{hipótese} $B$ que se alinha a $\mathbf{a}_i$.
+                \item $\boldsymbol{\alpha}_j \in \mathbb{R}^d$: a parte da \textbf{premissa} $A$ que se alinha a $\mathbf{b}_j$.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \scriptsize
+            Pesos $\mathrm{softmax}_j(e_{ij})$ \textit{(valores ilustrativos)}
+
+            \vspace{0.1cm}
+            \begin{tabular}{@{}lccc@{}}
+                \toprule
+                 & alguém & faz & música \\
+                \midrule
+                homem  & {\color{dexpiGreenDark}\textbf{0,80}} & 0,10 & 0,10 \\
+                toca   & 0,10 & {\color{dexpiGreenDark}\textbf{0,70}} & 0,20 \\
+                violão & 0,05 & 0,15 & {\color{dexpiGreenDark}\textbf{0,80}} \\
+                \bottomrule
+            \end{tabular}
+        \end{column}
+    \end{columns}
+    \vspace{0.1cm}
+    \begin{exampleblock}{Alinhamento suave}
+        \footnotesize
+        Cada linha soma 1: ``violão'' recebe $\boldsymbol{\beta} \approx$ (quase só ``música''). Não há escolha dura: é uma média ponderada, então tudo é diferenciável.
+    \end{exampleblock}
+
+    \note{
+        Agora transformamos as afinidades em pesos. Para cada token $i$ da premissa, fazemos uma softmax ao longo da linha $i$ de $E$, ou seja, sobre todos os tokens da hipótese. Os pesos somam 1. O vetor beta $i$ é a média ponderada dos vetores da hipótese com esses pesos: é a parte da hipótese que se alinha ao token $i$.
+        Simetricamente, para cada token $j$ da hipótese, fazemos a softmax ao longo da coluna $j$, e alfa $j$ é a média ponderada dos vetores da premissa.
+        Na tabela, com valores ilustrativos, ``violão'' presta muita atenção em ``música'', então o seu beta fica quase igual ao vetor de ``música''. Repare que o alinhamento é suave: não escolhemos uma palavra, fazemos uma média, e por isso tudo é diferenciável.
+    }
+\end{frame}
+
+\begin{frame}{Etapa 2 --- Comparing: o par concorda?}
+    \small
+    Concatenamos cada token com o seu \textbf{resumo alinhado} e passamos por uma MLP $g$:
+    \begin{equation*}
+        \boxed{\;\mathbf{v}_{1,i} = g\big([\mathbf{a}_i,\, \boldsymbol{\beta}_i]\big)\;}, \quad i = 1, \dots, m
+        \qquad\qquad
+        \boxed{\;\mathbf{v}_{2,j} = g\big([\mathbf{b}_j,\, \boldsymbol{\alpha}_j]\big)\;}, \quad j = 1, \dots, n
+    \end{equation*}
+    \begin{columns}[t]
+        \begin{column}{0.50\textwidth}
+            \begin{block}{Dimensões}
+                \footnotesize
+                $[\mathbf{a}_i, \boldsymbol{\beta}_i] \in \mathbb{R}^{2d}$ e $g: \mathbb{R}^{2d} \to \mathbb{R}^{H}$, logo $\mathbf{v}_{1,i}, \mathbf{v}_{2,j} \in \mathbb{R}^{H}$.
+                A mesma $g$ é aplicada a todos os pares, nos dois lados.
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{Intuição}
+                \footnotesize
+                $\mathbf{v}_{1,i}$ é um \textbf{veredito local}: ``violão'' + ``música'' $\Rightarrow$ concordam. ``toca'' + ``dormindo'' $\Rightarrow$ conflito. A $g$ aprende a distinguir esses casos.
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+    \vspace{0.1cm}
+    \begin{alertblock}{Cuidado}
+        \footnotesize
+        A comparação é feita \textbf{token a token}, sem olhar a posição da palavra na frase.
+    \end{alertblock}
+
+    \note{
+        Na etapa de comparação, pegamos cada token original e o resumo que foi alinhado a ele, concatenamos, e passamos por uma segunda MLP, a $g$. Para a premissa, concatenamos $\mathbf{a}_i$ com beta $i$. Para a hipótese, $\mathbf{b}_j$ com alfa $j$. A mesma $g$ serve aos dois lados.
+        Em termos de dimensão, a concatenação tem $2d$ componentes e $g$ a leva para uma dimensão oculta $H$.
+        A intuição: o vetor $\mathbf{v}_{1,i}$ é um veredito local sobre aquele pedaço. Se a palavra e o seu alinhamento concordam, como violão e música, o veredito é de concordância. Se há conflito, é de contradição. A rede aprende isso sozinha no treino.
+        Um cuidado: a comparação é por token, sem olhar a posição da palavra na frase. Voltamos a isso no resumo.
+    }
+\end{frame}
+
+\begin{frame}{Etapa 3 --- Aggregating: da comparação à classe}
+    \small
+    Somamos os vereditos locais de cada frase e classificamos:
+    \begin{equation*}
+        \mathbf{v}_1 = \sum_{i=1}^{m} \mathbf{v}_{1,i}, \qquad
+        \mathbf{v}_2 = \sum_{j=1}^{n} \mathbf{v}_{2,j}, \qquad
+        \boxed{\;\hat{\mathbf{y}} = h\big([\mathbf{v}_1,\, \mathbf{v}_2]\big)\;}
+    \end{equation*}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Dimensões}
+                \footnotesize
+                $\mathbf{v}_1, \mathbf{v}_2 \in \mathbb{R}^{H}$; $[\mathbf{v}_1, \mathbf{v}_2] \in \mathbb{R}^{2H}$; $h: \mathbb{R}^{2H} \to \mathbb{R}^{3}$, uma pontuação para cada classe do SNLI.
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{Por que somar?}
+                \footnotesize
+                A soma dá um vetor de tamanho \textbf{fixo} ($H$), qualquer que seja o comprimento da frase, e não depende da ordem dos tokens.
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+    \vspace{0.15cm}
+    \centering
+    \footnotesize
+    \begin{tabular}{@{}lc@{}}
+        \toprule
+        Saída de $h$ (após softmax) & Classe \\
+        \midrule
+        \textbf{0,85}\; 0,05\; 0,10 & {\color{dexpiGreenDark}\textit{entailment}} \\
+        \bottomrule
+    \end{tabular}
+    \;{\scriptsize\textit{(ilustrativo, para ``alguém está fazendo música'')}}
+
+    \note{
+        Por fim, a agregação. Para cada frase, somamos os vetores de comparação de todos os tokens: $\mathbf{v}_1$ é a soma dos $\mathbf{v}_{1,i}$ e $\mathbf{v}_2$ é a soma dos $\mathbf{v}_{2,j}$. A soma tem uma vantagem: o resultado tem sempre tamanho $H$, não importa o comprimento da frase.
+        Concatenamos os dois resumos e passamos por uma terceira MLP, $h$, que devolve três pontuações, uma para cada classe do SNLI: implicação, contradição e neutro. Com uma softmax e a entropia cruzada, treinamos tudo em conjunto.
+        Na tabela, um exemplo ilustrativo: para ``alguém está fazendo música'', a maior probabilidade fica com \textit{entailment}.
+    }
+\end{frame}
+
+\begin{frame}{Detalhes experimentais: SNLI e embeddings GloVe}
+    \begin{columns}[t]
+        \begin{column}{0.50\textwidth}
+            \begin{block}{Dados: SNLI \cite{bowman2015large}}
+                \footnotesize
+                \begin{itemize}\setlength{\itemsep}{2pt}
+                    \item Cerca de \textbf{570 mil} pares premissa/hipótese, escritos por humanos.
+                    \item 3 classes: \textit{entailment}, \textit{contradiction}, \textit{neutral}.
+                    \item Sequências cortadas ou preenchidas (\textit{padding}) até um tamanho fixo.
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Modelo no D2L \cite{zhang2023dive}}
+                \footnotesize
+                \begin{itemize}\setlength{\itemsep}{2pt}
+                    \item Embeddings \textbf{GloVe de 100 dimensões} ($d = 100$) para os tokens.
+                    \item Camadas ocultas das MLPs $f$, $g$ e $h$ com $\mathbf{200}$ unidades ($H = 200$).
+                    \item Treino de ponta a ponta com entropia cruzada.
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+    \vspace{0.1cm}
+    \begin{exampleblock}{Inferência com um par de frases (exemplo do D2L)}
+        \footnotesize
+        Premissa: \textit{``he is good .''}; hipótese: \textit{``he is bad .''}. O modelo devolve \textbf{contradiction}: ``he is'' se alinha a ``he is'' e concorda, mas ``good'' e ``bad'' se alinham entre si e entram em conflito.
+    \end{exampleblock}
+
+    \note{
+        No D2L, o modelo é treinado no SNLI, o \textit{Stanford Natural Language Inference corpus}, com cerca de 570 mil pares de premissa e hipótese escritos por pessoas, e três classes. As sequências são cortadas ou preenchidas até um comprimento fixo.
+        Os tokens de entrada são representados por embeddings GloVe pré-treinados, de 100 dimensões, que vimos na seção sobre o GloVe. As camadas ocultas das MLPs têm 200 unidades. O treino é de ponta a ponta, com entropia cruzada.
+        Para inferir, passamos um par de frases. No exemplo do livro, ``he is good'' e ``he is bad'', o modelo prevê contradição: ``he is'' se alinha a ``he is'' e a comparação concorda, mas ``good'' se alinha a ``bad'' e a comparação acusa conflito.
+    }
+\end{frame}
+
+\begin{frame}{Resumo, vantagens e limitações}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{Vantagens}
+                \footnotesize
+                \begin{itemize}\setlength{\itemsep}{2pt}
+                    \item \textbf{Paralelizável}: sem recorrência, só MLPs e produtos de matrizes.
+                    \item \textbf{Leve}: $m + n$ chamadas de $f$, em vez de $m \times n$.
+                    \item Captura \textbf{alinhamentos locais} entre as duas frases.
+                \end{itemize}
+            \end{exampleblock}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{Limitações}
+                \footnotesize
+                \begin{itemize}\setlength{\itemsep}{2pt}
+                    \item \textbf{Ignora a ordem das palavras} dentro de cada frase: é um ``saco de palavras alinhadas''.
+                    \item Embeddings fixos: ``bank'' tem o mesmo vetor em qualquer contexto.
+                \end{itemize}
+            \end{alertblock}
+        \end{column}
+    \end{columns}
+    \vspace{0.1cm}
+    \begin{block}{Conexão com o BERT}
+        \footnotesize
+        Atenção \textbf{com contexto} (Transformer, BERT) mantém a ideia de alinhar, mas considera a frase inteira e a posição.
+    \end{block}
+
+    \note{
+        Para fechar. As vantagens: o modelo é paralelizável, porque não tem recorrência; é leve, pelo truque da decomposição; captura alinhamentos locais entre as duas frases; e é interpretável, porque a matriz de afinidade mostra o que foi alinhado.
+        As limitações: ele ignora a ordem das palavras dentro de cada frase. Como os vetores de comparação são somados, ``o cão mordeu o homem'' e ``o homem mordeu o cão'' ficam muito parecidos. É um saco de palavras alinhadas. Além disso, os embeddings são fixos, sem contexto.
+        Isso motiva modelos com atenção contextual, como o Transformer e o BERT que já vimos, que mantêm a ideia de alinhar via atenção, mas representam cada palavra levando em conta a frase inteira e a posição.
+    }
+\end{frame}
