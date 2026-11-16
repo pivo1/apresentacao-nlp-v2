@@ -7,7 +7,7 @@
 \section{Inferência de linguagem natural com atenção}
 %------------------------------------------------
 
-\begin{frame}{Inferência de linguagem natural: a tarefa}
+\begin{frame}{Inferência de linguagem natural (Attention)}
     \small
     Dada uma \textbf{premissa} e uma \textbf{hipótese}, a hipótese decorre da premissa?
     \vspace{0.15cm}
@@ -241,76 +241,5 @@
         Por fim, a agregação. Para cada frase, somamos os vetores de comparação de todos os tokens: $\mathbf{v}_1$ é a soma dos $\mathbf{v}_{1,i}$ e $\mathbf{v}_2$ é a soma dos $\mathbf{v}_{2,j}$. A soma tem uma vantagem: o resultado tem sempre tamanho $H$, não importa o comprimento da frase.
         Concatenamos os dois resumos e passamos por uma terceira MLP, $h$, que devolve três pontuações, uma para cada classe do SNLI: implicação, contradição e neutro. Com uma softmax e a entropia cruzada, treinamos tudo em conjunto.
         Na tabela, um exemplo ilustrativo: para ``alguém está fazendo música'', a maior probabilidade fica com \textit{entailment}.
-    }
-\end{frame}
-
-\begin{frame}{Detalhes experimentais: SNLI e embeddings GloVe}
-    \begin{columns}[t]
-        \begin{column}{0.50\textwidth}
-            \begin{block}{Dados: SNLI \cite{bowman2015large}}
-                \footnotesize
-                \begin{itemize}\setlength{\itemsep}{2pt}
-                    \item Cerca de \textbf{570 mil} pares premissa/hipótese, escritos por humanos.
-                    \item 3 classes: \textit{entailment}, \textit{contradiction}, \textit{neutral}.
-                    \item Sequências cortadas ou preenchidas (\textit{padding}) até um tamanho fixo.
-                \end{itemize}
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Modelo no D2L \cite{zhang2023dive}}
-                \footnotesize
-                \begin{itemize}\setlength{\itemsep}{2pt}
-                    \item Embeddings \textbf{GloVe de 100 dimensões} ($d = 100$) para os tokens.
-                    \item Camadas ocultas das MLPs $f$, $g$ e $h$ com $\mathbf{200}$ unidades ($H = 200$).
-                    \item Treino de ponta a ponta com entropia cruzada.
-                \end{itemize}
-            \end{block}
-        \end{column}
-    \end{columns}
-    \vspace{0.1cm}
-    \begin{exampleblock}{Inferência com um par de frases (exemplo do D2L)}
-        \footnotesize
-        Premissa: \textit{``he is good .''}; hipótese: \textit{``he is bad .''}. O modelo devolve \textbf{contradiction}: ``he is'' se alinha a ``he is'' e concorda, mas ``good'' e ``bad'' se alinham entre si e entram em conflito.
-    \end{exampleblock}
-
-    \note{
-        No D2L, o modelo é treinado no SNLI, o \textit{Stanford Natural Language Inference corpus}, com cerca de 570 mil pares de premissa e hipótese escritos por pessoas, e três classes. As sequências são cortadas ou preenchidas até um comprimento fixo.
-        Os tokens de entrada são representados por embeddings GloVe pré-treinados, de 100 dimensões, que vimos na seção sobre o GloVe. As camadas ocultas das MLPs têm 200 unidades. O treino é de ponta a ponta, com entropia cruzada.
-        Para inferir, passamos um par de frases. No exemplo do livro, ``he is good'' e ``he is bad'', o modelo prevê contradição: ``he is'' se alinha a ``he is'' e a comparação concorda, mas ``good'' se alinha a ``bad'' e a comparação acusa conflito.
-    }
-\end{frame}
-
-\begin{frame}{Resumo, vantagens e limitações}
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{exampleblock}{Vantagens}
-                \footnotesize
-                \begin{itemize}\setlength{\itemsep}{2pt}
-                    \item \textbf{Paralelizável}: sem recorrência, só MLPs e produtos de matrizes.
-                    \item \textbf{Leve}: $m + n$ chamadas de $f$, em vez de $m \times n$.
-                    \item Captura \textbf{alinhamentos locais} entre as duas frases.
-                \end{itemize}
-            \end{exampleblock}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{alertblock}{Limitações}
-                \footnotesize
-                \begin{itemize}\setlength{\itemsep}{2pt}
-                    \item \textbf{Ignora a ordem das palavras} dentro de cada frase: é um ``saco de palavras alinhadas''.
-                    \item Embeddings fixos: ``bank'' tem o mesmo vetor em qualquer contexto.
-                \end{itemize}
-            \end{alertblock}
-        \end{column}
-    \end{columns}
-    \vspace{0.1cm}
-    \begin{block}{Conexão com o BERT}
-        \footnotesize
-        Atenção \textbf{com contexto} (Transformer, BERT) mantém a ideia de alinhar, mas considera a frase inteira e a posição.
-    \end{block}
-
-    \note{
-        Para fechar. As vantagens: o modelo é paralelizável, porque não tem recorrência; é leve, pelo truque da decomposição; captura alinhamentos locais entre as duas frases; e é interpretável, porque a matriz de afinidade mostra o que foi alinhado.
-        As limitações: ele ignora a ordem das palavras dentro de cada frase. Como os vetores de comparação são somados, ``o cão mordeu o homem'' e ``o homem mordeu o cão'' ficam muito parecidos. É um saco de palavras alinhadas. Além disso, os embeddings são fixos, sem contexto.
-        Isso motiva modelos com atenção contextual, como o Transformer e o BERT que já vimos, que mantêm a ideia de alinhar via atenção, mas representam cada palavra levando em conta a frase inteira e a posição.
     }
 \end{frame}
