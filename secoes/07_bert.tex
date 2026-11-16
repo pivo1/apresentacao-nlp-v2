@@ -226,40 +226,61 @@
 
 \begin{frame}{Tarefa de pré-treino 2: \textit{Next Sentence Prediction} (NSP)}
     \begin{columns}[c]
-        \begin{column}{0.48\textwidth}
-            \footnotesize
-            \begin{itemize}
-                \item O MLM ensina palavras \textbf{dentro} de uma frase. Mas perguntas e respostas e inferência exigem a \textbf{relação entre duas frases}.
-                \item NSP: classificação \textbf{binária}. ``A frase B vem logo depois da A no texto?''
-                \item Na geração dos pares:
-                \begin{itemize}
-                    \footnotesize
-                    \item 50\%: B é a frase seguinte de verdade $\Rightarrow$ {\color{dexpiGreenDark}\textbf{True}};
-                    \item 50\%: B é uma frase aleatória do corpus $\Rightarrow$ {\color{dexpiRedDark}\textbf{False}}.
-                \end{itemize}
-                \item Quem responde é o vetor do \texttt{<cls>}: como o \textit{encoder} é bidirecional, ele ``absorve'' as duas frases.
+        \begin{column}{0.42\textwidth}
+            \scriptsize
+            {\color{dexpiBlue}\textbf{Por que existe?}}\par
+            O MLM entende palavras \textbf{dentro} de uma frase, mas perguntas e respostas exigem entender a \textbf{relação entre duas frases}.
+
+            \vspace{0.25cm}
+            {\color{dexpiBlue}\textbf{O jogo (classificação binária)}}\par
+            O modelo recebe (Frase A, Frase B) e responde: \textit{``B vem logo depois de A no texto original?''}
+            \begin{itemize}\setlength{\itemsep}{0pt}
+                \item 50\% ({\color{dexpiGreenDark}\textbf{True}}): B é a continuação real de A.
+                \item 50\% ({\color{dexpiRedDark}\textbf{False}}): B é uma frase aleatória do corpus.
             \end{itemize}
+
+            \vspace{0.1cm}
+            {\color{dexpiBlue}\textbf{Quem dá a resposta?}}\par
+            Apenas o vetor do \texttt{<cls>}. Como o \textit{encoder} é bidirecional, ele ``absorve'' e resume o contexto das duas frases.
         \end{column}
-        \begin{column}{0.50\textwidth}
+        \begin{column}{0.56\textwidth}
             \centering
             \begin{tikzpicture}[font=\tiny,
-                fa/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum width=2.55cm, minimum height=0.45cm, inner sep=1pt},
-                fb/.style={rounded corners=2pt, minimum width=2.55cm, minimum height=0.45cm, inner sep=1pt}]
-                \node[font=\scriptsize\bfseries, anchor=west] at (-1.3,2.9) {Exemplos de pares};
-                \node[fa] (a1) at (0,2.35) {A: \texttt{this movie is great}};
-                \node[fb, draw=dexpiGreenDark, fill=dexpiGreenLight] (b1) at (2.7,2.35) {B: \texttt{i like it}};
-                \node[font=\scriptsize\bfseries, text=dexpiGreenDark, anchor=west] at (4.05,2.35) {True};
-                \node[fa] (a2) at (0,1.75) {A: \texttt{this movie is great}};
-                \node[fb, draw=dexpiRedDark, fill=dexpiRedLight] (b2) at (2.7,1.75) {B: \texttt{the sky is blue}};
-                \node[font=\scriptsize\bfseries, text=dexpiRedDark, anchor=west] at (4.05,1.75) {False};
-                % pipeline
-                \node[draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, minimum width=5.2cm, minimum height=0.5cm, font=\scriptsize\bfseries] (enc) at (1.35,0.6) {BERT \textit{encoder}};
-                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=0.9cm, minimum height=0.4cm, inner sep=0pt] (cls) at (-0.75,-0.35) {\texttt{<cls>}};
-                \foreach \x in {0.4,1.2,2.0,2.8,3.6} \node[draw=gray, fill=gray!10, minimum width=0.6cm, minimum height=0.4cm] at (\x,-0.35) {};
-                \draw[-{Stealth}, thick, dexpiGreenDark] (enc.south -| cls) -- (cls);
-                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, align=center, font=\scriptsize] (mlp) at (-0.75,-1.35) {MLP\\{\tiny\texttt{hidden} +}\\{\tiny\texttt{NextSentencePred}}};
-                \draw[-{Stealth}, thick, dexpiGreenDark] (cls) -- (mlp);
-                \node[font=\scriptsize, anchor=west, align=left] at (0.55,-1.35) {2 saídas: True / False\\{\tiny\texttt{nsp\_Y\_hat.shape}:}\\{\tiny\texttt{torch.Size([2, 2])}}};
+                fa/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum width=2.4cm, minimum height=0.42cm, inner sep=1pt},
+                fb/.style={rounded corners=2pt, minimum width=2.1cm, minimum height=0.42cm, inner sep=1pt},
+                tk/.style={draw=dexpiBlue, fill=white, minimum width=0.58cm, minimum height=0.42cm, inner sep=0pt},
+                sp/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.58cm, minimum height=0.42cm, inner sep=0pt},
+                cn/.style={draw=gray!50, fill=gray!10, minimum width=0.58cm, minimum height=0.3cm, inner sep=0pt},
+                sub/.style={-{Stealth[length=1.3mm]}, dexpiBlue!60, line width=0.4pt}]
+                % exemplos (topo)
+                \node[font=\scriptsize\bfseries, anchor=west] at (0,4.85) {Exemplos de pares};
+                \node[fa] (a1) at (1.2,4.4) {A: \texttt{this movie is great}};
+                \node[fb, draw=dexpiGreenDark, fill=dexpiGreenLight] (b1) at (3.85,4.4) {B: \texttt{i like it}};
+                \node[font=\scriptsize\bfseries, text=dexpiGreenDark, anchor=west] at (5.0,4.4) {True};
+                \node[fa] (a2) at (1.2,3.95) {A: \texttt{this movie is great}};
+                \node[fb, draw=dexpiRedDark, fill=dexpiRedLight] (b2) at (3.85,3.95) {B: \texttt{the sky is blue}};
+                \node[font=\scriptsize\bfseries, text=dexpiRedDark, anchor=west] at (5.0,3.95) {False};
+                % saida e classificador (de cima para baixo)
+                \node[font=\scriptsize\bfseries, align=center] (out) at (2.1,3.2) {\textcolor{dexpiGreenDark}{True (\textit{IsNext})} / \textcolor{dexpiRedDark}{False (\textit{NotNext})}};
+                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize\bfseries, minimum height=0.5cm, inner sep=3pt] (clf) at (2.1,2.5) {Classificador Binário (Camada Linear)};
+                \draw[-{Stealth}, thick, dexpiGreenDark] (clf.north) -- (out.south);
+                % posicoes de saida do encoder
+                \node[cn, draw=dexpiGreenDark, fill=dexpiGreenLight, minimum height=0.4cm] (c0) at (-1.0,1.8) {\texttt{<cls>}};
+                \foreach \k in {1,...,9} \node[cn] (c\k) at ({-1.0+0.68*\k},1.8) {};
+                \draw[-{Stealth}, thick, dexpiGreenDark] (c0.north) |- (clf.west);
+                % encoder
+                \node[draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, minimum width=6.4cm, minimum height=0.5cm, font=\scriptsize\bfseries] (enc) at (2.1,1.0) {BERT \textit{encoder}};
+                \foreach \k in {0,...,9} \draw[sub] ({-1.0+0.68*\k},0.45) -- ({-1.0+0.68*\k},0.75);
+                \foreach \k in {0,...,9} \draw[-{Stealth[length=1.3mm]}, gray!60, line width=0.4pt] ({-1.0+0.68*\k},1.25) -- ({-1.0+0.68*\k},1.62);
+                \draw[-{Stealth[length=1.5mm]}, thick, dexpiGreenDark] (-1.0,1.25) -- (-1.0,1.62);
+                % entrada (base)
+                \foreach \w [count=\k from 0] in {<cls>, this, movie, is, great, <sep>, i, like, it, <sep>} {
+                    \ifnum\k=0 \node[sp] (t\k) at ({-1.0+0.68*\k},0.2) {\texttt{\w}};
+                    \else\ifnum\k=5 \node[sp] (t\k) at ({-1.0+0.68*\k},0.2) {\texttt{\w}};
+                    \else\ifnum\k=9 \node[sp] (t\k) at ({-1.0+0.68*\k},0.2) {\texttt{\w}};
+                    \else \node[tk] (t\k) at ({-1.0+0.68*\k},0.2) {\texttt{\w}};
+                    \fi\fi\fi
+                }
             \end{tikzpicture}
         \end{column}
     \end{columns}
@@ -269,7 +290,7 @@
         Por que ela existe? O MLM ensina o BERT a entender palavras dentro de uma frase. Mas muitas tarefas, como responder perguntas ou a inferência de linguagem natural, exigem entender a relação lógica entre duas frases. O MLM não ensina isso explicitamente.
         A NSP é uma classificação binária, sim ou não. O modelo recebe um par de frases, A e B, e precisa dizer se B é de fato a frase que vem logo depois de A no texto original.
         Os dados são gerados assim: em metade dos casos, B é realmente a frase seguinte, e o rótulo é True. Na outra metade, B é uma frase aleatória pega de qualquer lugar do corpus, e o rótulo é False. Nos exemplos da figura: depois de ``this movie is great'', ``i like it'' faz sentido, então True; ``the sky is blue'' não tem nada a ver, então False.
-        E quem dá a resposta? Aqui entra o token \texttt{<cls>}. Como o encoder é bidirecional, o vetor final do \texttt{<cls>} recebe informação das duas frases inteiras. O modelo pega só esse vetor e passa por um MLP de uma camada oculta, que devolve 2 escores: True ou False. No exemplo do livro, com 2 sequências no lote, a saída tem formato 2 por 2.
+        E quem dá a resposta? Aqui entra o token \texttt{<cls>}. Como o encoder é bidirecional, o vetor final do \texttt{<cls>} recebe informação das duas frases inteiras. O modelo pega só esse vetor e passa por um classificador binário, uma camada linear que devolve 2 escores: True (IsNext) ou False (NotNext).
     }
 \end{frame}
 
