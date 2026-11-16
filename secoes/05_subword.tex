@@ -108,27 +108,29 @@
 \begin{frame}{Byte Pair Encoding (BPE)}
     \begin{columns}[T, onlytextwidth]
         % Coluna da Esquerda: Conceito e Resultado
-        \begin{column}{0.45\textwidth}
+        \begin{column}{0.40\textwidth}
+            \footnotesize
             \begin{itemize}
                 \item No fastText, os pedaços têm tamanho \textbf{fixo} (3 a 6) e todos entram no vocabulário.
-                \vspace{0.3em}
+                \vspace{0.1em}
                 \item BPE [7]: deixa os \textbf{dados} decidirem quais pedaços valem a pena, com tamanhos \textbf{variáveis}.
             \end{itemize}
             
-            \vspace{0.6em}
+            \vspace{0.1em}
             
             % Nota: substitua o ambiente 'exampleblock' pelo ambiente de bloco verde 
             % customizado do seu template (ex: greenblock / blocoverde), se houver.
             \begin{exampleblock}{Resultado}
+                \scriptsize
                 Pedaços frequentes viram símbolos; palavras raras se quebram em pedaços menores. Usado no GPT-2 e no RoBERTa.
             \end{exampleblock}
         \end{column}
         
         % Coluna da Direita: Tabelas do Corpus e das 10 Junções
-        \begin{column}{0.52\textwidth}
+        \begin{column}{0.58\textwidth}
             \begin{columns}[T, onlytextwidth]
                 % Subcoluna 1: Corpus
-                \begin{column}{0.46\textwidth}
+                \begin{column}{0.44\textwidth}
                     {\footnotesize \textbf{Corpus} (palavra: freq.):}
                     \vspace{0.2em}
                     
@@ -147,7 +149,7 @@
                 \end{column}
                 
                 % Subcoluna 2: Tabela de 10 Junções
-                \begin{column}{0.52\textwidth}
+                \begin{column}{0.54\textwidth}
                     \scriptsize
                     \setlength{\tabcolsep}{3pt}
                     \begin{tabular}{clcl}
