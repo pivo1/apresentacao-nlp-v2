@@ -16,8 +16,8 @@
                 vet/.style={circle, inner sep=2.2pt}]
                 % estatico
                 \node[font=\footnotesize\bfseries, text=dexpiRedDark, anchor=west] at (-1.5,3.45) {Estático (word2vec, GloVe)};
-                \node[frase] (s1) at (0,2.8) {a \textbf{crane} is flying};
-                \node[frase] (s2) at (0,2.0) {a \textbf{crane} driver came};
+                \node[frase] (s1) at (0,2.8) {i go to the \textbf{bank} to pay};
+                \node[frase] (s2) at (0,2.0) {i sat on the river \textbf{bank}};
                 \node[vet, fill=dexpiRedDark] (v) at (2.8,2.4) {};
                 \node[right=2pt of v, text=dexpiRedDark, align=left] {o mesmo\\vetor};
                 \draw[-{Stealth}, dexpiRedDark] (s1.east) -- (v);
@@ -25,12 +25,12 @@
                 % contextual
                 \draw[dexpiLightBlue, thick] (-1.5,1.45) -- (4.6,1.45);
                 \node[font=\footnotesize\bfseries, text=dexpiGreenDark, anchor=west] at (-1.5,1.0) {Contextual (ELMo, GPT, BERT)};
-                \node[frase] (t1) at (0,0.35) {a \textbf{crane} is flying};
-                \node[frase] (t2) at (0,-0.45) {a \textbf{crane} driver came};
+                \node[frase] (t1) at (0,0.35) {i go to the \textbf{bank} to pay};
+                \node[frase] (t2) at (0,-0.45) {i sat on the river \textbf{bank}};
                 \node[vet, fill=dexpiGreenDark] (w1) at (2.8,0.6) {};
                 \node[vet, fill=dexpiGreenDark] (w2) at (2.8,-0.7) {};
-                \node[right=2pt of w1, text=dexpiGreenDark] {perto de ``bird''};
-                \node[right=2pt of w2, text=dexpiGreenDark] {perto de ``truck''};
+                \node[right=2pt of w1, text=dexpiGreenDark] {perto de ``money''};
+                \node[right=2pt of w2, text=dexpiGreenDark] {perto de ``river''};
                 \draw[-{Stealth}, dexpiGreenDark] (t1.east) -- (w1);
                 \draw[-{Stealth}, dexpiGreenDark] (t2.east) -- (w2);
             \end{tikzpicture}
@@ -45,8 +45,8 @@
     \note{
         Chegamos à última seção, a 15.8, sobre o BERT. Para entender por que ele existe, precisamos olhar para uma limitação de tudo o que vimos até agora.
         O word2vec, o GloVe e o fastText dão um único vetor para cada palavra. Não importa a frase em que ela aparece, o vetor é sempre o mesmo. Em notação, a representação é uma função só da palavra, f de x.
-        Mas o sentido de uma palavra depende do contexto. O exemplo do livro é ``crane'', que em inglês pode ser um grou, a ave, ou um guindaste. Em ``a crane is flying'' é a ave; em ``a crane driver came'' é a máquina.
-        No desenho de cima, com vetores estáticos, as duas frases levam ao mesmo ponto. No de baixo, com vetores contextuais, cada frase leva a um ponto diferente: um perto de ``bird'', outro perto de ``truck''.
+        Mas o sentido de uma palavra depende do contexto. O exemplo aqui é ``bank'', que em inglês pode ser um banco, a instituição financeira, ou a margem de um rio. Em ``i go to the bank to pay'' é o banco; em ``i sat on the river bank'' é a margem.
+        No desenho de cima, com vetores estáticos, as duas frases levam ao mesmo ponto. No de baixo, com vetores contextuais, cada frase leva a um ponto diferente: um perto de ``money'', outro perto de ``river''.
         A ideia, então, é que o vetor dependa da palavra e também do contexto: f de x e c de x. O primeiro modelo famoso a fazer isso foi o ELMo, de 2018: uma rede LSTM bidirecional, pré-treinada, que lê a frase inteira e só então gera o vetor de cada palavra.
     }
 \end{frame}
