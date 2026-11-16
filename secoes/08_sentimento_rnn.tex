@@ -7,86 +7,64 @@
 \section{Análise de sentimento com RNN}
 %------------------------------------------------
 
-\begin{frame}{Aplicação: análise de sentimento com RNN}
+\begin{frame}{Análise de sentimento com BiRNN e GloVe}
     \begin{columns}[c]
-        \begin{column}{0.52\textwidth}
-            \footnotesize
-            \begin{itemize}
-                \item Tarefa: uma frase de \textbf{tamanho variável} entra, uma \textbf{classe fixa} sai: positivo ou negativo.
-                \item Dados (Seção 16.1): críticas de filmes do \textbf{IMDb}, 25 mil para treino e 25 mil para teste, metade positivas e metade negativas.
-                \item Cada crítica é cortada ou completada com \texttt{<pad>} até \textbf{500 tokens}; lotes de 64 críticas.
-                \item A ideia da Seção 16.2: reaproveitar os \textbf{vetores pré-treinados} do GloVe numa \textbf{RNN}.
+        \begin{column}{0.56\textwidth}
+            \scriptsize
+            \begin{itemize}\setlength{\itemsep}{1pt}
+                \item \textbf{Tarefa e dados (IMDb):} classificar críticas de tamanho variável em \textbf{positivo} ou \textbf{negativo} (25 mil para treino e 25 mil para teste, balanceadas).
+                \item \textbf{Pré-processamento:} textos cortados ou completados com \texttt{<pad>} até $T = 500$ tokens, em lotes de $B = 64$.
             \end{itemize}
         \end{column}
-        \begin{column}{0.46\textwidth}
+        \begin{column}{0.42\textwidth}
             \centering
-            \begin{tikzpicture}[font=\scriptsize,
-                critica/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, text width=3.6cm, align=left, inner sep=3pt},
-                rot/.style={rounded corners=2pt, font=\scriptsize\bfseries, inner sep=3pt}]
-                \node[critica] (c1) at (0,0.8) {``this movie is so great, i loved every minute''};
-                \node[critica] (c2) at (0,-0.6) {``this movie is so bad, a waste of time''};
-                \node[rot, draw=dexpiGreenDark, fill=dexpiGreenLight, text=dexpiGreenDark] (r1) at (3.0,0.8) {positivo};
-                \node[rot, draw=dexpiRedDark, fill=dexpiRedLight, text=dexpiRedDark] (r2) at (3.0,-0.6) {negativo};
+            \begin{tikzpicture}[font=\tiny,
+                critica/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, text width=2.5cm, align=left, inner sep=2pt},
+                rot/.style={rounded corners=2pt, font=\tiny\bfseries, inner sep=2pt}]
+                \node[critica] (c1) at (0,0.35) {``this movie is so great, i loved every minute''};
+                \node[critica] (c2) at (0,-0.35) {``waste of time''};
+                \node[rot, draw=dexpiGreenDark, fill=dexpiGreenLight, text=dexpiGreenDark] (r1) at (2.8,0.35) {positivo};
+                \node[rot, draw=dexpiRedDark, fill=dexpiRedLight, text=dexpiRedDark] (r2) at (2.8,-0.35) {negativo};
                 \draw[-{Stealth}, thick, dexpiBlue] (c1) -- (r1);
                 \draw[-{Stealth}, thick, dexpiBlue] (c2) -- (r2);
             \end{tikzpicture}
         \end{column}
     \end{columns}
-    \vspace{0.3cm}
+    \vspace{0.15cm}
     \centering
     \begin{tikzpicture}[font=\scriptsize,
-        etapa/.style={rounded corners=3pt, minimum width=3.4cm, minimum height=1.0cm, align=center, thick},
-        s/.style={-{Stealth}, very thick, gray}]
-        \node[etapa, draw=dexpiGreenDark, fill=dexpiGreenLight] (a) at (0,0) {\textbf{Pré-treino}\\GloVe (Seção 15.5)};
-        \node[etapa, draw=dexpiBlue, fill=dexpiBlueLight] (b) at (4.4,0) {\textbf{Arquitetura}\\RNN bidirecional (BiRNN)};
-        \node[etapa, draw=dexpiRedDark, fill=dexpiRedLight] (c) at (8.8,0) {\textbf{Aplicação}\\análise de sentimento};
-        \draw[s] (a) -- (b);
-        \draw[s] (b) -- (c);
-    \end{tikzpicture}
-
-    \note{
-        Até aqui falamos de como aprender bons vetores de palavras. Agora vamos usar esses vetores numa aplicação de verdade: a análise de sentimento, da Seção 16.2 do livro.
-        A tarefa é simples de enunciar: entra uma frase de tamanho variável, sai uma classe fixa, positivo ou negativo. ``This movie is so great'' é positivo; ``this movie is so bad'' é negativo.
-        Os dados, preparados na Seção 16.1, são críticas de filmes do site IMDb: 25 mil para treino e 25 mil para teste, metade positivas e metade negativas. Como as críticas têm tamanhos diferentes, cada uma é cortada ou completada com um token de preenchimento até ter exatamente 500 tokens, e o treino usa lotes de 64 críticas.
-        A figura de baixo, que segue a Figura 16.2.1 do livro, resume a ideia da seção: pegamos os vetores pré-treinados do GloVe, colocamos numa arquitetura de rede recorrente bidirecional e aplicamos na análise de sentimento.
-    }
-\end{frame}
-
-\begin{frame}{A arquitetura BiRNN: três camadas}
-    \centering
-    \begin{tikzpicture}[font=\scriptsize,
-        cam/.style={rounded corners=2pt, align=center, minimum height=1.1cm, inner sep=3pt, thick},
+        cam/.style={rounded corners=2pt, align=center, minimum height=1.0cm, inner sep=3pt, thick},
         s/.style={-{Stealth}, thick, dexpiBlue},
         dim/.style={font=\tiny, text=dexpiRedDark}]
-        \node[draw=gray, rounded corners=2pt, align=center, minimum height=1.1cm, inner sep=3pt] (x) at (0,0) {índices das\\palavras};
+        \node[draw=gray, rounded corners=2pt, align=center, minimum height=1.0cm, inner sep=3pt] (x) at (0,0) {índices das\\palavras};
         \node[cam, draw=dexpiGreenDark, fill=dexpiGreenLight] (e) at (2.75,0) {\textbf{Embedding}\\{\tiny\texttt{self.embedding}}\\{\tiny (GloVe, $d = 100$)}};
         \node[cam, draw=dexpiBlue, fill=dexpiBlueLight] (l) at (5.85,0) {\textbf{LSTM bidirecional}\\{\tiny\texttt{self.encoder}}\\{\tiny 2 camadas, 100 unidades}};
-        \node[cam, draw=dexpiBlue, fill=white] (c) at (8.75,0) {\textbf{concatena}\\{\tiny 1.º e último}\\{\tiny passos}};
+        \node[cam, draw=dexpiBlue, fill=dexpiBlueLight] (c) at (8.75,0) {\textbf{Concatena}\\{\tiny 1.º e último}\\{\tiny passos}};
         \node[cam, draw=dexpiRedDark, fill=dexpiRedLight] (d) at (11.2,0) {\textbf{Linear}\\{\tiny\texttt{self.decoder}}\\{\tiny $400 \to 2$}};
-        \draw[s] (x) -- node[below=0.62cm, dim] {(B, T)} (e);
-        \draw[s] (e) -- node[below=0.62cm, dim] {(T, B, 100)} (l);
-        \draw[s] (l) -- node[below=0.62cm, dim] {(T, B, 200)} (c);
-        \draw[s] (c) -- node[below=0.62cm, dim] {(B, 400)} (d);
+        \draw[s] (x) -- node[below=0.55cm, dim] {(B, T)} (e);
+        \draw[s] (e) -- node[below=0.55cm, dim] {(T, B, 100)} (l);
+        \draw[s] (l) -- node[below=0.55cm, dim] {(T, B, 200)} (c);
+        \draw[s] (c) -- node[below=0.55cm, dim] {(B, 400)} (d);
         \draw[s] (d.east) -- ++(0.6,0) node[right, align=left, font=\tiny] {pos.\\neg.};
     \end{tikzpicture}
 
-    \vspace{0.3cm}
+    \vspace{0.2cm}
     \raggedright
-    \footnotesize
-    \begin{itemize}
-        \item \textbf{Embedding}: troca o índice de cada palavra pelo seu vetor denso (aqui, o vetor do GloVe).
-        \item \textbf{Codificador}: uma \textbf{LSTM bidirecional} lê a frase nos dois sentidos e gera um estado oculto por palavra.
-        \item \textbf{Decodificador}: uma camada \texttt{nn.Linear} transforma a representação da frase em \textbf{2 \textit{logits}} (positivo e negativo).
-    \end{itemize}
-    {\scriptsize B = tamanho do lote (64), T = número de passos (500). A LSTM do PyTorch quer o tempo na 1.ª dimensão, por isso a entrada é transposta.}
+    \scriptsize
+    \begin{enumerate}\setlength{\itemsep}{0pt}
+        \item {\color{dexpiGreenDark}\textbf{Embedding (pré-treino):}} troca o índice de cada palavra pelo seu vetor denso pré-treinado do GloVe.
+        \item {\color{dexpiBlue}\textbf{Codificador (BiRNN):}} a LSTM bidirecional lê a frase nos dois sentidos e junta os estados ocultos inicial e final da sequência.
+        \item {\color{dexpiRedDark}\textbf{Decodificador (aplicação):}} a camada \texttt{nn.Linear} transforma a representação final de 400 dimensões em \textbf{2 \textit{logits}} (positivo e negativo).
+    \end{enumerate}
+    {\tiny\textit{Nota PyTorch: a LSTM recebe a entrada transposta, com o tempo $T$ na 1.ª dimensão.}}
 
     \note{
-        O modelo do livro, chamado BiRNN, tem três camadas, e a figura mostra o caminho de um lote de críticas por elas, com o formato dos tensores em vermelho.
-        A entrada são os índices das palavras: um lote de B críticas, cada uma com T tokens. B é 64 e T é 500.
-        A primeira camada é o embedding: troca cada índice pelo vetor da palavra. Aqui, esses vetores vão ser os do GloVe, de dimensão 100. Um detalhe de implementação: a LSTM do PyTorch espera o tempo na primeira dimensão, então a entrada é transposta, e o formato vira T por B por 100.
-        A segunda camada é o codificador: uma LSTM bidirecional, com 2 camadas empilhadas e 100 unidades ocultas. Ela gera um estado oculto para cada palavra. Como são duas direções, cada estado tem 200 números: 100 da leitura para a frente e 100 da leitura para trás.
-        Depois vem o passo mais interessante, que vamos ver com calma: juntamos os estados do primeiro e do último passo de tempo, o que dá um vetor de 400 números por crítica.
-        Por fim, o decodificador: uma camada linear que leva esses 400 números a 2 saídas, os logits de positivo e de negativo.
+        Até aqui falamos de como aprender bons vetores de palavras. Agora vamos usar esses vetores numa aplicação de verdade: a análise de sentimento, da Seção 16.2 do livro.
+        A tarefa: entra uma frase de tamanho variável, sai uma classe fixa, positivo ou negativo. Os dados são críticas de filmes do IMDb: 25 mil para treino e 25 mil para teste, metade positivas e metade negativas. Cada crítica é cortada ou completada com um token de preenchimento até ter 500 tokens, e o treino usa lotes de 64 críticas.
+        O modelo, chamado BiRNN, tem três camadas, e a figura mostra o caminho de um lote por elas, com o formato dos tensores em vermelho. A entrada são os índices das palavras, formato B por T.
+        A primeira camada é o embedding: troca cada índice pelo vetor do GloVe, de dimensão 100. A LSTM do PyTorch espera o tempo na primeira dimensão, então a entrada é transposta e o formato vira T por B por 100.
+        A segunda é o codificador: uma LSTM bidirecional, com 2 camadas e 100 unidades ocultas. Como são duas direções, cada estado tem 200 números. Depois juntamos os estados do primeiro e do último passo, o que dá um vetor de 400 números por crítica.
+        Por fim, o decodificador: uma camada linear leva esses 400 números a 2 saídas, os logits de positivo e de negativo.
     }
 \end{frame}
 
