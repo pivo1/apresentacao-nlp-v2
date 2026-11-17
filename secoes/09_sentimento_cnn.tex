@@ -272,31 +272,34 @@
             \draw[gray!55, very thin] (9.95,\y) -- (pos.west);
             \draw[gray!55, very thin] (9.95,\y) -- (neg.west);
         }
+        \node[draw=dexpiRedDark, dashed, fill=white, rounded corners=1pt, font=\tiny\bfseries, text=dexpiRedDark, inner sep=2pt, rotate=90] at (10.45,0) {\textit{dropout}};
         \end{scope}
 
         % titulos das etapas
-        \node[num, fill=dexpiBlue] (n1) at (0.12,2.45) {1};
+        \node[num, fill=dexpiBlue] (n1) at (0.12,2.35) {1};
         \node[tit] at (n1.east) {Entrada};
-        \node[num, fill=dexpiBlue] (n2) at (4.02,2.45) {2};
+        \node[num, fill=dexpiBlue] (n2) at (4.02,2.35) {2};
         \node[tit] at (n2.east) {Convoluções};
-        \node[num, fill=dexpiBlue] (n3) at (6.55,2.45) {3};
+        \node[num, fill=dexpiBlue] (n3) at (6.55,2.35) {3};
         \node[tit] at (n3.east) {Max-over-time};
-        \node[num, fill=dexpiBlue] (n4) at (9.25,2.45) {4};
+        \node[num, fill=dexpiBlue] (n4) at (9.25,2.35) {4};
         \node[tit] at (n4.east) {Concatena};
-        \node[num, fill=dexpiBlue] (n5) at (11.4,2.45) {5};
-        \node[tit] at (n5.east) {Camada densa};
+        \node[num, fill=dexpiBlue] (n5) at (11.4,2.35) {5};
+        \node[tit] at (n5.east) {\textit{Dropout} $+$ densa};
 
         % legendas das etapas
-        \node[leg] at (1.1,-2.45) {a frase vira uma matriz:\\11 palavras $\times$ 6 dimensões};
-        \node[leg] at (4.75,-2.45) {dois tamanhos de filtro\\trabalhando em paralelo};
-        \node[leg] at (7.7,-2.45) {cada canal vira\\1 número};
-        \node[leg] at (10.0,-2.45) {$4 + 5 = 9$ números\\num único vetor};
-        \node[leg] at (12.4,-2.45) {$9 \to 2$ escores\\(com \textit{dropout})};
+        \node[leg] at (1.1,-2.35) {a frase vira uma matriz:\\11 palavras $\times$ 6 dimensões};
+        \node[leg] at (4.75,-2.35) {dois tamanhos de filtro\\trabalhando em paralelo};
+        \node[leg] at (7.7,-2.35) {cada canal vira\\1 número};
+        \node[leg] at (10.0,-2.35) {$4 + 5 = 9$ números\\num único vetor};
+        \node[leg] at (12.4,-2.35) {$9 \to 2$ escores:\\positivo e negativo};
     \end{tikzpicture}
 
     \vspace{0.1cm}
     \raggedright
-    {\scriptsize \textbf{\color{dexpiBlue}Por que larguras diferentes?} Cada largura capta um tamanho de expressão: ``so great'' tem 2 palavras; ``not good at all'' tem 4 \cite{kim2014convolutional}.\par}
+    {\scriptsize \textbf{\color{dexpiBlue}Por que larguras diferentes?} Cada uma capta um tamanho de expressão: ``so great'' (2), ``not good at all'' (4) \cite{kim2014convolutional}.\par
+    \vspace{0.05cm}
+    \textbf{\color{dexpiRedDark}Por que o \textit{dropout}?} No treino, desliga neurônios ao acaso ($p = 0{,}5$): o modelo não aposta numa única pista.\par}
 
     \note{
         Agora juntamos tudo no modelo completo, o textCNN de Kim, com o exemplo do livro. Vamos da esquerda para a direita.
@@ -304,69 +307,7 @@
         Etapa 2, as convoluções. Duas trabalham em paralelo sobre a mesma entrada. A verde tem largura 2 e 4 filtros, ou 4 canais: cada parada da janela verde gera uma coluna de 4 números, e são 10 paradas. A vermelha tem largura 4 e 5 canais: 8 paradas. As larguras são diferentes de propósito: a de largura 2 capta bigramas, como ``so great'', e a de largura 4 capta expressões maiores, como ``not good at all''.
         Etapa 3, o max-over-time: de cada canal sobra só o maior valor. A grade verde vira 4 números; a vermelha, 5.
         Etapa 4: concatenamos tudo num vetor só, de 9 números.
-        Etapa 5: uma camada densa, com dropout, leva esses 9 números a 2 escores, positivo e negativo.
-    }
-\end{frame}
-
-\begin{frame}{O fluxo de dados: de $T$ palavras a 2 números}
-    \footnotesize
-    A cada etapa, só muda o \textbf{tamanho} do que passa adiante. A conta é a mesma no desenho anterior e no modelo do livro.
-
-    \vspace{0.15cm}
-    \centering
-    \begin{tikzpicture}[font=\scriptsize,
-        et/.style={rounded corners=2pt, thick, align=center, minimum width=2.05cm, minimum height=0.85cm, inner sep=2pt, font=\scriptsize\bfseries},
-        val/.style={align=center, font=\scriptsize},
-        lin/.style={anchor=east, align=right, font=\scriptsize\bfseries, text=dexpiBlue},
-        s/.style={-{Stealth[length=1.5mm]}, thick, dexpiBlue}]
-        % faixas das linhas
-        \fill[dexpiBlueLight] (-1.55,-1.0) rectangle (12.2,-0.4);
-        \fill[dexpiBlueLight] (-1.55,-2.4) rectangle (12.2,-1.7);
-        % etapas
-        \node[et, draw=dexpiGreenDark, fill=dexpiGreenLight] (e1) at (1.9,0.3) {Embedding};
-        \node[et, draw=dexpiBlue, fill=dexpiBlueLight] (e2) at (4.2,0.3) {Convolução\\{\tiny\mdseries largura $k$, $c$ canais}};
-        \node[et, draw=dexpiBlue, fill=dexpiBlueLight] (e3) at (6.5,0.3) {Max-over-time};
-        \node[et, draw=dexpiBlue, fill=dexpiBlueLight] (e4) at (8.8,0.3) {Concatena};
-        \node[et, draw=dexpiRedDark, fill=dexpiRedLight] (e5) at (11.1,0.3) {Dropout\\$+$ densa};
-        \draw[s] (e1) -- (e2);
-        \draw[s] (e2) -- (e3);
-        \draw[s] (e3) -- (e4);
-        \draw[s] (e4) -- (e5);
-        % linha 1: em geral
-        \node[lin] at (0.7,-0.7) {em geral};
-        \node[val] at (1.9,-0.7) {$T \times d$};
-        \node[val] at (4.2,-0.7) {$(T - k + 1) \times c$};
-        \node[val] at (6.5,-0.7) {$c$ números};
-        \node[val] at (8.8,-0.7) {soma dos $c$};
-        \node[val] at (11.1,-0.7) {2 escores};
-        % linha 2: no desenho
-        \node[lin] at (0.7,-1.35) {no desenho\\{\tiny\mdseries $T = 11$; $k = 2$ e $4$}};
-        \node[val] at (1.9,-1.35) {$11 \times 6$};
-        \node[val] at (4.2,-1.35) {$10 \times 4$ \;e\; $8 \times 5$};
-        \node[val] at (6.5,-1.35) {4 \;e\; 5};
-        \node[val] at (8.8,-1.35) {$4 + 5 = 9$};
-        \node[val] at (11.1,-1.35) {2};
-        % linha 3: no livro
-        \node[lin] at (0.7,-2.05) {no livro\\{\tiny\mdseries $T = 500$; $k = 3$, $4$ e $5$}};
-        \node[val] at (1.9,-2.05) {$500 \times 200^{\,*}$};
-        \node[val] at (4.2,-2.05) {$498$, $497$ e $496$\\{\tiny posições, 100 canais cada}};
-        \node[val] at (6.5,-2.05) {100, 100 e 100};
-        \node[val] at (8.8,-2.05) {300};
-        \node[val] at (11.1,-2.05) {2};
-        \node[anchor=west, font=\tiny\itshape, text=gray!70!black] at (-1.55,-2.65) {* $d = 200$: o modelo do livro concatena dois embeddings GloVe de 100 dimensões, um fixo e um treinável.};
-    \end{tikzpicture}
-
-    \vspace{0.1cm}
-    \begin{exampleblock}{Por que o Dropout?}
-        \footnotesize
-        No treino, ele desliga neurônios ao acaso ($p = 0{,}5$): o modelo não pode apostar numa única pista e fica mais \textbf{robusto}, com menos \textit{overfitting}.
-    \end{exampleblock}
-
-    \note{
-        Para fechar, os tamanhos, etapa por etapa. A ideia é que nada aqui é mágico: em cada etapa só muda o tamanho do que passa adiante.
-        O embedding transforma T palavras numa matriz T por d. A convolução de largura k devolve T menos k mais 1 posições, para cada um dos c canais. O max-over-time reduz cada canal a 1 número. A concatenação junta os números de todas as convoluções num vetor só. E a camada densa leva esse vetor a 2 escores.
-        No desenho do slide anterior: 11 por 6 na entrada; 10 por 4 e 8 por 5 depois das convoluções; 4 e 5 depois do pooling; 9 na concatenação; e 2 na saída.
-        No modelo do livro, as críticas têm 500 palavras e as convoluções têm larguras 3, 4 e 5, com 100 canais cada. Então saem 498, 497 e 496 posições; o pooling deixa 100 números de cada; e a concatenação dá 300. Um detalhe: no livro, d é 200, porque o modelo usa dois embeddings GloVe de 100 dimensões lado a lado, um fixo e outro que continua treinando.
-        Antes da camada densa entra o dropout: no treino, ele desliga neurônios ao acaso, com probabilidade de 50\%. O modelo não pode depender de uma única pista e precisa espalhar a evidência, o que o torna mais robusto. Na hora de usar o modelo, o dropout é desligado.
+        Etapa 5: uma camada densa leva esses 9 números a 2 escores, positivo e negativo.
+        Antes da camada densa entra o dropout: no treino, ele desliga neurônios ao acaso, com probabilidade de 50\%. O modelo não pode depender de uma única pista e precisa espalhar a evidência, o que o torna mais robusto e reduz o overfitting. Na hora de usar o modelo, o dropout é desligado.
     }
 \end{frame}
