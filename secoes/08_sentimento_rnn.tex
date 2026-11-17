@@ -22,7 +22,7 @@
         %---------------- TOPO: contexto e dados
         \node[zona, minimum width=13.4cm, minimum height=1.85cm, anchor=north west] (topo) at (-0.95,3.2) {};
         \node[anchor=north west, align=flush left, text width=6.9cm, font=\scriptsize] at (-0.85,3.12) {%
-            \textbf{\color{dexpiBlue}Tarefa e dados (IMDb):} críticas de tamanho variável $\to$ \textbf{positivo} ou \textbf{negativo} (25 mil treino / 25 mil teste, balanceadas).\\[2pt]
+            \textbf{\color{dexpiBlue}Tarefa e dados (IMDb):} críticas \textbf{positivo} ou \textbf{negativo} (25 mil para treino e 25 mil para teste, balanceadas).\\[2pt]
             \textbf{\color{dexpiBlue}Pré-processamento:} corta ou completa com \texttt{<pad>} até $T = 500$ tokens; lotes de $B = 64$.};
         \node[critica] (c1) at (6.6,2.6) {``this movie is so great, i loved every minute''};
         \node[critica] (c2) at (6.6,1.95) {``waste of time''};
@@ -75,14 +75,14 @@
     }
 \end{frame}
 
-\begin{frame}{Por que LSTM? Por que bidirecional?}
+\begin{frame}{LSTM bidirecional}
     \begin{columns}[t]
         \begin{column}{0.48\textwidth}
             \begin{block}{Por que LSTM?}
                 \footnotesize
                 \begin{itemize}
-                    \item Uma RNN simples sofre com o \textbf{gradiente que desvanece}: ela ``esquece'' o começo de frases longas.
-                    \item A LSTM tem \textbf{portões} que decidem o que guardar e o que esquecer, e lembra de contextos distantes.
+                    \item Uma RNN simples ``esquece'' o começo de frases longas.
+                    \item A LSTM lembra de contextos distantes.
                 \end{itemize}
                 \centering
                 \begin{tikzpicture}[font=\scriptsize]
@@ -121,8 +121,6 @@
         \end{column}
     \end{columns}
     \vspace{0.2cm}
-    \footnotesize
-    Saída em cada palavra: $\mathbf{h}_t = [\,\overrightarrow{\mathbf{h}}_t\,;\,\overleftarrow{\mathbf{h}}_t\,]$, com $100 + 100 = 200$ números.
 
     \note{
         Por que essa escolha de camada? Duas perguntas: por que LSTM, e por que bidirecional?
@@ -132,7 +130,7 @@
     }
 \end{frame}
 
-\begin{frame}{O pulo do gato: concatenar o primeiro e o último passo}
+\begin{frame}{Concatenar (o primeiro e o último passo)}
     \centering
     \begin{tikzpicture}[font=\tiny,
         fw/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.95cm, minimum height=0.4cm, inner sep=0pt},
