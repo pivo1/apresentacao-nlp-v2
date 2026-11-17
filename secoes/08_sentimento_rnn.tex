@@ -12,7 +12,7 @@
         \begin{column}{0.56\textwidth}
             \scriptsize
             \begin{itemize}\setlength{\itemsep}{1pt}
-                \item \textbf{Tarefa e dados (IMDb):} classificar críticas de tamanho variável em \textbf{positivo} ou \textbf{negativo} (25 mil para treino e 25 mil para teste, balanceadas).
+                \item \textbf{Tarefa e dados (IMDb):}  críticas \textbf{positivo} ou \textbf{negativo} (25 mil para treino e 25 mil para teste, balanceadas).
                 \item \textbf{Pré-processamento:} textos cortados ou completados com \texttt{<pad>} até $T = 500$ tokens, em lotes de $B = 64$.
             \end{itemize}
         \end{column}
@@ -68,14 +68,14 @@
     }
 \end{frame}
 
-\begin{frame}{Por que LSTM? Por que bidirecional?}
+\begin{frame}{LSTM bidirecional}
     \begin{columns}[t]
         \begin{column}{0.48\textwidth}
             \begin{block}{Por que LSTM?}
                 \footnotesize
                 \begin{itemize}
-                    \item Uma RNN simples sofre com o \textbf{gradiente que desvanece}: ela ``esquece'' o começo de frases longas.
-                    \item A LSTM tem \textbf{portões} que decidem o que guardar e o que esquecer, e lembra de contextos distantes.
+                    \item Uma RNN simples ``esquece'' o começo de frases longas.
+                    \item A LSTM lembra de contextos distantes.
                 \end{itemize}
                 \centering
                 \begin{tikzpicture}[font=\scriptsize]
@@ -114,8 +114,6 @@
         \end{column}
     \end{columns}
     \vspace{0.2cm}
-    \footnotesize
-    Saída em cada palavra: $\mathbf{h}_t = [\,\overrightarrow{\mathbf{h}}_t\,;\,\overleftarrow{\mathbf{h}}_t\,]$, com $100 + 100 = 200$ números.
 
     \note{
         Por que essa escolha de camada? Duas perguntas: por que LSTM, e por que bidirecional?
@@ -125,7 +123,7 @@
     }
 \end{frame}
 
-\begin{frame}{O pulo do gato: concatenar o primeiro e o último passo}
+\begin{frame}{Concatenar (o primeiro e o último passo)}
     \centering
     \begin{tikzpicture}[font=\tiny,
         fw/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.95cm, minimum height=0.4cm, inner sep=0pt},
