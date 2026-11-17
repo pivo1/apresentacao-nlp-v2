@@ -95,61 +95,58 @@
     }
 \end{frame}
 
-\begin{frame}{Por que não basta usar só os exemplos positivos?}
-    \small
-    \begin{itemize}\setlength{\itemsep}{1pt}
-        \item Exemplo: todos os vetores iguais a $(10,\,0)$ $\Rightarrow$ todo par tem escore $100$ e $\sigma(100) \approx 1$.
-    \end{itemize}
+\begin{frame}{Amostragem negativa: por que precisamos de exemplos falsos?}
+    \begin{columns}[T]
+        \begin{column}{0.47\textwidth}
+            {\color{dexpiRedDark}\small\textbf{1. Sem negativos: o modelo colapsa}\par\vspace{2pt}\hrule height 0.8pt}
+            \vspace{4pt}
+            \footnotesize
+            Se todos os vetores ficarem iguais a $(10,\,0)$, todo par tem escore $100$: o modelo diz ``sim'' para \textbf{qualquer} par.
 
-    \vspace{0.1cm}
-    {\centering
-    \footnotesize
-    \begin{tabular}{@{}p{5.9cm}cc@{}}
-        \toprule
-        par & escore & $P(D=1)$ \\
-        \midrule
-        (\textit{gato}, \textit{miou}) --- \textbf{real} & $100$ & \destaque{1,000} \\
-        (\textit{gato}, \textit{cloreto}) --- \textbf{falso} & $100$ & \destaque{1,000} \\
-        \bottomrule
-    \end{tabular}\par}
+            \vspace{0.15cm}
+            {\centering
+            \begin{tabular}{@{}lcc@{}}
+                \toprule
+                par & escore & $P(D=1)$ \\
+                \midrule
+                (\textit{gato}, \textit{miou}) --- \textbf{real} & $100$ & \destaque{1,000} \\
+                (\textit{gato}, \textit{cloreto}) --- \textbf{falso} & $100$ & \destaque{1,000} \\
+                \bottomrule
+            \end{tabular}\par}
 
-    \vspace{0.2cm}
-    \begin{alertblock}{Perda zero, utilidade zero}
-        \footnotesize
-        O modelo aprendeu a dizer ``sim'' para \textbf{tudo}, inclusive para (\textit{gato}, \textit{cloreto}), e os vetores ficaram todos iguais: não distinguem mais nada. A cura é exigir que ele diga ``não'' --- é o que o próximo slide faz.
-    \end{alertblock}
+            \vspace{0.15cm}
+            \begin{alertblock}{Perda zero, utilidade zero}
+                \footnotesize
+                O modelo diz ``sim'' para \textbf{tudo}: os vetores ficam iguais e não distinguem nada.
+            \end{alertblock}
+        \end{column}
+        \begin{column}{0.49\textwidth}
+            {\color{dexpiGreenDark}\small\textbf{2. A cura: sortear $K$ palavras de ruído ($w_k$)}\par\vspace{2pt}\hrule height 0.8pt}
+            \vspace{4pt}
+            \footnotesize
+            A probabilidade do vizinho vira um produto:
 
-    \note{
-        Por que não dá para treinar só com os positivos? Porque a perda menos a soma dos logaritmos das sigmoides tem uma solução trivial: fazer todos os vetores iguais e enormes. Se todos apontam para a mesma direção e têm norma grande, o produto escalar de qualquer par é grande e positivo.
-        No exemplo, com todos os vetores iguais a $(10, 0)$, todo par tem escore 100 e a sigmoide dá praticamente 1. Reparem na tabela: o par real e o par falso recebem a mesma probabilidade, 1,000. O modelo não distingue mais nada --- é como decorar a resposta.
-        A perda vai a zero e os embeddings ficam inúteis. É por isso que precisamos de exemplos negativos: sem um par que o modelo deva rejeitar, não existe contrapeso.
-    }
-\end{frame}
+            \vspace{0.1cm}
+            {\centering\scriptsize
+            $P(w^{(t+j)} \mid w^{(t)}) =
+            {\color{dexpiGreenDark}\underbrace{P(D = 1 \mid w^{(t)}, w^{(t+j)})}_{\text{o positivo é real}}}
+            \displaystyle\prod_{k=1}^{K}
+            {\color{dexpiRedDark}\underbrace{P(D = 0 \mid w^{(t)}, w_k)}_{\text{cada negativo é falso}}}$\par}
 
-\begin{frame}{A aproximação com amostragem negativa}
-    \begin{itemize}
-        \item Para cada par positivo, sorteamos $K$ palavras de ruído $w_k$ e multiplicamos:
-    \end{itemize}
-    \begin{equation*}
-        P\left(w^{(t+j)} \mid w^{(t)}\right) =
-        {\color{dexpiGreenDark}\underbrace{P\left(D = 1 \mid w^{(t)}, w^{(t+j)}\right)}_{\text{o positivo é real}}}
-        \;\prod_{k=1}^{K}
-        {\color{dexpiRedDark}\underbrace{P\left(D = 0 \mid w^{(t)}, w_k\right)}_{\text{cada negativo é falso}}}
-    \end{equation*}
-    \begin{itemize}
-        \item \textbf {Para maximizar a probabilidade total, o modelo tem de acertar as duas tarefas em simultâneo:}
-        \begin{itemize}
-            \item Dizer "Sim" ($D=1$) para pares verdadeiros como (gato, miou).;
-            \item Dizer "Não" ($D=0$) para pares aleatórios/falsos como (gato, avião) e (gato, cloreto).
-        \end{itemize}
-        \item Agora fazer todos os vetores na mesma direção \textbf{não funciona mais}: os negativos seriam penalizados.
-    \end{itemize}
+            \vspace{0.1cm}
+            \begin{itemize}\setlength{\itemsep}{1pt}
+                \item {\color{dexpiGreenDark}\textbf{Dizer ``sim'' ($D=1$)}} para pares reais: (\textit{gato}, \textit{miou}).
+                \item {\color{dexpiRedDark}\textbf{Dizer ``não'' ($D=0$)}} para ruídos sorteados: (\textit{gato}, \textit{avião}), (\textit{gato}, \textit{cloreto}).
+                \item \textbf{Efeito:} vetores na mesma direção \textbf{deixam de funcionar}: os negativos seriam penalizados.
+            \end{itemize}
+        \end{column}
+    \end{columns}
 
     \note{
-        A correção é esta: para cada par positivo, sorteamos $K$ palavras de ruído $w_k$, e a probabilidade do vizinho passa a ser o produto de duas partes.
-        A primeira parte, em verde, é a chance de o par positivo ser reconhecido como real, $D = 1$. A segunda, em vermelho, é o produto, para cada uma das $K$ palavras de ruído, da chance de o par ser reconhecido como falso, $D = 0$.
-        Para esse produto ser alto, o modelo precisa acertar as duas coisas ao mesmo tempo: dizer ``sim'' para (gato, miou) e ``não'' para (gato, avião) e (gato, cloreto).
-        Com isso, aquela solução trivial de fazer todos os vetores enormes deixa de funcionar, porque ela faria o modelo dizer ``sim'' também para os pares de ruído, e esses termos seriam penalizados.
+        Por que precisamos de exemplos falsos? Comecem pela esquerda: o que acontece se treinarmos só com os positivos. A perda tem uma solução trivial: fazer todos os vetores iguais e enormes. Se todos apontam para a mesma direção e têm norma grande, o produto escalar de qualquer par é grande e positivo.
+        No exemplo, com todos os vetores iguais a $(10, 0)$, todo par tem escore 100 e a sigmoide dá praticamente 1. Na tabela, o par real e o par falso recebem a mesma probabilidade, 1,000. A perda vai a zero, mas os embeddings ficam inúteis: o modelo diz sim para tudo e não distingue mais nada.
+        A cura está à direita. Para cada par positivo, sorteamos $K$ palavras de ruído, e a probabilidade do vizinho passa a ser o produto de duas partes. A primeira, em verde, é a chance de o par positivo ser reconhecido como real, $D = 1$. A segunda, em vermelho, é o produto, para cada uma das $K$ palavras de ruído, da chance de o par ser reconhecido como falso, $D = 0$.
+        Para esse produto ser alto, o modelo precisa acertar as duas coisas ao mesmo tempo: dizer sim para (gato, miou) e não para (gato, avião) e (gato, cloreto). Com isso, a solução trivial deixa de funcionar, porque ela faria o modelo dizer sim também para os pares de ruído, e esses termos seriam penalizados.
     }
 \end{frame}
 
