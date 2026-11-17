@@ -106,23 +106,7 @@
         \end{column}
     \end{columns}
 
-    \vspace{-0.15cm}
-    \centering
-    \begin{tikzpicture}[
-        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum height=0.6cm, align=center, font=\footnotesize},
-        arr/.style={-{Stealth}, thick, dexpiBlue}]
-        \node[box] (t) {Texto\\{\scriptsize ``the man loves his son''}};
-        \node[box, right=0.35cm of t] (k) {Tokens\\{\scriptsize the | man | loves | \ldots}};
-        \node[box, right=0.35cm of k] (i) {Índices\\{\scriptsize 0, 1, 2, 3, 4}};
-        \node[box, right=0.35cm of i, fill=dexpiLightBlue, very thick] (v) {\textbf{Vetores}\\{\scriptsize $\xx_0, \xx_1, \ldots \in \mathbb{R}^d$}};
-        \node[box, right=0.35cm of v] (m) {Modelo\\{\scriptsize RNN, Transformer\ldots}};
-        \draw[arr] (t) -- (k);
-        \draw[arr] (k) -- (i);
-        \draw[arr] (i) -- (v);
-        \draw[arr] (v) -- (m);
-        \draw[dexpiBlue, dashed, thick, -{Stealth}] (v.north) -- ++(0,0.3) node[above, font=\scriptsize, text=dexpiBlue, fill=white, inner sep=1pt] {aqui as palavras ganham posição no mapa};
-        \node[below=0.15cm of v, font=\scriptsize, text=dexpiRedDark] {\textbf{Tema de hoje}};
-    \end{tikzpicture}
+   
 \end{frame}
 
 \begin{frame}{Primeira tentativa: vetores \textit{one-hot}}
@@ -162,7 +146,7 @@
 
 \begin{frame}{Por que \textit{one-hot} é uma má escolha?}
     \begin{itemize}
-        \item Uma forma natural de medir semelhança entre vetores é a \destaque{similaridade do cosseno}:
+        \item \textbf{semelhança entre vetores}:
     \end{itemize}
     \begin{equation*}
         \cos(\theta) = \frac{\xx^\top \yy}{\|\xx\|\,\|\yy\|} \in [-1, 1].
@@ -514,29 +498,6 @@
     A perda mede o erro; falta saber \destaque{para que lado} empurrar cada vetor (o \textbf{gradiente}). Com bilhões de palavras, cada passo usa um \textbf{trecho curto}: \destaque{SGD}.
 
     \vspace{0.15cm}
-    {\centering
-    \begin{tikzpicture}[
-        carta/.style={line width=0.8pt, rounded corners=4pt,
-                      text width=0.27\textwidth, minimum height=1.55cm, align=center, inner sep=3pt},
-        seta/.style={-{Stealth[length=2.5mm]}, line width=1pt, dexpiBlueDark}]
-        \node[carta, draw=dexpiBlue, fill=dexpiBlue!8] (c1) {%
-            {\color{dexpiBlue}\large\textbf{1}}\;\; \small\textbf{um trecho}\\[1pt]
-            {\footnotesize cada passo olha}\\[0pt]
-            {\footnotesize um \textbf{lote} pequeno}\\[1pt]
-            {\color{dexpiBlue}\scriptsize estocástico $=$ sorteado}};
-        \node[carta, draw=dexpiGreenDark, fill=dexpiGreenDark!8, right=0.45cm of c1] (c2) {%
-            {\color{dexpiGreenDark}\large\textbf{2}}\;\; \small\textbf{um par}\\[1pt]
-            {\footnotesize bastam \textbf{dois} vetores:}\\[0pt]
-            {\footnotesize centro e vizinho}\\[1pt]
-            {\color{dexpiGreenDark}\scriptsize $\log P(w_o \mid w_c)$}};
-        \node[carta, draw=dexpiRedDark, fill=dexpiRedDark!8, right=0.45cm of c2] (c3) {%
-            {\color{dexpiRedDark}\large\textbf{3}}\;\; \small\textbf{um passo}\\[1pt]
-            {\footnotesize anda no sentido}\\[0pt]
-            {\footnotesize que \textbf{diminui} a perda}\\[1pt]
-            {\color{dexpiRedDark}\scriptsize $\vv \leftarrow \vv - \eta\,\nabla$}};
-        \draw[seta] (c1) -- (c2);
-        \draw[seta] (c2) -- (c3);
-    \end{tikzpicture}\par}
 
     \vspace{0.2cm}
     {\centering
@@ -661,7 +622,7 @@
             {\scriptsize cada palavra pesa $1/2m$}};
         \node[caixa, draw=dexpiRedDark, fill=dexpiRedDark!8, right=0.45cm of b2] (b3) {%
             \footnotesize o ajuste chega \textbf{repartido}\\[2pt]
-            {\scriptsize entre as $2m$ palavras do contexto}};
+            {\scriptsize entre as palavras do contexto}};
         \draw[seta] (b1) -- (b2);
         \draw[seta] (b2) -- (b3);
     \end{tikzpicture}\par}
