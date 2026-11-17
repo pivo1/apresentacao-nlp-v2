@@ -75,6 +75,50 @@
     }
 \end{frame}
 
+
+\begin{frame}[fragile]{Embeddings pré-treinados: o GloVe de 100 dimensões}
+    \begin{columns}[c]
+        \begin{column}{0.55\textwidth}
+\begin{lstlisting}[basicstyle=\ttfamily\fontsize{6.2}{7.2}\selectfont]
+glove_embedding = d2l.TokenEmbedding('glove.6b.100d')
+embeds = glove_embedding[vocab.idx_to_token]
+embeds.shape                 # torch.Size([49346, 100])
+net.embedding.weight.data.copy_(embeds)
+net.embedding.weight.requires_grad = False  # congela
+\end{lstlisting}
+            \footnotesize
+            \begin{itemize}
+                \item Em vez de pesos aleatórios, o embedding começa com vetores que \textbf{já sabem} o significado das palavras.
+                \item Os vetores ficam \textbf{congelados}: só a LSTM e a camada linear são treinadas.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.43\textwidth}
+            \centering
+            \begin{tikzpicture}[font=\scriptsize,
+                tab/.style={thick, minimum width=1.6cm, align=center, inner sep=2pt}]
+                \node[tab, draw=dexpiGreenDark, fill=dexpiGreenLight, minimum height=2.6cm] (g) at (0,0) {GloVe 6B\\[2pt]{\tiny 400 mil}\\{\tiny palavras}\\{\tiny $\times$ 100}};
+                \node[tab, draw=dexpiBlue, fill=dexpiBlueLight, minimum height=1.6cm] (e) at (3.7,0) {Embedding\\[2pt]{\tiny 49.346}\\{\tiny palavras}\\{\tiny $\times$ 100}};
+                \draw[-{Stealth}, very thick, dexpiGreenDark] (g.east) -- node[above=2pt, font=\tiny, align=center] {copia as\\linhas do\\vocabulário} (e.west);
+                \node[below=3pt of e, font=\tiny\bfseries, text=dexpiRedDark] {congelado};
+                \node[below=3pt of g, font=\tiny, text=gray] {6 bilhões de tokens};
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+    \vspace{0.2cm}
+    \begin{exampleblock}{Por que ajuda?}
+        \footnotesize
+        Se ``brilliant'' aparece pouco nas críticas do IMDb, o modelo mal aprenderia seu sentido só com elas. O GloVe já a coloca \textbf{perto de ``excellent''} e \textbf{longe de ``terrible''}. O treino fica mais rápido e o modelo \textbf{generaliza melhor} (menos \textit{overfitting}).
+    \end{exampleblock}
+
+    \note{
+        Agora o elo com tudo o que vimos antes: os embeddings pré-treinados.
+        O código carrega o GloVe com vetores de dimensão 100, o \texttt{glove.6b.100d}. Depois, para cada palavra do vocabulário do IMDb, pega o vetor correspondente do GloVe. O resultado é uma matriz de 49.346 palavras por 100 dimensões. Essa matriz é copiada para os pesos da camada de embedding.
+        A última linha é importante: \texttt{requires\_grad = False}. Isso congela os vetores: durante o treino, eles não mudam. Só a LSTM e a camada linear aprendem.
+        Por que isso ajuda? Pensem na palavra ``brilliant''. Se ela aparece poucas vezes nas críticas, o modelo mal aprenderia o sentido dela só com esses dados. Mas o GloVe foi treinado em 6 bilhões de tokens e já sabe que ``brilliant'' fica perto de ``excellent'' e longe de ``terrible''. Então o modelo começa sabendo muito sobre as palavras, treina mais rápido e generaliza melhor, com menos overfitting.
+    }
+\end{frame}
+
+
 \begin{frame}{LSTM bidirecional}
     \begin{columns}[t]
         \begin{column}{0.48\textwidth}
@@ -229,47 +273,7 @@ Os pesos das camadas lineares e da LSTM começam com a inicialização de \textb
 }
 \end{frame}
 
-\begin{frame}[fragile]{Embeddings pré-treinados: o GloVe de 100 dimensões}
-    \begin{columns}[c]
-        \begin{column}{0.55\textwidth}
-\begin{lstlisting}[basicstyle=\ttfamily\fontsize{6.2}{7.2}\selectfont]
-glove_embedding = d2l.TokenEmbedding('glove.6b.100d')
-embeds = glove_embedding[vocab.idx_to_token]
-embeds.shape                 # torch.Size([49346, 100])
-net.embedding.weight.data.copy_(embeds)
-net.embedding.weight.requires_grad = False  # congela
-\end{lstlisting}
-            \footnotesize
-            \begin{itemize}
-                \item Em vez de pesos aleatórios, o embedding começa com vetores que \textbf{já sabem} o significado das palavras.
-                \item Os vetores ficam \textbf{congelados}: só a LSTM e a camada linear são treinadas.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.43\textwidth}
-            \centering
-            \begin{tikzpicture}[font=\scriptsize,
-                tab/.style={thick, minimum width=1.6cm, align=center, inner sep=2pt}]
-                \node[tab, draw=dexpiGreenDark, fill=dexpiGreenLight, minimum height=2.6cm] (g) at (0,0) {GloVe 6B\\[2pt]{\tiny 400 mil}\\{\tiny palavras}\\{\tiny $\times$ 100}};
-                \node[tab, draw=dexpiBlue, fill=dexpiBlueLight, minimum height=1.6cm] (e) at (3.7,0) {Embedding\\[2pt]{\tiny 49.346}\\{\tiny palavras}\\{\tiny $\times$ 100}};
-                \draw[-{Stealth}, very thick, dexpiGreenDark] (g.east) -- node[above=2pt, font=\tiny, align=center] {copia as\\linhas do\\vocabulário} (e.west);
-                \node[below=3pt of e, font=\tiny\bfseries, text=dexpiRedDark] {congelado};
-                \node[below=3pt of g, font=\tiny, text=gray] {6 bilhões de tokens};
-            \end{tikzpicture}
-        \end{column}
-    \end{columns}
-    \vspace{0.2cm}
-    \begin{exampleblock}{Por que ajuda?}
-        \footnotesize
-        Se ``brilliant'' aparece pouco nas críticas do IMDb, o modelo mal aprenderia seu sentido só com elas. O GloVe já a coloca \textbf{perto de ``excellent''} e \textbf{longe de ``terrible''}. O treino fica mais rápido e o modelo \textbf{generaliza melhor} (menos \textit{overfitting}).
-    \end{exampleblock}
 
-    \note{
-        Agora o elo com tudo o que vimos antes: os embeddings pré-treinados.
-        O código carrega o GloVe com vetores de dimensão 100, o \texttt{glove.6b.100d}. Depois, para cada palavra do vocabulário do IMDb, pega o vetor correspondente do GloVe. O resultado é uma matriz de 49.346 palavras por 100 dimensões. Essa matriz é copiada para os pesos da camada de embedding.
-        A última linha é importante: \texttt{requires\_grad = False}. Isso congela os vetores: durante o treino, eles não mudam. Só a LSTM e a camada linear aprendem.
-        Por que isso ajuda? Pensem na palavra ``brilliant''. Se ela aparece poucas vezes nas críticas, o modelo mal aprenderia o sentido dela só com esses dados. Mas o GloVe foi treinado em 6 bilhões de tokens e já sabe que ``brilliant'' fica perto de ``excellent'' e longe de ``terrible''. Então o modelo começa sabendo muito sobre as palavras, treina mais rápido e generaliza melhor, com menos overfitting.
-    }
-\end{frame}
 
 \begin{frame}{Treino e resultados}
     \begin{columns}[c]
