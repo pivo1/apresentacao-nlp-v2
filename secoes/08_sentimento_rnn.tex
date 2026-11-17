@@ -8,55 +8,62 @@
 %------------------------------------------------
 
 \begin{frame}{Análise de sentimento com BiRNN e GloVe}
-    \begin{columns}[c]
-        \begin{column}{0.56\textwidth}
-            \scriptsize
-            \begin{itemize}\setlength{\itemsep}{1pt}
-                \item \textbf{Tarefa e dados (IMDb):} classificar críticas de tamanho variável em \textbf{positivo} ou \textbf{negativo} (25 mil para treino e 25 mil para teste, balanceadas).
-                \item \textbf{Pré-processamento:} textos cortados ou completados com \texttt{<pad>} até $T = 500$ tokens, em lotes de $B = 64$.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.42\textwidth}
-            \centering
-            \begin{tikzpicture}[font=\tiny,
-                critica/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, text width=2.5cm, align=left, inner sep=2pt},
-                rot/.style={rounded corners=2pt, font=\tiny\bfseries, inner sep=2pt}]
-                \node[critica] (c1) at (0,0.35) {``this movie is so great, i loved every minute''};
-                \node[critica] (c2) at (0,-0.35) {``waste of time''};
-                \node[rot, draw=dexpiGreenDark, fill=dexpiGreenLight, text=dexpiGreenDark] (r1) at (2.8,0.35) {positivo};
-                \node[rot, draw=dexpiRedDark, fill=dexpiRedLight, text=dexpiRedDark] (r2) at (2.8,-0.35) {negativo};
-                \draw[-{Stealth}, thick, dexpiBlue] (c1) -- (r1);
-                \draw[-{Stealth}, thick, dexpiBlue] (c2) -- (r2);
-            \end{tikzpicture}
-        \end{column}
-    \end{columns}
-    \vspace{0.15cm}
     \centering
     \begin{tikzpicture}[font=\scriptsize,
         cam/.style={rounded corners=2pt, align=center, minimum height=1.0cm, inner sep=3pt, thick},
         s/.style={-{Stealth}, thick, dexpiBlue},
-        dim/.style={font=\tiny, text=dexpiRedDark}]
-        \node[draw=gray, rounded corners=2pt, align=center, minimum height=1.0cm, inner sep=3pt] (x) at (0,0) {índices das\\palavras};
-        \node[cam, draw=dexpiGreenDark, fill=dexpiGreenLight] (e) at (2.75,0) {\textbf{Embedding}\\{\tiny\texttt{self.embedding}}\\{\tiny (GloVe, $d = 100$)}};
-        \node[cam, draw=dexpiBlue, fill=dexpiBlueLight] (l) at (5.85,0) {\textbf{LSTM bidirecional}\\{\tiny\texttt{self.encoder}}\\{\tiny 2 camadas, 100 unidades}};
-        \node[cam, draw=dexpiBlue, fill=dexpiBlueLight] (c) at (8.75,0) {\textbf{Concatena}\\{\tiny 1.º e último}\\{\tiny passos}};
-        \node[cam, draw=dexpiRedDark, fill=dexpiRedLight] (d) at (11.2,0) {\textbf{Linear}\\{\tiny\texttt{self.decoder}}\\{\tiny $400 \to 2$}};
-        \draw[s] (x) -- node[below=0.55cm, dim] {(B, T)} (e);
-        \draw[s] (e) -- node[below=0.55cm, dim] {(T, B, 100)} (l);
-        \draw[s] (l) -- node[below=0.55cm, dim] {(T, B, 200)} (c);
-        \draw[s] (c) -- node[below=0.55cm, dim] {(B, 400)} (d);
-        \draw[s] (d.east) -- ++(0.6,0) node[right, align=left, font=\tiny] {pos.\\neg.};
-    \end{tikzpicture}
+        dim/.style={font=\tiny, text=gray!70!black, inner sep=1pt},
+        num/.style={circle, text=white, font=\tiny\bfseries, inner sep=1.2pt},
+        zona/.style={rounded corners=3pt, draw=dexpiLightBlue, fill=dexpiBlueLight!55, inner sep=4pt},
+        cartao/.style={rounded corners=2pt, thick, align=flush left, text width=4.0cm, minimum height=1.7cm, inner sep=4pt, anchor=north, font=\scriptsize},
+        critica/.style={draw=dexpiBlue, fill=white, rounded corners=2pt, font=\tiny, inner sep=2.5pt, anchor=west},
+        rot/.style={rounded corners=2pt, font=\tiny\bfseries, inner sep=2.5pt, anchor=west}]
 
-    \vspace{0.2cm}
-    \raggedright
-    \scriptsize
-    \begin{enumerate}\setlength{\itemsep}{0pt}
-        \item {\color{dexpiGreenDark}\textbf{Embedding (pré-treino):}} troca o índice de cada palavra pelo seu vetor denso pré-treinado do GloVe.
-        \item {\color{dexpiBlue}\textbf{Codificador (BiRNN):}} a LSTM bidirecional lê a frase nos dois sentidos e junta os estados ocultos inicial e final da sequência.
-        \item {\color{dexpiRedDark}\textbf{Decodificador (aplicação):}} a camada \texttt{nn.Linear} transforma a representação final de 400 dimensões em \textbf{2 \textit{logits}} (positivo e negativo).
-    \end{enumerate}
-    {\tiny\textit{Nota PyTorch: a LSTM recebe a entrada transposta, com o tempo $T$ na 1.ª dimensão.}}
+        %---------------- TOPO: contexto e dados
+        \node[zona, minimum width=13.4cm, minimum height=1.85cm, anchor=north west] (topo) at (-0.95,3.2) {};
+        \node[anchor=north west, align=flush left, text width=6.9cm, font=\scriptsize] at (-0.85,3.12) {%
+            \textbf{\color{dexpiBlue}Tarefa e dados (IMDb):} críticas de tamanho variável $\to$ \textbf{positivo} ou \textbf{negativo} (25 mil treino / 25 mil teste, balanceadas).\\[2pt]
+            \textbf{\color{dexpiBlue}Pré-processamento:} corta ou completa com \texttt{<pad>} até $T = 500$ tokens; lotes de $B = 64$.};
+        \node[critica] (c1) at (6.6,2.6) {``this movie is so great, i loved every minute''};
+        \node[critica] (c2) at (6.6,1.95) {``waste of time''};
+        \node[rot, draw=dexpiGreenDark, fill=dexpiGreenLight, text=dexpiGreenDark] (r1) at (11.35,2.6) {positivo};
+        \node[rot, draw=dexpiRedDark, fill=dexpiRedLight, text=dexpiRedDark] (r2) at (11.35,1.95) {negativo};
+        \draw[-{Stealth[length=1.4mm]}, dexpiBlue] (c1) -- (r1);
+        \draw[-{Stealth[length=1.4mm]}, dexpiBlue] (c2) -- (r2);
+
+        %---------------- CENTRO: fluxo
+        \node[draw=gray, fill=white, rounded corners=2pt, align=center, minimum height=1.0cm, inner sep=3pt] (x) at (0,0.3) {índices das\\palavras};
+        \node[cam, draw=dexpiGreenDark, fill=dexpiGreenLight] (e) at (2.75,0.3) {\textbf{Embedding}\\{\tiny\texttt{self.embedding}}\\{\tiny GloVe, $d = 100$}};
+        \node[cam, draw=dexpiBlue, fill=dexpiBlueLight] (l) at (5.85,0.3) {\textbf{LSTM bidirecional}\\{\tiny\texttt{self.encoder}}\\{\tiny 2 camadas, 100 unidades}};
+        \node[cam, draw=dexpiBlue, fill=dexpiBlueLight] (c) at (8.75,0.3) {\textbf{Concatena}\\{\tiny 1.º e último}\\{\tiny passos}};
+        \node[cam, draw=dexpiRedDark, fill=dexpiRedLight] (d) at (11.1,0.3) {\textbf{Linear}\\{\tiny\texttt{self.decoder}}\\{\tiny $400 \to 2$}};
+        \node[num, fill=dexpiGreenDark] at (e.north west) {1};
+        \node[num, fill=dexpiBlue] at (l.north west) {2};
+        \node[num, fill=dexpiRedDark] at (d.north west) {3};
+        \draw[s] (x) -- (e);
+        \draw[s] (e) -- (l);
+        \draw[s] (l) -- (c);
+        \draw[s] (c) -- (d);
+        \node[dim] at ($(x.east)!0.5!(e.west)+(0,-0.7)$) {(B, T)};
+        \node[dim] at ($(e.east)!0.5!(l.west)+(0,-0.7)$) {(T, B, 100)};
+        \node[dim] at ($(l.east)!0.5!(c.west)+(0,-0.7)$) {(T, B, 200)};
+        \node[dim] at ($(c.east)!0.5!(d.west)+(0,-0.7)$) {(B, 400)};
+        \node[font=\tiny\bfseries, text=dexpiGreenDark, anchor=west] (op) at (12.15,0.5) {pos.};
+        \node[font=\tiny\bfseries, text=dexpiRedDark, anchor=west] (on) at (12.15,0.1) {neg.};
+        \draw[s] (d.east) -- (12.15,0.3);
+
+        %---------------- BASE: as tres camadas
+        \node[cartao, draw=dexpiGreenDark, fill=dexpiGreenLight] (k1) at (1.25,-0.85) {%
+            \textbf{\color{dexpiGreenDark}1. Embedding (pré-treino)}\\[1pt]
+            Troca o índice de cada palavra pelo seu vetor denso pré-treinado do GloVe.};
+        \node[cartao, draw=dexpiBlue, fill=dexpiBlueLight] (k2) at (5.75,-0.85) {%
+            \textbf{\color{dexpiBlue}2. Codificador (BiRNN)}\\[1pt]
+            A LSTM bidirecional lê a frase nos dois sentidos e junta os estados ocultos inicial e final.};
+        \node[cartao, draw=dexpiRedDark, fill=dexpiRedLight] (k3) at (10.25,-0.85) {%
+            \textbf{\color{dexpiRedDark}3. Decodificador (aplicação)}\\[1pt]
+            A \texttt{nn.Linear} leva o vetor de 400 dimensões a \textbf{2 \textit{logits}} (pos. e neg.).};
+        \node[anchor=north west, font=\tiny\itshape, text=gray!70!black] at (-0.95,-2.72) {Nota PyTorch: a LSTM recebe a entrada transposta, com o tempo $T$ na 1.ª dimensão.};
+    \end{tikzpicture}
 
     \note{
         Até aqui falamos de como aprender bons vetores de palavras. Agora vamos usar esses vetores numa aplicação de verdade: a análise de sentimento, da Seção 16.2 do livro.
