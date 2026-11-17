@@ -11,211 +11,362 @@
 
 \begin{frame}{A matemática da convolução 1D}
     \begin{columns}[c]
-        \begin{column}{0.44\textwidth}
+        \begin{column}{0.33\textwidth}
             \footnotesize
-            Uma \destaque{lupa de $k$ palavras} percorre a frase: em cada parada, ela multiplica o que vê pelo molde e soma.
-
-            \vspace{0.15cm}
-            \begin{itemize}\setlength{\itemsep}{3pt}
-                \item \textbf{Input}: o texto já é número --- cada célula, uma palavra.
-                \item \textbf{Kernel}: o \destaque{molde} de $k$ números que procura um n-grama.
-                \item \textbf{Output}: um número por parada --- o encaixe daquele pedaço.
-                \item Os números do kernel são \textbf{aprendidos}, não escolhidos.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.54\textwidth}
-            \centering
-            \begin{tikzpicture}[font=\small,
-                cel/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.85cm, minimum height=0.50cm, inner sep=0pt},
-                hl/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=0.85cm, minimum height=0.50cm, inner sep=0pt, font=\small\bfseries},
-                kn/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=0.85cm, minimum height=0.50cm, inner sep=0pt, font=\small\bfseries},
-                lbl/.style={anchor=east, font=\scriptsize\bfseries, text=dexpiBlue}]
-                \node[hl] (in0) at (0.425,0) {0};
-                \node[hl] (in1) at (1.275,0) {1};
-                \node[cel] (in2) at (2.125,0) {2};
-                \node[cel] (in3) at (2.975,0) {3};
-                \node[cel] (in4) at (3.825,0) {4};
-                \node[cel] (in5) at (4.675,0) {5};
-                \node[cel] (in6) at (5.525,0) {6};
-                \node[lbl] at (-0.12,0) {Input};
-
-                \node[kn] (k0) at (0.425,-1.05) {1};
-                \node[kn] (k1) at (1.275,-1.05) {2};
-                \node[lbl] at (-0.12,-1.05) {Kernel};
-                \draw[-{Stealth}, thick, dexpiRedDark] (2.10,-1.05) -- (3.20,-1.05);
-                \node[font=\scriptsize, text=dexpiRedDark, anchor=south] at (2.65,-1.05) {desliza};
-
-                \node[hl] (out0) at (0.85,-2.10) {2};
-                \node[cel] at (1.70,-2.10) {5};
-                \node[cel] at (2.55,-2.10) {8};
-                \node[cel] at (3.40,-2.10) {11};
-                \node[cel] at (4.25,-2.10) {14};
-                \node[cel] at (5.10,-2.10) {17};
-                \node[lbl] at (-0.12,-2.10) {Output};
-
-                \node[draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, inner sep=4pt, font=\small] (eq) at (1.70,-3.25)
-                    {${\color{dexpiBlue}0}\cdot{\color{dexpiGreenDark}1} + {\color{dexpiBlue}1}\cdot{\color{dexpiGreenDark}2} = {\color{dexpiGreenDark}\mathbf{2}}$};
-                \draw[-{Stealth}, thick, dexpiGreenDark] (eq.north) -- (out0.south);
-            \end{tikzpicture}
+            Uma \destaque{janela de $k$ números}, o \textit{kernel}, percorre a entrada. Em cada parada:
 
             \vspace{0.1cm}
-            {\scriptsize No texto real, cada célula é um vetor de 100 números e o kernel tem 100 números por palavra; aqui usamos escalares para ver a conta.\par}
+            \begin{enumerate}\setlength{\itemsep}{2pt}
+                \item \textbf{multiplica} par a par o que vê pelo kernel;
+                \item \textbf{soma} tudo: sai um número;
+                \item \textbf{desliza} uma casa e repete.
+            \end{enumerate}
+
+            \vspace{0.1cm}
+            \begin{block}{Tamanho da saída}
+                \footnotesize
+                $T - k + 1 = 7 - 2 + 1 = 6$ paradas.
+            \end{block}
+        \end{column}
+        \begin{column}{0.65\textwidth}
+            \centering
+            \begin{tikzpicture}[font=\footnotesize,
+                cel/.style={draw=dexpiBlue!70, fill=dexpiBlueLight, minimum width=0.6cm, minimum height=0.48cm, inner sep=0pt},
+                jan/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, very thick, minimum width=0.6cm, minimum height=0.48cm, inner sep=0pt, font=\footnotesize\bfseries},
+                ker/.style={draw=dexpiGreenDark, fill=dexpiGreenDark, text=white, minimum width=0.6cm, minimum height=0.48cm, inner sep=0pt, font=\footnotesize\bfseries},
+                rot/.style={anchor=east, font=\scriptsize\bfseries, text=dexpiBlue},
+                eq/.style={anchor=west, font=\footnotesize}]
+                % cabecalho: entrada e kernel
+                \node[font=\scriptsize\bfseries, text=dexpiBlue] at (1.86,0.62) {Entrada ($T = 7$)};
+                \node[font=\scriptsize\bfseries, text=dexpiGreenDark, anchor=east] at (5.55,0.62) {Kernel ($k = 2$):};
+                \node[ker] at (5.95,0.62) {1};
+                \node[ker] at (6.57,0.62) {2};
+                % tres paradas da janela
+                \foreach \a/\y in {0/0, 1/-0.72, 5/-1.95} {
+                    \pgfmathtruncatemacro{\b}{\a+1}
+                    \foreach \i in {0,...,6} {
+                        \ifnum\i=\a \node[jan] at (0.62*\i,\y) {\i};
+                        \else\ifnum\i=\b \node[jan] at (0.62*\i,\y) {\i};
+                        \else \node[cel] at (0.62*\i,\y) {\i};
+                        \fi\fi
+                    }
+                }
+                \node[rot] at (-0.45,0) {parada 1};
+                \node[rot] at (-0.45,-0.72) {parada 2};
+                \node[rot] at (-0.45,-1.95) {parada 6};
+                \node at (1.86,-1.28) {$\vdots$};
+                \node[eq] at (4.3,0) {${\color{dexpiBlue}0}\cdot{\color{dexpiGreenDark}\mathbf{1}} + {\color{dexpiBlue}1}\cdot{\color{dexpiGreenDark}\mathbf{2}} = \mathbf{2}$};
+                \node[eq] at (4.3,-0.72) {${\color{dexpiBlue}1}\cdot{\color{dexpiGreenDark}\mathbf{1}} + {\color{dexpiBlue}2}\cdot{\color{dexpiGreenDark}\mathbf{2}} = \mathbf{5}$};
+                \node[eq] at (4.3,-1.95) {${\color{dexpiBlue}5}\cdot{\color{dexpiGreenDark}\mathbf{1}} + {\color{dexpiBlue}6}\cdot{\color{dexpiGreenDark}\mathbf{2}} = \mathbf{17}$};
+                % saida
+                \draw[gray!40] (-1.6,-2.5) -- (7.0,-2.5);
+                \node[rot] at (-0.45,-3.0) {Saída};
+                \foreach \v [count=\i from 0] in {2,5,8,11,14,17} {
+                    \ifnum\i=0 \node[jan] at (0.62*\i,-3.0) {\v};
+                    \else\ifnum\i=1 \node[jan] at (0.62*\i,-3.0) {\v};
+                    \else\ifnum\i=5 \node[jan] at (0.62*\i,-3.0) {\v};
+                    \else \node[cel] at (0.62*\i,-3.0) {\v};
+                    \fi\fi\fi
+                }
+                \foreach \i in {1,...,6} \node[font=\tiny, text=gray!70!black] at ({0.62*(\i-1)},-3.42) {\i.ª};
+                \node[eq, font=\scriptsize, text=gray!70!black] at (4.3,-3.0) {um número por parada};
+            \end{tikzpicture}
         \end{column}
     \end{columns}
 
+    \vspace{0.15cm}
+    {\scriptsize Os números do kernel são \textbf{aprendidos} no treino. No texto, cada célula é o \textbf{vetor} de uma palavra: a conta é a mesma, somando também nas dimensões.\par}
+
     \note{
-        Pensem numa lupa de duas palavras que percorre a frase. O texto já é número: 0, 1, 2, e assim por diante. Em cada parada, a lupa multiplica o que vê pelos números do molde e soma. Aqui: 0 vezes 1 mais 1 vezes 2 dá 2, o primeiro número do output. Depois ela desliza uma casa e repete. O detalhe importante: os números do molde não são escolhidos por nós --- a rede os aprende, e eles passam a disparar quando o padrão aparece.
+        Começamos pela conta, com o exemplo do livro. A entrada é uma fila de sete números, de 0 a 6. O kernel é uma janela de dois números, 1 e 2.
+        Em cada parada, a janela faz três coisas: multiplica par a par o que está vendo pelos números do kernel, soma tudo e devolve um número. Na primeira parada ela vê 0 e 1: 0 vezes 1 mais 1 vezes 2 dá 2. Depois desliza uma casa: agora vê 1 e 2, e a conta dá 5. E assim vai, até a sexta parada, que vê 5 e 6 e dá 17.
+        A saída tem um número por parada. Como a janela de tamanho 2 cabe em 6 posições de uma entrada de 7, o tamanho da saída é T menos k mais 1.
+        Dois detalhes importantes. Primeiro: os números do kernel não são escolhidos por nós, a rede os aprende. Segundo: no texto, cada célula não é um número, é o vetor de uma palavra. A conta é a mesma, como veremos a seguir.
     }
 \end{frame}
 
-\begin{frame}{A arquitetura textCNN na prática}
+\begin{frame}{Do número ao texto: um filtro lendo a frase}
     \begin{columns}[c]
-        \begin{column}{0.52\textwidth}
-            \footnotesize
-            A mesma conta, agora dentro de um modelo de verdade \cite{kim2014convolutional}.
-
-            \vspace{0.15cm}
-            \begin{itemize}\setlength{\itemsep}{3pt}
-                \item A RNN lê \textbf{palavra por palavra}: o estado de hoje carrega o de ontem.
-                \item A CNN olha \textbf{pedaços} de 3, 4 e 5 palavras \textbf{ao mesmo tempo}.
-                \item \textbf{Fluxo}: GloVe $\to$ CNN $\to$ positivo/negativo.
-                \item \textbf{Expressões locais}: ``não é bom'' é um trigrama --- a CNN o detecta como padrão.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.44\textwidth}
+        \begin{column}{0.56\textwidth}
             \centering
             \begin{tikzpicture}[font=\scriptsize,
-                bx/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, minimum width=1.85cm, minimum height=1.35cm, inner sep=2pt},
-                mid/.style={draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, align=center, minimum width=1.85cm, minimum height=1.35cm, inner sep=2pt, font=\scriptsize\bfseries}]
-                \node[bx] (g) at (0,0) {Pré-treino\\{\tiny GloVe (15.5)}\\{\tiny 6 bi tokens}};
-                \node[mid] (m) at (2.4,0) {Arquitetura\\{\tiny CNN (16.3)}\\{\tiny conv + max}};
-                \node[bx] (a) at (4.8,0) {Aplicação\\{\tiny sentimento}\\{\tiny pos./neg.}};
-                \draw[-{Stealth}, line width=1.5pt, dexpiRedDark] (g) -- (m);
-                \draw[-{Stealth}, thick, dexpiBlue] (m) -- (a);
-                \node[font=\tiny, text=dexpiRedDark, align=center, anchor=south] at (1.20,0.85) {aqui entra a\\convolução};
-                \draw[dexpiRedDark, dashed, thick] (1.20,0.78) -- (1.20,0.06);
+                emb/.style={draw=dexpiBlue!60, fill=dexpiBlueLight, minimum width=1.0cm, minimum height=0.3cm, inner sep=0pt},
+                sc/.style={draw=gray!60, fill=white, minimum width=0.95cm, minimum height=0.45cm, inner sep=0pt},
+                pa/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, very thick, minimum width=0.95cm, minimum height=0.45cm, inner sep=0pt, font=\scriptsize\bfseries},
+                pb/.style={draw=dexpiRedDark, fill=dexpiRedLight, minimum width=0.95cm, minimum height=0.45cm, inner sep=0pt},
+                rl/.style={anchor=east, font=\scriptsize\bfseries},
+                jl/.style={font=\tiny, text=gray!70!black, align=center}]
+                % frase como matriz T x d
+                \foreach \p [count=\k from 1] in {this, movie, is, so, great} {
+                    \node[font=\footnotesize] at (1.1*\k,2.55) {\p};
+                    \foreach \r in {0,1,2,3} \node[emb] at (1.1*\k,{2.1-0.32*\r}) {};
+                }
+                \draw[decorate, decoration={brace, amplitude=3pt}, dexpiBlue] (0.5,0.99) -- (0.5,2.25) node[midway, left=4pt, align=right, font=\tiny, text=dexpiBlue] {$d$ dimensões\\(GloVe: 100)};
+                % janela do kernel: fantasma na 1.a parada, cheia na 4.a
+                \draw[dexpiGreenDark!60, dashed, line width=0.8pt, rounded corners=2pt] (0.55,0.92) rectangle (2.75,2.32);
+                \draw[dexpiGreenDark, line width=1.6pt, rounded corners=2pt] (3.85,0.92) rectangle (6.05,2.32);
+                \node[font=\tiny\bfseries, text=dexpiGreenDark] at (4.95,2.95) {kernel ($k = 2$): $2 \times d$ números};
+                \draw[-{Stealth[length=1.6mm]}, thick, dexpiGreenDark!70] (1.65,0.75) -- node[below, font=\tiny, text=dexpiGreenDark] {desliza} (3.6,0.75);
+                \draw[-{Stealth[length=1.6mm]}, thick, dexpiGreenDark] (4.95,0.92) -- (4.95,0.12);
+                % escores: um por parada, uma linha por filtro
+                \node[rl, text=dexpiGreenDark] at (1.05,-0.13) {filtro A};
+                \foreach \v [count=\j from 1] in {0{,}2, 0{,}1, 0{,}9} \node[sc] at ({1.1*\j+0.55},-0.13) {$\v$};
+                \node[pa] at (4.95,-0.13) {$4{,}7$};
+                \node[rl, text=dexpiRedDark] at (1.05,-0.68) {filtro B};
+                \foreach \v [count=\j from 1] in {0{,}3, 0{,}2, 0{,}1, 0{,}0} \node[pb] at ({1.1*\j+0.55},-0.68) {$\v$};
+                \foreach \t [count=\j from 1] in {this\\movie, movie\\is, is\\so, so\\great} \node[jl] at ({1.1*\j+0.55},-1.22) {\t};
+                \node[font=\tiny\itshape, text=gray!70!black, anchor=west] at (5.55,-0.4) {valores};
+                \node[font=\tiny\itshape, text=gray!70!black, anchor=west] at (5.55,-0.62) {ilustrativos};
             \end{tikzpicture}
+        \end{column}
+        \begin{column}{0.42\textwidth}
+            \footnotesize
+            \begin{itemize}\setlength{\itemsep}{3pt}
+                \item Cada palavra é um \textbf{vetor}: a frase vira uma matriz $T \times d$.
+                \item O kernel cobre \textbf{$k$ palavras inteiras} e só desliza \textbf{ao longo da frase}: por isso ``1D''.
+                \item Cada filtro é um \destaque{detector de n-gramas}: o filtro A dispara em ``so great''; o B procura outro padrão.
+                \item O textCNN usa \textbf{muitos filtros}, de larguras 3, 4 e 5 \cite{kim2014convolutional}.
+            \end{itemize}
         \end{column}
     \end{columns}
 
     \vspace{0.1cm}
-    \begin{exampleblock}{Por que é mais rápida}
+    \begin{exampleblock}{Por que é mais rápida que a RNN}
         \footnotesize
-        Todas as janelas são calculadas \textbf{em paralelo}; a RNN não pode, porque cada passo espera o anterior.
+        Todas as paradas são calculadas \textbf{em paralelo}; na RNN, cada passo espera o anterior.
     \end{exampleblock}
 
     \note{
-        A RNN lê palavra por palavra: o estado de hoje depende do de ontem. A CNN não: ela olha pedaços de três, quatro e cinco palavras ao mesmo tempo, e todas as janelas são calculadas em paralelo --- é por isso que ela é mais rápida. O fluxo é o desta figura: o GloVe entrega os vetores prontos, a CNN os transforma em escores, e a camada final classifica. E onde ela brilha é no local: ``não é bo
-        
-        m'' é um trigrama, e a CNN o detecta como um padrão.
+        Agora a mesma conta, só que no texto. Cada palavra já é um vetor do GloVe, com 100 números. Então a frase ``this movie is so great'' vira uma matriz: uma coluna por palavra.
+        O kernel agora cobre k palavras inteiras, com todas as dimensões: aqui, 2 palavras, ou seja, 2 vezes d números. E ele só desliza num sentido, ao longo da frase. É por isso que a convolução se chama 1D.
+        Em cada parada sai um escore. Um filtro treinado funciona como um detector de n-gramas: o filtro A, em verde, dá escores baixos em ``this movie'' e ``movie is'', e dispara em ``so great''. O filtro B, em vermelho, procura outro padrão, digamos ``so bad'', e não encontra nada aqui. Os valores são ilustrativos.
+        O textCNN usa muitos filtros ao mesmo tempo, com larguras de 3, 4 e 5 palavras. E repare na vantagem sobre a RNN: a RNN lê palavra por palavra, e cada passo espera o anterior. Aqui, todas as paradas de todos os filtros podem ser calculadas em paralelo. Por isso a CNN é mais rápida.
     }
 \end{frame}
 
 \begin{frame}{Max-over-time: muitos números, um resumo}
     \begin{columns}[c]
-        \begin{column}{0.50\textwidth}
-            \footnotesize
-            Depois da convolução, cada filtro deixa uma \textbf{sequência} de escores. Como resumir a frase?
-
-            \vspace{0.15cm}
-            \begin{itemize}\setlength{\itemsep}{1pt}
-                \item Para cada canal, guardamos \textbf{só o maior} escore: um número por filtro.
-                \item Onde ele apareceu não importa: o filtro de ``não é bom'' dá 8 no início, no meio ou no fim.
-                \item É um \destaque{filtro de importância}: o pico é a evidência de que o padrão existe.
-                \item A média \textbf{diluiria}: uma pista que aparece uma vez em 500 posições vale $1/500$; daí o \textit{global max pooling} de Collobert et al. \cite{collobert2011natural}.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.48\textwidth}
+        \begin{column}{0.57\textwidth}
             \centering
-            \begin{tikzpicture}[font=\scriptsize]
-                \foreach \v [count=\i from 0] in {1,5,2,8,3} {
-                    \ifnum\i=3
-                        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=0.72cm, minimum height=0.6cm, font=\scriptsize\bfseries] (v\i) at (0.95*\i,0) {\v};
-                    \else
-                        \node[draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.72cm, minimum height=0.6cm] (v\i) at (0.95*\i,0) {\v};
-                    \fi
-                }
-                \node[font=\tiny, text=dexpiBlue, anchor=south] at (1.9,0.34) {escores de um filtro, um por posição};
-                \draw[-{Stealth}, thick, dexpiGreenDark] (v3.south) -- (2.85,-0.62);
-                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize\bfseries, anchor=north] at (2.85,-0.62) {Max Pooling: 8};
-                \node[font=\tiny, text=gray, anchor=north] at (2.85,-1.2) {a média daria $3{,}8$};
+            \begin{tikzpicture}[font=\scriptsize,
+                sc/.style={draw=gray!60, fill=white, minimum width=0.9cm, minimum height=0.45cm, inner sep=0pt},
+                sd/.style={draw=gray!60, fill=white, minimum width=0.72cm, minimum height=0.45cm, inner sep=0pt},
+                pa/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, very thick, minimum width=0.9cm, minimum height=0.45cm, inner sep=0pt, font=\scriptsize\bfseries},
+                pd/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, very thick, minimum width=0.72cm, minimum height=0.45cm, inner sep=0pt, font=\scriptsize\bfseries},
+                pb/.style={draw=dexpiRedDark, fill=dexpiRedLight, very thick, minimum width=0.9cm, minimum height=0.45cm, inner sep=0pt, font=\scriptsize\bfseries},
+                rl/.style={anchor=east, font=\scriptsize\bfseries},
+                jl/.style={font=\tiny, text=gray!70!black, align=center},
+                s/.style={-{Stealth[length=1.6mm]}, thick}]
+                % frase 1
+                \node[anchor=west, font=\scriptsize\bfseries, text=dexpiBlue] at (-0.85,2.6) {Frase 1: ``this movie is so great''};
+                \foreach \t [count=\j from 1] in {this\\movie, movie\\is, is\\so, so\\great} \node[jl] at (0.95*\j,2.05) {\t};
+                \node[rl, text=dexpiGreenDark] at (0.4,1.5) {filtro A};
+                \foreach \v [count=\j from 1] in {0{,}2, 0{,}1, 0{,}9} \node[sc] at (0.95*\j,1.5) {$\v$};
+                \node[pa] (a4) at (3.8,1.5) {$4{,}7$};
+                \node[rl, text=dexpiRedDark] at (0.4,0.95) {filtro B};
+                \node[pb] (b1) at (0.95,0.95) {$0{,}3$};
+                \foreach \v [count=\j from 2] in {0{,}2, 0{,}1, 0{,}0} \node[sc] at (0.95*\j,0.95) {$\v$};
+                \node[pa] (ra) at (5.75,1.5) {$4{,}7$};
+                \node[pb] (rb) at (5.75,0.95) {$0{,}3$};
+                \draw[s, dexpiGreenDark] (a4.east) -- node[above, font=\tiny] {máx.} (ra.west);
+                \draw[s, dexpiRedDark] (4.27,0.95) -- node[below, font=\tiny] {máx.} (rb.west);
+                \node[font=\tiny\bfseries, text=dexpiBlue] at (5.75,2.05) {resumo};
+                \node[jl] at (5.75,0.42) {1 número\\por filtro};
+                % frase 2
+                \draw[gray!40] (-0.85,-0.05) -- (6.35,-0.05);
+                \node[anchor=west, font=\scriptsize\bfseries, text=dexpiBlue] at (-0.85,-0.38) {Frase 2: ``so great i loved every minute''};
+                \foreach \t [count=\j from 0] in {so\\great, great\\i, i\\loved, loved\\every, every\\minute} \node[jl] at ({0.855+0.76*\j},-0.95) {\t};
+                \node[rl, text=dexpiGreenDark] at (0.4,-1.5) {filtro A};
+                \node[pd] (c1) at (0.855,-1.5) {$4{,}7$};
+                \foreach \v [count=\j from 1] in {0{,}3, 0{,}1, 0{,}6, 0{,}2} \node[sd] at ({0.855+0.76*\j},-1.5) {$\v$};
+                \node[pa] (rc) at (5.75,-1.5) {$4{,}7$};
+                \draw[s, dexpiGreenDark] (4.27,-1.5) -- node[above, font=\tiny] {máx.} (rc.west);
+                \node[font=\tiny, text=dexpiGreenDark, anchor=west] at (-0.85,-2.05) {outra frase, outro tamanho, pico em outro lugar: \textbf{mesmo resumo}};
             \end{tikzpicture}
+        \end{column}
+        \begin{column}{0.41\textwidth}
+            \footnotesize
+            \begin{itemize}\setlength{\itemsep}{4pt}
+                \item De cada filtro, guardamos \textbf{só o maior} escore: o pico é a evidência de que o padrão \textbf{existe} na frase.
+                \item \textbf{Onde} ele apareceu não importa: ``so great'' no fim ou no começo dá o mesmo $4{,}7$.
+                \item A média \textbf{diluiria} o sinal: no filtro A da frase 1, daria $1{,}5$ em vez de $4{,}7$ \cite{collobert2011natural}.
+            \end{itemize}
         \end{column}
     \end{columns}
 
     \vspace{0.1cm}
     \begin{exampleblock}{O que o pooling compra}
         \footnotesize
-        Saída de tamanho \textbf{fixo}: $C$ números, um por canal, para qualquer $T$.
+        Saída de tamanho \textbf{fixo}: um número por filtro, para frases de qualquer tamanho $T$.
     \end{exampleblock}
 
     \note{
-        A convolução deixou uma sequência de escores por filtro: são muitos números. Para resumir a frase, guardamos só o maior de cada canal. Reparem que a posição não importa: se o filtro procura ``não é bom'', o valor 8 diz ``achei em algum lugar'', seja no início, no meio ou no fim da crítica. É um filtro de importância. E por que não a média? Porque ela dilui: uma pista que aparece uma vez em quinhentas posições vale um quinhentos do total. O pico preserva o sinal, e ainda nos dá uma saída de tamanho fixo, não importa o tamanho da frase.
+        A convolução deixou uma fila de escores para cada filtro. São muitos números, e a quantidade depende do tamanho da frase. Como resumir?
+        A resposta é simples: de cada filtro, guardamos só o maior escore. Na frase 1, o filtro A tem pico 4,7, em ``so great''; o filtro B não achou nada, e seu maior valor é 0,3. O resumo da frase são esses dois números, um por filtro.
+        Agora olhem a frase 2: ``so great i loved every minute''. Ela é mais comprida, e o ``so great'' está no começo, não no fim. O pico do filtro A mudou de lugar, mas o máximo é o mesmo 4,7. Ou seja: o máximo diz ``achei o padrão em algum lugar'', sem importar onde, e sem importar o tamanho da frase.
+        E por que não a média? Porque ela dilui o sinal. Na frase 1, a média do filtro A daria 1,5. Numa crítica de 500 palavras, uma pista que aparece uma vez praticamente sumiria.
+        O que ganhamos: uma saída de tamanho fixo, um número por filtro, para qualquer frase.
     }
 \end{frame}
 
 \begin{frame}{A arquitetura completa do textCNN}
-    \begin{columns}[c]
-        \begin{column}{0.33\textwidth}
-            \footnotesize
-            O modelo de Kim (2014) \cite{kim2014convolutional}, \textbf{de baixo para cima}.
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        num/.style={circle, text=white, font=\tiny\bfseries, inner sep=1.2pt},
+        tit/.style={font=\scriptsize\bfseries, anchor=west, inner sep=2pt},
+        leg/.style={font=\tiny, align=center, anchor=north},
+        dimv/.style={font=\tiny, inner sep=1pt},
+        fluxo/.style={-{Stealth[length=1.6mm]}, thick, gray!70}]
 
-            \vspace{0.2cm}
-            \begin{itemize}\setlength{\itemsep}{5pt}
-                \item \textbf{Entrada}: a frase vira uma matriz, 11 palavras $\times$ 6 dimensões.
-                \item \textbf{Convolução com filtros diferentes}: olhando \textcolor{dexpiGreenDark}{\textbf{2 palavras}} e \textcolor{dexpiRedDark}{\textbf{4 palavras}} ao mesmo tempo.
-                \item \textbf{Pooling $+$ concatenação}: cada canal vira 1 número, os resultados se juntam para a classificação.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.65\textwidth}
-            \centering
-            \begin{tikzpicture}[x=0.00525cm, y=-0.00525cm]
-                \node[anchor=north west, inner sep=0] at (0,0) {\includegraphics[width=8.3cm]{img/d2l_textcnn.png}};
-                \draw[dexpiGreenDark, line width=1.8pt] (298,446) rectangle (792,648);
-                \draw[dexpiGreenDark, line width=1.4pt] (18,626) rectangle (290,674);
-                \draw[dexpiRedDark, line width=1.8pt] (856,396) rectangle (1252,648);
-                \draw[dexpiRedDark, line width=1.4pt] (1292,612) rectangle (1562,660);
-            \end{tikzpicture}
-        \end{column}
-    \end{columns}
+        % (1) entrada: 11 palavras x 6 dimensoes
+        \draw[dexpiBlue, fill=dexpiBlueLight] (0,-0.6) rectangle (2.2,0.6);
+        \foreach \i in {1,...,10} \draw[dexpiBlue!45, very thin] ({0.2*\i},-0.6) -- ({0.2*\i},0.6);
+        \foreach \j in {1,...,5} \draw[dexpiBlue!45, very thin] (0,{-0.6+0.2*\j}) -- (2.2,{-0.6+0.2*\j});
+        \node[dimv, rotate=90, anchor=south, text=dexpiBlue] at (-0.05,0) {6 dimensões};
+        \node[dimv, anchor=north, text=dexpiBlue] at (0.55,-0.65) {11 palavras};
+        % janelas dos kernels sobre a entrada
+        \draw[dexpiGreenDark, line width=1.3pt] (0.2,-0.6) rectangle (0.6,0.6);
+        \draw[dexpiRedDark, line width=1.3pt] (1.2,-0.6) rectangle (2.0,0.6);
+
+        % (2a) convolucao verde: largura 2, 4 canais, 10 posicoes
+        \draw[dexpiGreenDark, fill=dexpiGreenLight] (3.9,0.95) rectangle (5.9,1.75);
+        \foreach \i in {1,...,9} \draw[dexpiGreenDark!45, very thin] ({3.9+0.2*\i},0.95) -- ({3.9+0.2*\i},1.75);
+        \foreach \j in {1,...,3} \draw[dexpiGreenDark!45, very thin] (3.9,{0.95+0.2*\j}) -- (5.9,{0.95+0.2*\j});
+        \draw[dexpiGreenDark, line width=1.1pt] (4.1,0.95) rectangle (4.3,1.75);
+        \draw[dexpiGreenDark, thin] (0.2,0.6) -- (4.1,0.95);
+        \draw[dexpiGreenDark, thin] (0.6,0.6) -- (4.3,0.95);
+        \node[dimv, anchor=south, text=dexpiGreenDark] at (4.9,1.78) {\textbf{largura 2, 4 canais}: 10 posições};
+
+        % (2b) convolucao vermelha: largura 4, 5 canais, 8 posicoes
+        \draw[dexpiRedDark, fill=dexpiRedLight] (3.9,-1.95) rectangle (5.5,-0.95);
+        \foreach \i in {1,...,7} \draw[dexpiRedDark!45, very thin] ({3.9+0.2*\i},-1.95) -- ({3.9+0.2*\i},-0.95);
+        \foreach \j in {1,...,4} \draw[dexpiRedDark!45, very thin] (3.9,{-1.95+0.2*\j}) -- (5.5,{-1.95+0.2*\j});
+        \draw[dexpiRedDark, line width=1.1pt] (5.1,-1.95) rectangle (5.3,-0.95);
+        \draw[dexpiRedDark, thin] (2.0,-0.6) -- (5.3,-0.95);
+        \draw[dexpiRedDark, thin] (1.2,-0.6) -- (5.1,-0.95);
+        \node[dimv, anchor=north, text=dexpiRedDark] at (4.7,-1.98) {\textbf{largura 4, 5 canais}: 8 posições};
+
+        % (3) max-over-time: 1 numero por canal
+        \draw[dexpiGreenDark, fill=dexpiGreenLight] (7.6,0.95) rectangle (7.8,1.75);
+        \foreach \j in {1,...,3} \draw[dexpiGreenDark!45, very thin] (7.6,{0.95+0.2*\j}) -- (7.8,{0.95+0.2*\j});
+        \draw[dexpiRedDark, fill=dexpiRedLight] (7.6,-1.95) rectangle (7.8,-0.95);
+        \foreach \j in {1,...,4} \draw[dexpiRedDark!45, very thin] (7.6,{-1.95+0.2*\j}) -- (7.8,{-1.95+0.2*\j});
+        \draw[fluxo] (5.98,1.35) -- node[above, font=\tiny, text=gray!70!black] {máx. por canal} (7.52,1.35);
+        \draw[fluxo] (5.58,-1.45) -- node[above, font=\tiny, text=gray!70!black] {máx. por canal} (7.52,-1.45);
+        \node[dimv, anchor=west, text=dexpiGreenDark] at (7.85,1.35) {4};
+        \node[dimv, anchor=west, text=dexpiRedDark] at (7.85,-1.45) {5};
+
+        % (4) concatenacao: 9 numeros
+        \begin{scope}[xshift=0.2cm]
+        \draw[dexpiGreenDark, fill=dexpiGreenLight] (9.7,0.1) rectangle (9.9,0.9);
+        \foreach \j in {1,...,3} \draw[dexpiGreenDark!45, very thin] (9.7,{0.1+0.2*\j}) -- (9.9,{0.1+0.2*\j});
+        \draw[dexpiRedDark, fill=dexpiRedLight] (9.7,-0.9) rectangle (9.9,0.1);
+        \foreach \j in {1,...,4} \draw[dexpiRedDark!45, very thin] (9.7,{-0.9+0.2*\j}) -- (9.9,{-0.9+0.2*\j});
+        \draw[fluxo] (7.95,1.35) -- (9.62,0.55);
+        \draw[fluxo] (7.95,-1.45) -- (9.62,-0.45);
+
+        % (5) camada densa: 9 -> 2
+        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\tiny\bfseries, text=dexpiGreenDark, minimum width=1.2cm, minimum height=0.42cm, inner sep=1pt] (pos) at (12.3,0.4) {positivo};
+        \node[draw=dexpiRedDark, fill=dexpiRedLight, rounded corners=2pt, font=\tiny\bfseries, text=dexpiRedDark, minimum width=1.2cm, minimum height=0.42cm, inner sep=1pt] (neg) at (12.3,-0.4) {negativo};
+        \foreach \y in {-0.8,-0.4,0,0.4,0.8} {
+            \draw[gray!55, very thin] (9.95,\y) -- (pos.west);
+            \draw[gray!55, very thin] (9.95,\y) -- (neg.west);
+        }
+        \end{scope}
+
+        % titulos das etapas
+        \node[num, fill=dexpiBlue] (n1) at (0.12,2.45) {1};
+        \node[tit] at (n1.east) {Entrada};
+        \node[num, fill=dexpiBlue] (n2) at (4.02,2.45) {2};
+        \node[tit] at (n2.east) {Convoluções};
+        \node[num, fill=dexpiBlue] (n3) at (6.55,2.45) {3};
+        \node[tit] at (n3.east) {Max-over-time};
+        \node[num, fill=dexpiBlue] (n4) at (9.25,2.45) {4};
+        \node[tit] at (n4.east) {Concatena};
+        \node[num, fill=dexpiBlue] (n5) at (11.4,2.45) {5};
+        \node[tit] at (n5.east) {Camada densa};
+
+        % legendas das etapas
+        \node[leg] at (1.1,-2.45) {a frase vira uma matriz:\\11 palavras $\times$ 6 dimensões};
+        \node[leg] at (4.75,-2.45) {dois tamanhos de filtro\\trabalhando em paralelo};
+        \node[leg] at (7.7,-2.45) {cada canal vira\\1 número};
+        \node[leg] at (10.0,-2.45) {$4 + 5 = 9$ números\\num único vetor};
+        \node[leg] at (12.4,-2.45) {$9 \to 2$ escores\\(com \textit{dropout})};
+    \end{tikzpicture}
+
+    \vspace{0.1cm}
+    \raggedright
+    {\scriptsize \textbf{\color{dexpiBlue}Por que larguras diferentes?} Cada largura capta um tamanho de expressão: ``so great'' tem 2 palavras; ``not good at all'' tem 4 \cite{kim2014convolutional}.\par}
 
     \note{
-        Vamos guiar o olhar de baixo para cima. Embaixo, a frase vira uma matriz: onze palavras por seis dimensões no exemplo do livro. Em cima dela, duas convoluções trabalham em paralelo: a verde, com filtros de largura dois, e a vermelha, com filtros de largura quatro. São tamanhos diferentes de propósito: um filtro de largura dois capta bigramas, como ``muito bom'', e um de largura quatro capta expressões maiores, como ``não é nada bom''. Quanto mais variedade de tamanhos, mais tipos de padrão o modelo enxerga. As setas pontilhadas sobem para o pooling: cada canal vira um número. No topo, os resultados são concatenados e seguem para a classificação.
+        Agora juntamos tudo no modelo completo, o textCNN de Kim, com o exemplo do livro. Vamos da esquerda para a direita.
+        Etapa 1, a entrada: a frase vira uma matriz, com 11 palavras e 6 dimensões por palavra.
+        Etapa 2, as convoluções. Duas trabalham em paralelo sobre a mesma entrada. A verde tem largura 2 e 4 filtros, ou 4 canais: cada parada da janela verde gera uma coluna de 4 números, e são 10 paradas. A vermelha tem largura 4 e 5 canais: 8 paradas. As larguras são diferentes de propósito: a de largura 2 capta bigramas, como ``so great'', e a de largura 4 capta expressões maiores, como ``not good at all''.
+        Etapa 3, o max-over-time: de cada canal sobra só o maior valor. A grade verde vira 4 números; a vermelha, 5.
+        Etapa 4: concatenamos tudo num vetor só, de 9 números.
+        Etapa 5: uma camada densa, com dropout, leva esses 9 números a 2 escores, positivo e negativo.
     }
 \end{frame}
 
 \begin{frame}{O fluxo de dados: de $T$ palavras a 2 números}
-    \begin{columns}[c]
-        \begin{column}{0.36\textwidth}
-            \footnotesize
-            Os tamanhos, sem susto.
+    \footnotesize
+    A cada etapa, só muda o \textbf{tamanho} do que passa adiante. A conta é a mesma no desenho anterior e no modelo do livro.
 
-            \vspace{0.15cm}
-            \begin{itemize}\setlength{\itemsep}{5pt}
-                \item[\badge{dexpiGreenDark}{1}] \textbf{Convolução}: com filtro de largura $k$, a saída tem $T-k+1$ posições ($11-2+1=10$ e $11-4+1=8$).
-                \item[\badge{dexpiBlue}{2}] \textbf{Pooling $+$ concatenação}: 1 número por canal, tudo num \textbf{único vetor} ($4+5=9$).
-                \item[\badge{dexpiRedDark}{3}] \textbf{Dropout $+$ MLP}: a camada densa mapeia o vetor para as 2 polaridades.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.62\textwidth}
-            \centering
-            \begin{tikzpicture}[x=0.00535cm, y=-0.00535cm]
-                \node[anchor=north west, inner sep=0] at (0,0) {\includegraphics[width=8.45cm]{img/d2l_textcnn_topo.png}};
-                \node[circle, fill=dexpiGreenDark, text=white, inner sep=1.2pt, font=\scriptsize\bfseries] at (824,570) {1};
-                \node[circle, fill=dexpiBlue, text=white, inner sep=1.2pt, font=\scriptsize\bfseries] at (1064,262) {2};
-                \node[circle, fill=dexpiRedDark, text=white, inner sep=1.2pt, font=\scriptsize\bfseries] at (726,106) {3};
-                \node[draw=dexpiRedDark, dashed, fill=white, font=\tiny, inner sep=1.5pt] at (810,188) {dropout};
-            \end{tikzpicture}
-        \end{column}
-    \end{columns}
+    \vspace{0.15cm}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        et/.style={rounded corners=2pt, thick, align=center, minimum width=2.05cm, minimum height=0.85cm, inner sep=2pt, font=\scriptsize\bfseries},
+        val/.style={align=center, font=\scriptsize},
+        lin/.style={anchor=east, align=right, font=\scriptsize\bfseries, text=dexpiBlue},
+        s/.style={-{Stealth[length=1.5mm]}, thick, dexpiBlue}]
+        % faixas das linhas
+        \fill[dexpiBlueLight] (-1.55,-1.0) rectangle (12.2,-0.4);
+        \fill[dexpiBlueLight] (-1.55,-2.4) rectangle (12.2,-1.7);
+        % etapas
+        \node[et, draw=dexpiGreenDark, fill=dexpiGreenLight] (e1) at (1.9,0.3) {Embedding};
+        \node[et, draw=dexpiBlue, fill=dexpiBlueLight] (e2) at (4.2,0.3) {Convolução\\{\tiny\mdseries largura $k$, $c$ canais}};
+        \node[et, draw=dexpiBlue, fill=dexpiBlueLight] (e3) at (6.5,0.3) {Max-over-time};
+        \node[et, draw=dexpiBlue, fill=dexpiBlueLight] (e4) at (8.8,0.3) {Concatena};
+        \node[et, draw=dexpiRedDark, fill=dexpiRedLight] (e5) at (11.1,0.3) {Dropout\\$+$ densa};
+        \draw[s] (e1) -- (e2);
+        \draw[s] (e2) -- (e3);
+        \draw[s] (e3) -- (e4);
+        \draw[s] (e4) -- (e5);
+        % linha 1: em geral
+        \node[lin] at (0.7,-0.7) {em geral};
+        \node[val] at (1.9,-0.7) {$T \times d$};
+        \node[val] at (4.2,-0.7) {$(T - k + 1) \times c$};
+        \node[val] at (6.5,-0.7) {$c$ números};
+        \node[val] at (8.8,-0.7) {soma dos $c$};
+        \node[val] at (11.1,-0.7) {2 escores};
+        % linha 2: no desenho
+        \node[lin] at (0.7,-1.35) {no desenho\\{\tiny\mdseries $T = 11$; $k = 2$ e $4$}};
+        \node[val] at (1.9,-1.35) {$11 \times 6$};
+        \node[val] at (4.2,-1.35) {$10 \times 4$ \;e\; $8 \times 5$};
+        \node[val] at (6.5,-1.35) {4 \;e\; 5};
+        \node[val] at (8.8,-1.35) {$4 + 5 = 9$};
+        \node[val] at (11.1,-1.35) {2};
+        % linha 3: no livro
+        \node[lin] at (0.7,-2.05) {no livro\\{\tiny\mdseries $T = 500$; $k = 3$, $4$ e $5$}};
+        \node[val] at (1.9,-2.05) {$500 \times 200^{\,*}$};
+        \node[val] at (4.2,-2.05) {$498$, $497$ e $496$\\{\tiny posições, 100 canais cada}};
+        \node[val] at (6.5,-2.05) {100, 100 e 100};
+        \node[val] at (8.8,-2.05) {300};
+        \node[val] at (11.1,-2.05) {2};
+        \node[anchor=west, font=\tiny\itshape, text=gray!70!black] at (-1.55,-2.65) {* $d = 200$: o modelo do livro concatena dois embeddings GloVe de 100 dimensões, um fixo e um treinável.};
+    \end{tikzpicture}
 
     \vspace{0.1cm}
     \begin{exampleblock}{Por que o Dropout?}
         \footnotesize
-        No treino, ele desliga neurônios ao acaso ($p=0{,}5$): o modelo não pode apostar numa única pista e fica mais \textbf{robusto}, com menos \textit{overfitting}.
+        No treino, ele desliga neurônios ao acaso ($p = 0{,}5$): o modelo não pode apostar numa única pista e fica mais \textbf{robusto}, com menos \textit{overfitting}.
     \end{exampleblock}
 
     \note{
-        Agora os tamanhos, sem susto. Uma convolução de largura k sobre T palavras devolve T menos k mais um posições: onze com filtro dois dá dez; com filtro quatro, oito. O pooling reduz cada canal a um número só, e a concatenação junta tudo num único vetor: quatro mais cinco, nove. Esse vetor passa pela camada totalmente conectada, o MLP, que o mapeia para as duas polaridades, positiva e negativa. Antes dela entra o dropout: no treino, ele desliga neurônios ao acaso, então o modelo não pode depender de uma única pista e precisa espalhar a evidência. Isso o torna mais robusto. Na hora de usar o modelo, o dropout é desligado.
+        Para fechar, os tamanhos, etapa por etapa. A ideia é que nada aqui é mágico: em cada etapa só muda o tamanho do que passa adiante.
+        O embedding transforma T palavras numa matriz T por d. A convolução de largura k devolve T menos k mais 1 posições, para cada um dos c canais. O max-over-time reduz cada canal a 1 número. A concatenação junta os números de todas as convoluções num vetor só. E a camada densa leva esse vetor a 2 escores.
+        No desenho do slide anterior: 11 por 6 na entrada; 10 por 4 e 8 por 5 depois das convoluções; 4 e 5 depois do pooling; 9 na concatenação; e 2 na saída.
+        No modelo do livro, as críticas têm 500 palavras e as convoluções têm larguras 3, 4 e 5, com 100 canais cada. Então saem 498, 497 e 496 posições; o pooling deixa 100 números de cada; e a concatenação dá 300. Um detalhe: no livro, d é 200, porque o modelo usa dois embeddings GloVe de 100 dimensões lado a lado, um fixo e outro que continua treinando.
+        Antes da camada densa entra o dropout: no treino, ele desliga neurônios ao acaso, com probabilidade de 50\%. O modelo não pode depender de uma única pista e precisa espalhar a evidência, o que o torna mais robusto. Na hora de usar o modelo, o dropout é desligado.
     }
 \end{frame}
