@@ -175,62 +175,96 @@
     }
 \end{frame}
 
-\begin{frame}{Softmax hierárquica}
-    \begin{columns}[c]
-        \begin{column}{0.48\textwidth}
-            \small
-            \begin{itemize}
-                \item Proposta por Morin e Bengio \cite{morin2005hierarchical}.
-                \item Todo o dicionário vira as \textbf{folhas} de uma \destaque{árvore binária}.
-                \item Cada \textbf{nó interno} $n$ tem um vetor $\uu_n$.
-                \item Chegar a uma palavra é um \textbf{caminho} de decisões simples: \textbf{esquerda ou direita}?
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.50\textwidth}
-            \centering
-            \begin{tikzpicture}[
-                inner/.style={circle, draw=dexpiBlue, fill=dexpiBlueLight, minimum size=0.42cm, inner sep=0pt},
-                onpath/.style={inner, fill=dexpiBlue},
-                leaf/.style={rectangle, rounded corners=1pt, draw=dexpiGreenDark, fill=dexpiGreenLight, minimum size=0.42cm, inner sep=1pt, font=\scriptsize},
-                target/.style={leaf, fill=dexpiGreenDark, text=white, font=\scriptsize\bfseries},
-                level 1/.style={sibling distance=3.0cm, level distance=0.95cm},
-                level 2/.style={sibling distance=1.5cm, level distance=0.95cm},
-                level 3/.style={sibling distance=0.75cm, level distance=0.95cm},
-                edge from parent/.style={draw=gray, thick}]
-                \node[onpath] (r) {}
-                    child { node[onpath] (a) {}
-                        child { node[inner] {}
-                            child { node[leaf] {$w_1$} }
-                            child { node[leaf] {$w_2$} } }
-                        child { node[onpath] (b) {}
-                            child { node[target] (t) {$w_3$} }
-                            child { node[leaf] {$w_4$} } } }
-                    child { node[inner] {}
-                        child { node[inner] {}
-                            child { node[leaf] {$w_5$} }
-                            child { node[leaf] {$w_6$} } }
-                        child { node[inner] {}
-                            child { node[leaf] {$w_7$} }
-                            child { node[leaf] {$w_8$} } } };
-                \draw[very thick, dexpiBlue] (r) -- (a) -- (b) -- (t);
-                \node[font=\tiny, left=0.05cm of r] {$n(w_3,1)$};
-                \node[font=\tiny, left=0.05cm of a] {$n(w_3,2)$};
-                \node[font=\tiny, right=0.05cm of b] {$n(w_3,3)$};
-                \node[font=\tiny, text=dexpiBlue] at ($(r)!0.5!(a)+(-0.35,0.05)$) {esq.};
-                \node[font=\tiny, text=dexpiBlue] at ($(a)!0.5!(b)+(0.3,0.1)$) {dir.};
-                \node[font=\tiny, text=dexpiBlue] at ($(b)!0.5!(t)+(-0.3,0)$) {esq.};
+\begin{frame}{Softmax hierárquica: o cálculo da decisão em cada nó}
+    \begin{columns}[T]
+        \begin{column}{0.41\textwidth}
+            {\color{dexpiBlue}\small\textbf{Anatomia do nó e fórmula}\par\vspace{2pt}\hrule height 0.8pt}
+            \vspace{3pt}
+            \footnotesize
+            \begin{enumerate}\setlength{\itemsep}{2pt}
+                \item \textbf{Palavra central (entrada):} o vetor $\vv_w$ (ex.: ``gato'') entra pelo topo e guia as escolhas.
+                \item \textbf{Nós internos (classificadores):} cada nó $n$ é um classificador binário com um vetor treinável $\uu_n$.
+            \end{enumerate}
+            \vspace{1pt}
+            \begin{tikzpicture}
+                \node[draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=3pt, thick, inner sep=4pt, text width=0.93\linewidth, align=left, font=\scriptsize] {%
+                    \textbf{\color{dexpiBlue}3. Fórmula da decisão}\\[1pt]
+                    Ir para a \textbf{esquerda}: produto escalar entre o vetor do nó ($\uu_n$) e o da palavra central ($\vv_w$), passado por uma sigmoide:\\[2pt]
+                    \centering\small $P(\text{esq} \mid n, \vv_w) = \sigma\!\left(\uu_n^\top \vv_w\right)$};
             \end{tikzpicture}
 
-            \vspace{0.1cm}
-            {\scriptsize Caminho até $w_3$: esquerda, direita, esquerda ($L(w_3) = 4$).}
+            \vspace{1pt}
+            {\tiny\itshape Proposta por Morin e Bengio \cite{morin2005hierarchical}.\par}
+        \end{column}
+        \begin{column}{0.57\textwidth}
+            \centering
+            \begin{tikzpicture}[
+                no/.style={circle, draw=gray!55, fill=gray!12, minimum size=0.4cm, inner sep=0pt},
+                caminho/.style={circle, draw=dexpiBlue, fill=dexpiBlue, minimum size=0.4cm, inner sep=0pt},
+                folha/.style={rectangle, rounded corners=1pt, draw=gray!55, fill=gray!8, text=gray!70!black, minimum size=0.4cm, inner sep=1pt, font=\scriptsize},
+                alvo/.style={folha, draw=dexpiGreenDark, fill=dexpiGreenDark, text=white, font=\scriptsize\bfseries},
+                aresta/.style={draw=gray!55, thick},
+                trilha/.style={draw=dexpiBlue, line width=1.6pt},
+                dec/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, font=\scriptsize, inner sep=2pt, anchor=west},
+                rot/.style={font=\tiny, text=dexpiBlue, anchor=east}]
+                % nos internos
+                \node[caminho] (R) at (0,0) {};
+                \node[caminho] (A) at (-2.1,-0.95) {};
+                \node[no] (C) at (2.1,-0.95) {};
+                \node[no] (A1) at (-2.95,-1.9) {};
+                \node[caminho] (B) at (-1.25,-1.9) {};
+                \node[no] (C1) at (1.25,-1.9) {};
+                \node[no] (C2) at (2.95,-1.9) {};
+                % folhas
+                \foreach \i/\x in {1/-3.375, 2/-2.525, 4/-0.825, 5/0.825, 6/1.675, 7/2.525, 8/3.375}
+                    \node[folha] (w\i) at (\x,-2.85) {$w_\i$};
+                \node[alvo] (w3) at (-1.675,-2.85) {$w_3$};
+                % arestas
+                \draw[aresta] (R) -- (C);
+                \draw[aresta] (A) -- (A1);
+                \draw[aresta] (C) -- (C1);
+                \draw[aresta] (C) -- (C2);
+                \draw[aresta] (A1) -- (w1);
+                \draw[aresta] (A1) -- (w2);
+                \draw[aresta] (B) -- (w4);
+                \draw[aresta] (C1) -- (w5);
+                \draw[aresta] (C1) -- (w6);
+                \draw[aresta] (C2) -- (w7);
+                \draw[aresta] (C2) -- (w8);
+                \draw[trilha] (R) -- (A) -- (B) -- (w3);
+                % entrada: palavra central
+                \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize, inner sep=2.5pt] (in) at (0,0.95) {\textbf{Palavra central:} $\vv_w$};
+                \draw[-{Stealth[length=1.6mm]}, thick, dexpiGreenDark] (in.south) -- (R.north);
+                % decisao em cada no visitado
+                \node[dec] at ($(R.east)+(0.15,0.12)$) {$\uu_1^\top \vv_w$ $\rightarrow$ \textbf{esq.}};
+                \node[dec] at ($(A.east)+(0.3,-0.12)$) {$\uu_2^\top \vv_w$ $\rightarrow$ \textbf{dir.}};
+                \node[dec] at ($(B.east)+(0.12,0)$) {$\uu_3^\top \vv_w$ $\rightarrow$ \textbf{esq.}};
+                % rotulos dos nos
+                \node[rot] at ($(R.west)+(-0.05,0)$) {$n(w_3,1)$};
+                \node[rot] at ($(A.west)+(-0.05,0)$) {$n(w_3,2)$};
+                \node[rot] at ($(B.west)+(-0.05,0)$) {$n(w_3,3)$};
+                % alvo
+                \node[font=\tiny\bfseries, text=dexpiGreenDark, anchor=north] at (w3.south) {(contexto alvo)};
+            \end{tikzpicture}
+
+            \vspace{2pt}
+            {\scriptsize Caminho até $w_3$: esq.\ $\rightarrow$ dir.\ $\rightarrow$ esq.\ (3 decisões). $L(w_3) = 4$.\par}
         \end{column}
     \end{columns}
 
+    \vspace{0.1cm}
+    \begin{tikzpicture}
+        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=3pt, thick, inner sep=4pt, text width=0.97\textwidth, align=left, font=\footnotesize] {%
+            \textbf{\color{dexpiGreenDark}Conclusão:} o treino ajusta os $\uu_n$ de \textbf{todos os nós} para que os produtos internos levem às palavras de contexto corretas.};
+    \end{tikzpicture}
+
     \note{
-        A segunda aproximação é a softmax hierárquica. Aqui a ideia é outra: organizamos todo o dicionário como as folhas de uma árvore binária. No desenho, o vocabulário tem 8 palavras, de $w_1$ a $w_8$, e cada uma é uma folha.
-        Os nós internos, os círculos, não são palavras: cada um tem o seu próprio vetor $\uu_n$, que é aprendido no treino.
-        Para chegar a uma palavra, saímos da raiz e, em cada nó, tomamos uma decisão simples de sim ou não: ir para a esquerda ou para a direita. Para chegar a $w_3$, o caminho destacado é: esquerda, direita, esquerda.
-        A notação: $L(w)$ é o número de nós no caminho da raiz até a folha $w$, contando a raiz e a própria folha. Para $w_3$, $L = 4$. E $n(w, j)$ é o $j$-ésimo nó desse caminho; a raiz é $n(w_3, 1)$.
+        A segunda aproximação é a softmax hierárquica, proposta por Morin e Bengio. Todo o dicionário vira as folhas de uma árvore binária: no desenho, 8 palavras, de $w_1$ a $w_8$.
+        Comecem pelo topo. A palavra central, por exemplo ``gato'', entra com o seu vetor $\vv_w$. É ela que guia todas as escolhas.
+        Os nós internos, os círculos, não são palavras. Cada nó é um pequeno classificador binário, com o seu próprio vetor treinável $\uu_n$. A decisão em cada nó é sempre a mesma conta: o produto escalar entre o vetor do nó e o vetor da palavra central, passado por uma sigmoide. O resultado é a probabilidade de ir para a esquerda.
+        Para chegar a $w_3$, o caminho destacado em azul passa por três nós. Na raiz, $n(w_3, 1)$, a conta é $\uu_1^\top \vv_w$ e a decisão é esquerda. No segundo nó, $\uu_2^\top \vv_w$, direita. No terceiro, $\uu_3^\top \vv_w$, esquerda de novo, e chegamos à folha $w_3$, a palavra de contexto que queríamos.
+        A notação do livro: $L(w)$ é o número de nós no caminho da raiz até a folha, contando a raiz e a própria folha. Para $w_3$, $L = 4$, e são 3 decisões.
+        No treino, ajustamos os vetores $\uu_n$ de todos os nós, para que esses produtos internos levem consistentemente às palavras de contexto corretas.
     }
 \end{frame}
 
