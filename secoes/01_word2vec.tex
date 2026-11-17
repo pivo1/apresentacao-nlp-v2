@@ -195,73 +195,91 @@
 \end{frame}
 
 
-\begin{frame}{Embedding: um dicionário de números}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \small
-            \begin{itemize}
-                \item Pense num \destaque{dicionário}: você procura a palavra e recebe uma lista de números.
-                \item Esse dicionário é uma tabela $\mathbf{W}$, com \textbf{uma linha por palavra}.
-            \end{itemize}
+\begin{frame}{Embedding: o dicionário de significados}
+    \small
+    Cada palavra vira um \textbf{vetor de números aprendidos}, e significados parecidos ocupam \destaque{pontos próximos} no espaço.
 
-            \begin{tikzpicture}
-                \node[draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=3pt, thick, inner sep=4pt, align=center] {
-                    $\mathbf{e}_i^\top \mathbf{W} = \mathbf{W}_{i,:}$\\[1pt]
-                    {\scriptsize multiplicar pelo one-hot $=$ \destaque{selecionar a linha da palavra}}};
-            \end{tikzpicture}
+    \vspace{0.2cm}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize,
+        num/.style={circle, fill=dexpiBlue, text=white, font=\tiny\bfseries, inner sep=1.2pt},
+        tit/.style={font=\scriptsize\bfseries, text=dexpiBlue, anchor=west, inner sep=2pt},
+        cel/.style={minimum height=0.36cm, inner sep=0pt, anchor=center},
+        pt/.style={circle, inner sep=1.4pt}]
 
-            \vspace{0.3cm}
-            \begin{tikzpicture}[baseline=-0.6ex]
-                \foreach \a in {0,45,...,315} {
-                    \fill[dexpiRedDark, rotate=\a] (-0.05,0.1) rectangle (0.05,0.18);
-                }
-                \fill[dexpiRedDark] (0,0) circle (0.13);
-                \fill[white] (0,0) circle (0.05);
-            \end{tikzpicture}
-            {\footnotesize Os números são \textbf{\color{dexpiRedDark}APRENDIDOS}, não escolhidos por nós.}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \centering
-            \begin{tikzpicture}
-                \node[font=\small\bfseries, text=dexpiBlue] at (3.1,5.05) {O mapa do significado};
-                \matrix (W) [matrix of nodes, ampersand replacement=\&, font=\scriptsize,
-                    nodes={minimum height=0.34cm, anchor=center}, column sep=2pt,
-                    column 1/.style={nodes={minimum width=1.0cm}},
-                    column 2/.style={nodes={minimum width=0.75cm}},
-                    column 3/.style={nodes={minimum width=0.75cm}}, row 2/.style={nodes={fill=dexpiGreenLight}}] at (3.1,3.95) {
-                    rei \& 1.2 \& 1.5 \\
-                    gato \& $-1.0$ \& 1.5 \\
-                    correr \& $-0.6$ \& $-1.2$ \\
-                };
-                \draw[dexpiBlue] (W.north west) rectangle (W.south east);
-                \draw[dexpiBlue] (W-1-1.north east) -- (W-3-1.south east);
-                \node[font=\small, text=dexpiBlue, anchor=west] at ($(W.east)+(0.05,0)$) {$\mathbf{W}$};
-                \begin{axis}[
-                    at={(0,0)}, anchor=south west,
-                    width=6.8cm, height=3.5cm, clip=false,
-                    xmin=-2.4, xmax=2.6, ymin=-2.1, ymax=2.2,
-                    axis lines=middle, ticks=none,
-                    xlabel={\scriptsize dim 1}, ylabel={\scriptsize dim 2}]
-                    \coordinate (gatoPt) at (axis cs:-1.0,1.5);
-                    \addplot[only marks, mark=*, dexpiBlue] coordinates {(1.2,1.5) (1.6,1.1) (0.9,1.0)};
-                    \node[font=\scriptsize, anchor=south] at (axis cs:1.2,1.5) {rei};
-                    \node[font=\scriptsize, anchor=west] at (axis cs:1.6,1.1) {rainha};
-                    \node[font=\scriptsize, anchor=east] at (axis cs:0.9,1.0) {príncipe};
-                    \addplot[only marks, mark=square*, dexpiGreenDark] coordinates {(-1.4,1.2) (-1.0,1.5) (-1.6,0.8)};
-                    \node[font=\scriptsize, anchor=south] at (axis cs:-1.0,1.5) {gato};
-                    \node[font=\scriptsize, anchor=east] at (axis cs:-1.4,1.2) {cão};
-                    \node[font=\scriptsize, anchor=north] at (axis cs:-1.6,0.8) {lobo};
-                    \addplot[only marks, mark=triangle*, dexpiRed] coordinates {(-0.6,-1.2) (-1.1,-1.5) (-0.4,-1.6)};
-                    \node[font=\scriptsize, anchor=south] at (axis cs:-0.6,-1.2) {correr};
-                    \node[font=\scriptsize, anchor=east] at (axis cs:-1.1,-1.5) {andar};
-                    \node[font=\scriptsize, anchor=west] at (axis cs:-0.4,-1.6) {pular};
-                \end{axis}
-                \draw[-{Stealth}, thick, dexpiGreenDark] (W-2-1.west) to[out=180, in=90] ($(gatoPt)+(0,0.4)$);
-            \end{tikzpicture}\par
-            {\scriptsize Cada linha de $\mathbf{W}$ é um ponto ($d=2$, ilustrativo).\\
-            Significados parecidos $\Rightarrow$ \destaque{pontos próximos}.}
-        \end{column}
-    \end{columns}
+        %---------------- 1. a palavra
+        \node[num] (n1) at (0.0,3.45) {1};
+        \node[tit] at (n1.east) {A palavra};
+        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, very thick, rounded corners=3pt, minimum width=1.6cm, minimum height=0.8cm, font=\normalsize\bfseries] (pal) at (0.85,1.75) {gato};
+        \draw[-{Stealth[length=2mm]}, very thick, dexpiGreenDark] (pal.east) -- node[above, font=\tiny, text=dexpiGreenDark, align=center] {busca\\a linha} (3.0,1.75);
+
+        %---------------- 2. tabela W
+        \node[num] (n2) at (3.0,3.45) {2};
+        \node[tit] at (n2.east) {Tabela $\mathbf{W}$: o dicionário};
+        \foreach \c/\x in {palavra/3.65, dim 1/4.75, dim 2/5.5}
+            \node[cel, font=\tiny, text=gray!70!black] at (\x,2.98) {\c};
+        \fill[dexpiGreenLight] (3.0,1.57) rectangle (5.95,1.93);
+        \draw[dexpiGreenDark, very thick] (3.0,1.57) rectangle (5.95,1.93);
+        \foreach \p/\a/\b/\y in {rei/1.2/1.5/2.55, rainha/1.6/1.1/2.15, gato/$-1.0$/1.5/1.75, cão/$-1.4$/1.2/1.35, correr/$-0.6$/$-1.2$/0.95} {
+            \node[cel] at (3.65,\y) {\p};
+            \node[cel] at (4.75,\y) {\a};
+            \node[cel] at (5.5,\y) {\b};
+        }
+        \node[cel] at (3.65,0.6) {$\vdots$};
+        \node[cel] at (4.75,0.6) {$\vdots$};
+        \node[cel] at (5.5,0.6) {$\vdots$};
+        \draw[dexpiBlue] (3.0,0.38) rectangle (5.95,2.78);
+        \draw[dexpiBlue] (4.3,0.38) -- (4.3,2.78);
+        \node[font=\tiny, text=gray!70!black, anchor=north] at (4.48,0.33) {uma linha por palavra};
+
+        %---------------- 3. mapa de significados
+        \node[num] (n3) at (7.55,3.45) {3};
+        \node[tit] at (n3.east) {Mapa de significados};
+        \begin{scope}[shift={(10.6,1.45)}, x=1.0cm, y=0.72cm]
+            % ilhas
+            \fill[dexpiGreenLight] (-1.33,1.17) ellipse (0.72 and 0.62);
+            \fill[dexpiBlueLight] (1.23,1.2) ellipse (0.75 and 0.62);
+            \fill[dexpiRedLight] (-0.7,-1.43) ellipse (0.78 and 0.5);
+            % eixos
+            \draw[-{Stealth[length=1.5mm]}, gray!60] (-2.35,0) -- (2.6,0) node[below left, font=\tiny, text=gray!70!black] {dim 1};
+            \draw[-{Stealth[length=1.5mm]}, gray!60] (0,-2.05) -- (0,2.15) node[above, font=\tiny, text=gray!70!black] {dim 2};
+            % animais
+            \node[pt, fill=dexpiGreenDark] (gato) at (-1.0,1.5) {};
+            \node[pt, fill=dexpiGreenDark] (cao) at (-1.4,1.2) {};
+            \node[pt, fill=dexpiGreenDark] (lobo) at (-1.6,0.8) {};
+            \node[font=\scriptsize\bfseries, text=dexpiGreenDark, anchor=west] at (gato.east) {gato};
+            \node[anchor=east] at (cao.west) {cão};
+            \node[anchor=north] at (lobo.south) {lobo};
+            % realeza
+            \node[pt, fill=dexpiBlue] (rei) at (1.2,1.5) {};
+            \node[pt, fill=dexpiBlue] (rainha) at (1.6,1.1) {};
+            \node[pt, fill=dexpiBlue] (princ) at (0.9,1.0) {};
+            \node[anchor=south] at (rei.north) {rei};
+            \node[anchor=west] at (rainha.east) {rainha};
+            \node[anchor=north] at (princ.south) {príncipe};
+            % acoes
+            \node[pt, fill=dexpiRedDark] (correr) at (-0.6,-1.2) {};
+            \node[pt, fill=dexpiRedDark] (andar) at (-1.1,-1.5) {};
+            \node[pt, fill=dexpiRedDark] (pular) at (-0.4,-1.6) {};
+            \node[anchor=west] at (correr.east) {correr};
+            \node[anchor=east] at (andar.west) {andar};
+            \node[anchor=west] at (pular.east) {pular};
+            % nomes das ilhas
+            \node[font=\tiny\bfseries, text=dexpiGreenDark] at (-2.0,1.95) {animais};
+            \node[font=\tiny\bfseries, text=dexpiBlue] at (2.0,1.95) {realeza};
+            \node[font=\tiny\bfseries, text=dexpiRedDark, anchor=west] at (0.2,-0.9) {ações};
+        \end{scope}
+
+        %---------------- da linha ao ponto
+        \draw[-{Stealth[length=2.2mm]}, line width=1.6pt, dexpiGreenDark] (5.95,1.75) to[out=10, in=200] node[pos=0.42, below, font=\tiny\bfseries, text=dexpiGreenDark] {$[-1.0,\ 1.5]$} (gato.south west);
+    \end{tikzpicture}
+
+    \vspace{0.1cm}
+    \begin{tikzpicture}
+        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=3pt, thick, inner sep=5pt, text width=0.97\textwidth, align=left, font=\footnotesize] {%
+            \textbf{\color{dexpiGreenDark}Intuição chave:} significados parecidos $\rightarrow$ \textbf{coordenadas próximas} no espaço.\\[2pt]
+            \textbf{\color{dexpiBlue}Como é preenchida?} Os números de $\mathbf{W}$ são \textbf{\color{dexpiRedDark}APRENDIDOS} no treino, não escolhidos por nós.};
+    \end{tikzpicture}
 \end{frame}
 
 %------------------------------------------------
