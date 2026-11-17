@@ -43,20 +43,12 @@
         \end{column}
     \end{columns}
     \vspace{0.25cm}
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{alertblock}{word2vec: cada época relê o texto}
-                \footnotesize
-                10 épocas $=$ percorrer o corpus \textbf{10 vezes}. Um par que aparece 1 milhão de vezes é processado \textbf{10 milhões} de vezes.
-            \end{alertblock}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{exampleblock}{GloVe: lê uma vez, treina na matriz}
-                \footnotesize
-                Percorre o corpus \textbf{1 vez} para contar. Cada época passa só pelas entradas \textbf{não nulas}.
-            \end{exampleblock}
-        \end{column}
-    \end{columns}
+
+    \begin{exampleblock}{GloVe: lê uma vez, treina na matriz}
+        \footnotesize
+        Percorre o corpus \textbf{1 vez} para contar. Cada época passa só pelas entradas \textbf{não nulas}.
+    \end{exampleblock}
+
 
     \note{
         Como o GloVe evita percorrer o texto várias vezes? Com a matriz de coocorrência.
@@ -67,43 +59,6 @@
     }
 \end{frame}
 
-\begin{frame}{Por que não continuar com o word2vec?}
-    \small
-    \begin{itemize}
-        \item O modelo Skip-gram clássico reescrito usando contagens estáticas:
-    \end{itemize}
-    \vspace{-0.1cm}
-    \begin{equation*}
-        \underbrace{-\sum_{i \in \V} \sum_{j \in \V} x_{ij} \log q_{ij}}_{\text{entropia cruzada}},
-        \qquad
-        q_{ij} = \frac{\exp\left(\uu_j^\top \vv_i\right)}{{\color{dexpiRedDark}\sum_{k \in \V} \exp\left(\uu_k^\top \vv_i\right)}}
-    \end{equation*}
-    \begin{itemize}
-        \item$q_{ij}$: A probabilidade que o modelo prevê de encontrar a palavra j no contexto de i (Calculada via Softmax)
-
-        \item  $x_{ij}$: contagem real (quantas vezes j aparece perto de i em todo o texto)
-    \end{itemize}
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{alertblock}{1. Custo}
-                \footnotesize
-                $q_{ij}$ ainda soma \textbf{todo o vocabulário} no denominador.
-            \end{alertblock}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{alertblock}{2. Eventos raros}
-                \footnotesize
-                Pares que aparecem juntos 1 ou 2 vezes \textbf{por acaso} recebem peso demais.
-            \end{alertblock}
-        \end{column}
-    \end{columns}
-
-    \note{
-        Por que não continuar com o word2vec? O livro mostra que a perda do skip-gram pode ser reescrita agrupando os termos por par de palavras: somamos sobre todos os pares do vocabulário, cada um multiplicado por $x_{ij}$, o número de vezes que $w_j$ apareceu perto de $w_i$ no texto todo. Se (gato, miou) aparece 500 vezes, isso vira um termo só com peso 500.
-        Mas essa perda, uma entropia cruzada, tem dois problemas. Primeiro, o custo: $q_{ij}$ é a softmax completa, e o denominador, em vermelho, ainda soma o vocabulário inteiro. Segundo, os eventos raros: pares que aparecem juntos uma ou duas vezes por puro acaso recebem peso demais.
-        O GloVe resolve os dois.
-    }
-\end{frame}
 
 \begin{frame}{Mudança 1: logaritmo e erro quadrático}
     \small

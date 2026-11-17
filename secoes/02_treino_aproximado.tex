@@ -175,21 +175,21 @@
     }
 \end{frame}
 
-\begin{frame}{Softmax hierárquica: o cálculo da decisão em cada nó}
+\begin{frame}{Softmax hierárquica}
     \begin{columns}[T]
         \begin{column}{0.41\textwidth}
             {\color{dexpiBlue}\small\textbf{Anatomia do nó e fórmula}\par\vspace{2pt}\hrule height 0.8pt}
             \vspace{3pt}
             \footnotesize
             \begin{enumerate}\setlength{\itemsep}{2pt}
-                \item \textbf{Palavra central (entrada):} o vetor $\vv_w$ (ex.: ``gato'') entra pelo topo e guia as escolhas.
+                \item \textbf{Palavra central (entrada):} o vetor $\vv_w$ (ex.: ``gato'') 
                 \item \textbf{Nós internos (classificadores):} cada nó $n$ é um classificador binário com um vetor treinável $\uu_n$.
             \end{enumerate}
             \vspace{1pt}
             \begin{tikzpicture}
                 \node[draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=3pt, thick, inner sep=4pt, text width=0.93\linewidth, align=left, font=\scriptsize] {%
                     \textbf{\color{dexpiBlue}3. Fórmula da decisão}\\[1pt]
-                    Ir para a \textbf{esquerda}: produto escalar entre o vetor do nó ($\uu_n$) e o da palavra central ($\vv_w$), passado por uma sigmoide:\\[2pt]
+                    Ir para a \textbf{esquerda}:\\[2pt]
                     \centering\small $P(\text{esq} \mid n, \vv_w) = \sigma\!\left(\uu_n^\top \vv_w\right)$};
             \end{tikzpicture}
 
@@ -268,7 +268,7 @@
     }
 \end{frame}
 
-\begin{frame}{Softmax hierárquica: a probabilidade é o caminho}
+\begin{frame}{Softmax hierárquica}
     \small
     Descer a árvore é fazer \textbf{uma aposta por nó}: a probabilidade da palavra é o \textbf{produto} das apostas.
 
