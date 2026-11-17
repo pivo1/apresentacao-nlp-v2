@@ -131,53 +131,66 @@
 \end{frame}
 
 \begin{frame}{Concatenar (o primeiro e o último passo)}
+    \small
+    \textbf{\color{dexpiBlue}Ideia central:} numa BiRNN, os dois resumos completos da frase ficam nas \textbf{duas pontas} (início e fim), que usamos para a classificação final.
+
+    \vspace{0.25cm}
     \centering
-    \begin{tikzpicture}[font=\tiny,
-        fw/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.95cm, minimum height=0.4cm, inner sep=0pt},
-        bw/.style={draw=dexpiRedDark, fill=dexpiRedLight, minimum width=0.95cm, minimum height=0.4cm, inner sep=0pt},
-        fraco/.style={opacity=0.35},
-        seg/.style={draw, minimum height=0.42cm, minimum width=1.3cm, inner sep=0pt, font=\tiny}]
-        \foreach \p [count=\k from 1] in {this, movie, is, so, great} {
-            \node[font=\scriptsize] (w\k) at ({1.25*\k},0) {\p};
-            \node[fw] (f\k) at ({1.25*\k},0.6) {$\overrightarrow{\mathbf{h}}_{\k}$};
-            \node[bw] (b\k) at ({1.25*\k},1.15) {$\overleftarrow{\mathbf{h}}_{\k}$};
+    \begin{tikzpicture}[font=\scriptsize,
+        apag/.style={draw=gray!35, fill=gray!8, text=gray!55, minimum width=1.15cm, minimum height=0.5cm, inner sep=0pt},
+        fwf/.style={draw=dexpiBlue, fill=dexpiBlueLight, text=dexpiBlue, very thick, minimum width=1.15cm, minimum height=0.5cm, inner sep=0pt},
+        bwf/.style={draw=dexpiRedDark, fill=dexpiRedLight, text=dexpiRedDark, very thick, minimum width=1.15cm, minimum height=0.5cm, inner sep=0pt},
+        seta/.style={-{Stealth[length=1.5mm]}, gray!45},
+        caixa/.style={draw=dexpiGreen, line width=1.4pt, rounded corners=3pt, fill=dexpiGreenLight, fill opacity=0.45, inner sep=4pt},
+        leg/.style={font=\scriptsize\bfseries, inner sep=2pt}]
+        % caixas verdes das pontas (atras dos blocos)
+        \node[caixa, minimum width=1.5cm, minimum height=1.5cm] (g1) at (1.7,1.025) {};
+        \node[caixa, minimum width=1.5cm, minimum height=1.5cm] (g5) at (8.5,1.025) {};
+        % palavras e blocos
+        \foreach \p [count=\k from 1] in {this, movie, is, so, great}
+            \node[font=\small] (w\k) at ({1.7*\k},-0.05) {\p};
+        \foreach \k in {1,2,3,4}
+            \node[apag] (f\k) at ({1.7*\k},0.7) {$\overrightarrow{\mathbf{h}}_{\k}$};
+        \foreach \k in {2,3,4,5}
+            \node[apag] (b\k) at ({1.7*\k},1.35) {$\overleftarrow{\mathbf{h}}_{\k}$};
+        \node[fwf] (f5) at (8.5,0.7) {$\overrightarrow{\mathbf{h}}_{5}$};
+        \node[bwf] (b1) at (1.7,1.35) {$\overleftarrow{\mathbf{h}}_{1}$};
+        \foreach \i/\j in {1/2,2/3,3/4} {
+            \draw[seta] (f\i) -- (f\j);
+            \draw[seta] (b\j) -- (b\i);
         }
-        \foreach \i/\j in {1/2,2/3,3/4,4/5} {
-            \draw[-{Stealth}, dexpiBlue] (f\i) -- (f\j);
-            \draw[-{Stealth}, dexpiRedDark] (b\j) -- (b\i);
-        }
-        \node[draw=dexpiGreenDark, very thick, rounded corners, fit=(f1)(b1), inner sep=2pt, label={[font=\scriptsize\bfseries, text=dexpiGreenDark]above:\texttt{outputs[0]}}] {};
-        \node[draw=dexpiGreenDark, very thick, rounded corners, fit=(f5)(b5), inner sep=2pt, label={[font=\scriptsize\bfseries, text=dexpiGreenDark]above:\texttt{outputs[-1]}}] {};
-        % anotacoes
-        \node[anchor=east, align=right, text=dexpiRedDark] at (0.55,1.15) {$\overleftarrow{\mathbf{h}}_1$: leu a frase\\\textbf{toda} (de trás)};
-        \node[anchor=east, align=right, text=gray] at (0.55,0.6) {$\overrightarrow{\mathbf{h}}_1$: só viu ``this''};
-        \node[anchor=west, align=left, text=dexpiBlue] at (6.95,0.6) {$\overrightarrow{\mathbf{h}}_5$: leu a frase\\\textbf{toda} (da frente)};
-        \node[anchor=west, align=left, text=gray] at (6.95,1.15) {$\overleftarrow{\mathbf{h}}_5$: só viu ``great''};
-        % vetor concatenado
-        \node[seg, draw=dexpiBlue, fill=dexpiBlueLight, fraco] (v1) at (1.95,-0.85) {$\overrightarrow{\mathbf{h}}_1$ (100)};
-        \node[seg, draw=dexpiRedDark, fill=dexpiRedLight, right=0pt of v1] (v2) {$\overleftarrow{\mathbf{h}}_1$ (100)};
-        \node[seg, draw=dexpiBlue, fill=dexpiBlueLight, right=0pt of v2] (v3) {$\overrightarrow{\mathbf{h}}_5$ (100)};
-        \node[seg, draw=dexpiRedDark, fill=dexpiRedLight, fraco, right=0pt of v3] (v4) {$\overleftarrow{\mathbf{h}}_5$ (100)};
-        \node[anchor=west, font=\scriptsize] at (v4.east) {\;$= 400 = 4 \times$ \texttt{num\_hiddens}};
-        \node[anchor=east, font=\scriptsize\ttfamily] at (v1.west) {encoding =\;};
+        \draw[-{Stealth[length=1.8mm]}, thick, dexpiBlue] (f4) -- (f5);
+        \draw[seta] (b5) -- (b4);
+        \draw[-{Stealth[length=1.8mm]}, thick, dexpiRedDark] (b2) -- (b1);
+        % legendas
+        \node[leg, text=dexpiRedDark, above=1pt of g1] {Leu tudo $\leftarrow$};
+        \node[leg, text=dexpiBlue, above=1pt of g5] {Leu tudo $\rightarrow$};
+        \node[font=\tiny, text=gray!70!black, anchor=east] at (0.75,0.7) {ida $\rightarrow$};
+        \node[font=\tiny, text=gray!70!black, anchor=east] at (0.75,1.35) {volta $\leftarrow$};
     \end{tikzpicture}
 
-    \vspace{0.15cm}
-    \raggedright
-    \footnotesize
-    \texttt{encoding = torch.cat((outputs[0], outputs[-1]), dim=1)}
-    \begin{itemize}
-        \item \texttt{outputs} traz um estado por palavra, \textbf{só da última camada}: cada um tem $2 \times 100 = 200$ números.
-        \item As metades que resumem a frase inteira são $\overleftarrow{\mathbf{h}}_1$ e $\overrightarrow{\mathbf{h}}_T$, e cada uma está numa ponta. Por isso pegamos as \textbf{duas pontas}.
-        \item O 4 de \texttt{nn.Linear(4 * num\_hiddens, 2)} vem de \textbf{2 passos $\times$ 2 direções}, e não das 2 camadas.
-    \end{itemize}
+    \vspace{0.2cm}
+    \begin{columns}[t]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{De onde vem o 4?}
+                \scriptsize
+                Cada palavra gera 2 vetores (ida e volta). Pegamos \textbf{2 passos} da sequência (primeiro e último). Isso totaliza \textbf{4 vetores} de 100 dimensões cada.
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Dimensão do \textit{encoding}}
+                \scriptsize
+                Concatenando os 4 vetores, obtemos um vetor único de \textbf{400 números} ($4 \times$ \textit{num\_hiddens}). Esse vetor é enviado para a camada de classificação final.
+            \end{block}
+        \end{column}
+    \end{columns}
 
     \note{
-        Agora o pulo do gato, a linha mais importante do código: a concatenação do primeiro e do último passo.
-        A LSTM bidirecional devolve \texttt{outputs}: um estado oculto para cada palavra da frase. Cada estado tem duas metades, a da leitura para a frente, em azul, e a da leitura para trás, em vermelho.
-        Agora pensem no que cada metade já leu. A seta azul anda da esquerda para a direita. Então o h azul da primeira palavra só viu ``this''. Mas o h azul da última palavra leu a frase inteira. A seta vermelha anda ao contrário: o h vermelho da última palavra só viu ``great'', e o h vermelho da primeira palavra leu a frase inteira, de trás para a frente.
-        Ou seja, os dois resumos completos da frase estão em pontas opostas: um no fim, outro no começo. Por isso o código pega \texttt{outputs[0]} e \texttt{outputs[-1]} e concatena. O vetor resultante, embaixo, tem as quatro metades. As duas mais apagadas viram pouca coisa, mas vêm junto. As duas fortes resumem a frase nos dois sentidos.
-        E isso explica o tamanho: cada passo tem 200 números, dois passos dão 400, que é 4 vezes o número de unidades ocultas. Um cuidado: é comum achar que o 4 vem das 2 camadas vezes 2 direções. Não é. O \texttt{outputs} da LSTM só traz a última camada. O 4 vem de 2 passos de tempo vezes 2 direções.
+        Agora o passo mais importante do modelo: a concatenação do primeiro e do último passo.
+        A LSTM bidirecional devolve um estado oculto para cada palavra da frase. Cada estado tem duas metades: a da leitura para a frente, a ida, e a da leitura para trás, a volta.
+        Agora pensem no que cada metade já leu. A ida anda da esquerda para a direita. Então o h de ida da primeira palavra só viu ``this''. Mas o h de ida da última palavra, em azul, leu a frase inteira. A volta anda ao contrário: o h de volta da última palavra só viu ``great'', e o h de volta da primeira palavra, em vermelho, leu a frase inteira, de trás para a frente.
+        Ou seja, os dois resumos completos da frase estão em pontas opostas: um no fim, outro no começo. Por isso pegamos as duas colunas das pontas, em verde, e concatenamos. Os vetores apagados dessas colunas viram pouca coisa, mas vêm junto.
+        E isso explica o tamanho: cada passo tem 2 vetores de 100 números, dois passos dão 4 vetores, 400 números, que é 4 vezes o número de unidades ocultas. Um cuidado: é comum achar que o 4 vem das 2 camadas vezes 2 direções. Não é. A saída da LSTM só traz a última camada. O 4 vem de 2 passos de tempo vezes 2 direções.
     }
 \end{frame}
 
