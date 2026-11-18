@@ -60,26 +60,69 @@
 \end{frame}
 
 
-\begin{frame}{Mudança 1: logaritmo e erro quadrático}
-    \small
-    \begin{itemize}
-        \item Em vez de prever probabilidades, o GloVe tenta igualar o \textbf{produto escalar} ao \textbf{logaritmo da contagem real}.
-        \item Sem a softmax, $\uu_j^\top \vv_i$ pode ser qualquer número real, e $\log x_{ij}$ também é um número real.
-    \end{itemize}
-    \begin{equation*}
-        \boxed{\;\left(\uu_j^\top \vv_i - \log x_{ij}\right)^2\;}
-    \end{equation*}
+\begin{frame}{Mudança 1: prever log(contagem) em vez de probabilidades}
+    \vspace{-4pt}
+    \begin{columns}[T]
+        \begin{column}{0.485\textwidth}
+            \begin{block}{Antes (word2vec $+$ softmax)}
+                \scriptsize
+                \begin{itemize}\setlength{\itemsep}{1pt}
+                    \item Prever a probabilidade $P(j \mid i)$ exige \textbf{somar sobre todo o vocabulário} (normalização).
+                    \item Custo por par: {\color{dexpiRedDark}$\boldsymbol{O(\vert\V\vert)}$} (lento).
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.485\textwidth}
+            \begin{block}{Agora (GloVe $+$ regressão)}
+                \scriptsize
+                \begin{itemize}\setlength{\itemsep}{1pt}
+                    \item Iguala o produto escalar \textbf{diretamente} ao logaritmo da contagem de coocorrências ($x_{ij}$).
+                    \item Custo por par: {\color{dexpiGreenDark}$\boldsymbol{O(1)}$} (eficiente).
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
 
-    \begin{block}{Ganho}
+    \vspace{-2pt}
+    {\centering
+        \begin{tikzpicture}
+            \node[draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=3pt, thick, inner sep=4pt, anchor=base, font=\small] (obj) at (0,0) {$\text{Objetivo: }\ \uu_j^\top \vv_i \approx \log x_{ij}$};
+            \node[anchor=base west, inner sep=0pt, font=\small] (err) at ($(obj.base east)+(1.75,0)$) {%
+                $\text{Erro} = \Big(
+                {\color{dexpiBlue}\underbrace{\uu_j^\top \vv_i}_{\substack{\text{previsão do modelo}\\ \text{(produto escalar)}}}}
+                -
+                {\color{dexpiRedDark}\underbrace{\log x_{ij}}_{\substack{\text{alvo real no texto}\\ \text{(coocorrências comprimidas)}}}}
+                \Big)^2$};
+            \draw[-{Stealth[length=2.4mm]}, line width=1.4pt, dexpiBlue] ($(obj.east)+(0.12,0)$) -- node[above, font=\tiny, text=dexpiBlue] {medir o desvio} ($(obj.east)+(1.63,0)$);
+        \end{tikzpicture}\par}
+
+    \vspace{-6pt}
+    \begin{columns}[T]
+        \begin{column}{0.485\textwidth}
+            \scriptsize
+            {\color{dexpiBlue}\textbullet}~\textbf{\color{dexpiBlue}Por que o log?} Comprime contagens gigantescas de pares muito comuns (ex.: ``de'', ``o''), evitando que dominem o erro.
+        \end{column}
+        \begin{column}{0.485\textwidth}
+            \scriptsize
+            {\color{dexpiBlue}\textbullet}~\textbf{\color{dexpiBlue}Por que o quadrado?} Evita que erros positivos e negativos se cancelem, pune desvios grandes e gera gradientes suaves.
+        \end{column}
+    \end{columns}
+
+    \vspace{-4pt}
+    \begin{block}{Ganho computacional}
         \footnotesize
-        Ao eliminar a softmax, o custo por par cai de $O(\vert{}V\vert{})$ para $O(1)$, pois o erro passa a depender apenas dos dois vetores envolvidos, sem precisar consultar o vocabulário inteiro.
+        Ao eliminar a softmax, o custo por par cai de {\color{dexpiRedDark}$\boldsymbol{O(\vert\V\vert)}$} \textbf{para} {\color{dexpiGreenDark}$\boldsymbol{O(1)}$}: o erro depende \textbf{exclusivamente} dos dois vetores envolvidos ($\vv_i$ e $\uu_j$), sem consultar o restante do vocabulário $\V$.
     \end{block}
 
     \note{
-        A primeira mudança do GloVe é trocar a probabilidade pelo logaritmo da contagem. Em vez de prever a chance de uma palavra aparecer perto da outra, o modelo tenta fazer o produto escalar dos vetores ficar igual ao log de quantas vezes as duas apareceram juntas.
-        Sem a softmax, o produto escalar pode ser qualquer número real, e o log da contagem também é um número real. Então dá para comparar os dois diretamente, com um erro quadrático, como numa regressão.
-        A intuição: se ``gelo'' e ``sólido'' aparecem juntos mil vezes, o modelo quer que o produto escalar seja log de mil, cerca de 6,9. Se o produto escalar for 2, com os vetores meio distantes, o erro é 2 menos 6,9 ao quadrado, cerca de 24. O gradiente então empurra os vetores para aumentar esse produto escalar.
-        E o ganho principal: não há mais denominador. Cada termo custa um produto escalar, e não uma soma sobre o vocabulário inteiro.
+        A primeira mudança do GloVe é trocar a probabilidade pelo logaritmo da contagem. Comparem as duas caixas de cima.
+        Antes, no word2vec com softmax, prever a probabilidade de $j$ dado $i$ exige normalizar: somar sobre todas as palavras do vocabulário. O custo por par é $O(\vert\V\vert)$, lento.
+        Agora, o GloVe iguala o produto escalar diretamente ao log da contagem de coocorrências, $x_{ij}$. O custo por par é $O(1)$.
+        No centro está a conta. O objetivo é que $\uu_j^\top \vv_i$ fique próximo de $\log x_{ij}$. Para medir o quanto falta, usamos o erro quadrático: a previsão do modelo, em azul, menos o alvo real do texto, em vermelho, tudo ao quadrado. Vira uma regressão.
+        Por que o log? Pares muito comuns, como ``de'' e ``o'', chegam a milhões de ocorrências; o log de um milhão é só 13,8. Sem o log, esses pares dominariam o erro.
+        Por que o quadrado? Erros positivos e negativos não se cancelam, desvios grandes pesam mais, e a função é suave: o gradiente é simplesmente proporcional ao erro.
+        A intuição: se ``gelo'' e ``sólido'' aparecem juntos mil vezes, o modelo quer que o produto escalar seja log de mil, cerca de 6,9. Se o produto escalar for 2, o erro é 2 menos 6,9 ao quadrado, cerca de 24. O gradiente empurra os vetores para aumentar esse produto escalar.
+        E o ganho principal: não há mais denominador. Cada termo depende só dos dois vetores envolvidos, e o custo por par cai de $O(\vert\V\vert)$ para $O(1)$.
     }
 \end{frame}
 
