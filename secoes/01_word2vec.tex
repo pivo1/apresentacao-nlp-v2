@@ -259,10 +259,6 @@
     \end{tikzpicture}
 
     \vspace{0.1cm}
-    \begin{tikzpicture}
-        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=3pt, thick, inner sep=5pt, text width=0.97\textwidth, align=left, font=\footnotesize] %
-            \textbf{\color{dexpiBlue}Como é preenchida?} Os números de $\mathbf{W}$ são \textbf{\color{dexpiRedDark}APRENDIDOS} no treino, não escolhidos por nós.};
-    \end{tikzpicture}
 \end{frame}
 
 %------------------------------------------------
@@ -361,8 +357,8 @@
     \raggedright
     \small
     \begin{itemize}
-        \item \textbf{Skip-gram}: ``se eu digo \textit{futebol}, o que aparece por perto?'' (\textit{bola, gol, time}\ldots). Cada vizinho vira uma \destaque{pergunta separada}: 4 vizinhos = 4 exemplos de treino.
-        \item \textbf{CBOW}: o exercício de escola ``complete a frase''. Os vizinhos entram juntos, como um \destaque{saco de palavras} (\textit{bag of words}): a ordem não importa.
+        \item \textbf{Skip-gram}:  Cada vizinho vira uma \destaque{pergunta separada}: 4 vizinhos = 4 exemplos de treino.
+        \item \textbf{CBOW}: Os vizinhos entram juntos, como um \destaque{saco de palavras} (\textit{bag of words}): a ordem não importa.
     \end{itemize}
 
     \begin{exampleblock}{Intuição (vale para os dois)}
@@ -371,61 +367,7 @@
     \end{exampleblock}
 \end{frame}
 
-\begin{frame}{Treino do Skip-gram e CBOW}
-    \centering
-    {\small\color{dexpiBlue}\textbf{Skip-gram}: a palavra do meio entra, o modelo adivinha o contexto}
 
-    \vspace{0.1cm}
-    \begin{tikzpicture}[
-        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm},
-        num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
-        arr/.style={-{Stealth}, thick, dexpiBlue}]
-        \node[draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, font=\scriptsize\bfseries, minimum width=1.2cm, minimum height=0.6cm] (c) at (0,0) {loves};
-        \node[box, minimum width=1.6cm] (v) at (2.4,0) {vetor de\\centro $\vv$};
-        \node[box, minimum width=2.4cm] (s) at (5.4,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
-        \node[box, fill=dexpiGreenLight, draw=dexpiGreenDark, minimum width=2.0cm] (p) at (8.6,0) {\textbf{softmax}\\probabilidades\\dos vizinhos};
-        \node[box, fill=dexpiLightBlue, minimum width=2.6cm] (r) at (11.9,0) {confere com os\\vizinhos \textbf{reais}:\\the, man, his, son};
-        \draw[arr] (c) -- (v);
-        \draw[arr] (v) -- (s);
-        \draw[arr] (s) -- (p);
-        \draw[arr] (p) -- (r);
-        \node[num] at ($(v.north)+(0,0.3)$) {1};
-        \node[num] at ($(s.north)+(0,0.3)$) {2};
-        \node[num] at ($(p.north)+(0,0.3)$) {3};
-        \node[num] at ($(r.north)+(0,0.3)$) {4};
-    \end{tikzpicture}
-
-    \vspace{0.5cm}
-    {\small\color{dexpiBlue}\textbf{CBOW}: o contexto entra, o modelo adivinha a palavra do meio}
-
-    \vspace{0.1cm}
-    \begin{tikzpicture}[
-        ctx/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, minimum width=1.2cm, minimum height=0.5cm, font=\scriptsize},
-        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm},
-        num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
-        arr/.style={-{Stealth}, thick, dexpiBlue}]
-        % passo 1
-        \foreach \t [count=\i from 0] in {the, man, his, son} {
-            \node[ctx] (c\i) at (0, 0.9-\i*0.6) {\t};
-            \node[box, minimum height=0.5cm, right=0.4cm of c\i] (v\i) {vetor};
-            \draw[arr] (c\i) -- (v\i);
-        }
-        % passo 2
-        \node[box, fill=dexpiLightBlue, minimum width=2.0cm] (m) at (5.2,0) {\textbf{média}\\``resumo do\\contexto''};
-        \foreach \i in {0,...,3} { \draw[arr] (v\i.east) -- (m.west); }
-        % passo 3
-        \node[box, minimum width=2.4cm] (s) at (8.6,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
-        \draw[arr] (m) -- (s);
-        % passo 4
-        \node[box, fill=dexpiGreenLight, draw=dexpiGreenDark, minimum width=2.2cm] (p) at (12.0,0) {\textbf{softmax}\\probabilidades\\$\Rightarrow$ ``loves''};
-        \draw[arr] (s) -- (p);
-        % números
-        \node[num] at (1.4,1.45) {1};
-        \node[num] at ($(m.north)+(0,0.3)$) {2};
-        \node[num] at ($(s.north)+(0,0.3)$) {3};
-        \node[num] at ($(p.north)+(0,0.3)$) {4};
-    \end{tikzpicture}
-\end{frame}
 
 
 \begin{frame}{A fórmula do skip-gram}
@@ -485,7 +427,7 @@
         \node[passo, draw=dexpiRedDark, fill=dexpiRedDark!10, right=0.45cm of p2] (p3) {%
             {\color{dexpiRedDark}\large$-$\; \small\textbf{Passo 3: o negativo}}\\[1pt]
             \footnotesize$\mathcal{L} = -\sum_{t}\sum_{j} \log P\big(w^{(t+j)} \mid w^{(t)}\big)$\\[1pt]
-            \scriptsize ``Maximizar o acerto'' vira ``\textbf{minimizar o erro}'' (= entropia cruzada).\\[1pt]
+            \scriptsize ``Maximizar o acerto'' vira ``\textbf{minimizar o erro}''\\[1pt]
             {\color{dexpiRedDark}\scriptsize\textbf{minimizar}}};
         \draw[seta] (p1) -- (p2);
         \draw[seta] (p2) -- (p3);
@@ -501,9 +443,9 @@
     \vspace{0.2cm}
     {\centering
     $\log P(w_o \mid w_c) =
-     \underbrace{{\color{dexpiBlue}\uu_o^\top \vv_c}}_{\text{nota do vizinho real}}
+     \underbrace{{\color{dexpiBlue}\uu_o^\top \vv_c}}_{\text{score do vizinho real}}
      \;-\;
-     \underbrace{{\color{dexpiRedDark}\log\Big(\sum_{i \in \V} \exp(\uu_i^\top \vv_c)\Big)}}_{\text{soma sobre o vocabulário}}$
+     \underbrace{{\color{dexpiRedDark}\log\Big(\sum_{i \in \V} \exp(\uu_i^\top \vv_c)\Big)}}_{\text{soma do score entre o vetor central e todos os outros}}$
     \par}
 
     \vspace{0.15cm}
@@ -633,3 +575,58 @@
     \end{exampleblock}
 \end{frame}
 
+\begin{frame}{Treino do Skip-gram e CBOW}
+    \centering
+    {\small\color{dexpiBlue}\textbf{Skip-gram}: a palavra do meio entra, o modelo adivinha o contexto}
+
+    \vspace{0.1cm}
+    \begin{tikzpicture}[
+        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm},
+        num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
+        arr/.style={-{Stealth}, thick, dexpiBlue}]
+        \node[draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, font=\scriptsize\bfseries, minimum width=1.2cm, minimum height=0.6cm] (c) at (0,0) {loves};
+        \node[box, minimum width=1.6cm] (v) at (2.4,0) {vetor de\\centro $\vv$};
+        \node[box, minimum width=2.4cm] (s) at (5.4,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
+        \node[box, fill=dexpiGreenLight, draw=dexpiGreenDark, minimum width=2.0cm] (p) at (8.6,0) {\textbf{softmax}\\probabilidades\\dos vizinhos};
+        \node[box, fill=dexpiLightBlue, minimum width=2.6cm] (r) at (11.9,0) {compara as probabilidades previstas com os \\vizinhos reais para fazer o ajuste};
+        \draw[arr] (c) -- (v);
+        \draw[arr] (v) -- (s);
+        \draw[arr] (s) -- (p);
+        \draw[arr] (p) -- (r);
+        \node[num] at ($(v.north)+(0,0.3)$) {1};
+        \node[num] at ($(s.north)+(0,0.3)$) {2};
+        \node[num] at ($(p.north)+(0,0.3)$) {3};
+        \node[num] at ($(r.north)+(0,0.3)$) {4};
+    \end{tikzpicture}
+
+    \vspace{0.5cm}
+    {\small\color{dexpiBlue}\textbf{CBOW}: o contexto entra, o modelo adivinha a palavra do meio}
+
+    \vspace{0.1cm}
+    \begin{tikzpicture}[
+        ctx/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, minimum width=1.2cm, minimum height=0.5cm, font=\scriptsize},
+        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm},
+        num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
+        arr/.style={-{Stealth}, thick, dexpiBlue}]
+        % passo 1
+        \foreach \t [count=\i from 0] in {the, man, his, son} {
+            \node[ctx] (c\i) at (0, 0.9-\i*0.6) {\t};
+            \node[box, minimum height=0.5cm, right=0.4cm of c\i] (v\i) {vetor};
+            \draw[arr] (c\i) -- (v\i);
+        }
+        % passo 2
+        \node[box, fill=dexpiLightBlue, minimum width=2.0cm] (m) at (5.2,0) {\textbf{média}\\``resumo do\\contexto''};
+        \foreach \i in {0,...,3} { \draw[arr] (v\i.east) -- (m.west); }
+        % passo 3
+        \node[box, minimum width=2.4cm] (s) at (8.6,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
+        \draw[arr] (m) -- (s);
+        % passo 4
+        \node[box, fill=dexpiGreenLight, draw=dexpiGreenDark, minimum width=2.2cm] (p) at (12.0,0) {\textbf{softmax}\\probabilidades\\$\Rightarrow$ ``loves''};
+        \draw[arr] (s) -- (p);
+        % números
+        \node[num] at (1.4,1.45) {1};
+        \node[num] at ($(m.north)+(0,0.3)$) {2};
+        \node[num] at ($(s.north)+(0,0.3)$) {3};
+        \node[num] at ($(p.north)+(0,0.3)$) {4};
+    \end{tikzpicture}
+\end{frame}
