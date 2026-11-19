@@ -577,56 +577,51 @@
 
 \begin{frame}{Treino do Skip-gram e CBOW}
     \centering
-    {\small\color{dexpiBlue}\textbf{Skip-gram}: a palavra do meio entra, o modelo adivinha o contexto}
-
-    \vspace{0.1cm}
     \begin{tikzpicture}[
-        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm},
-        num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
-        arr/.style={-{Stealth}, thick, dexpiBlue}]
-        \node[draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, font=\scriptsize\bfseries, minimum width=1.2cm, minimum height=0.6cm] (c) at (0,0) {loves};
-        \node[box, minimum width=1.6cm] (v) at (2.4,0) {vetor de\\centro $\vv$};
-        \node[box, minimum width=2.4cm] (s) at (5.4,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
-        \node[box, fill=dexpiGreenLight, draw=dexpiGreenDark, minimum width=2.0cm] (p) at (8.6,0) {\textbf{softmax}\\probabilidades\\dos vizinhos};
-        \node[box, fill=dexpiLightBlue, minimum width=2.6cm] (r) at (11.9,0) {compara as probabilidades previstas com os \\vizinhos reais para fazer o ajuste};
-        \draw[arr] (c) -- (v);
-        \draw[arr] (v) -- (s);
-        \draw[arr] (s) -- (p);
-        \draw[arr] (p) -- (r);
-        \node[num] at ($(v.north)+(0,0.3)$) {1};
-        \node[num] at ($(s.north)+(0,0.3)$) {2};
-        \node[num] at ($(p.north)+(0,0.3)$) {3};
-        \node[num] at ($(r.north)+(0,0.3)$) {4};
-    \end{tikzpicture}
+        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum width=2.2cm, text width=2.05cm, minimum height=1.75cm, inner sep=1pt},
+        soft/.style={box, draw=dexpiGreenDark, fill=dexpiGreenLight},
+        vet/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, font=\scriptsize, minimum width=1.2cm, minimum height=0.31cm, inner sep=1pt},
+        pilula/.style={rounded corners=0.155cm, font=\scriptsize\bfseries, minimum width=1.1cm, minimum height=0.31cm, inner sep=1pt},
+        num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt, minimum size=0.36cm},
+        sub/.style={font=\small, text=dexpiBlue},
+        arr/.style={-{Stealth[length=1.8mm]}, thick, dexpiBlue}]
+        % colunas dos passos 1 a 5 (as mesmas nos dois fluxos)
+        \def\xA{2.075}\def\xB{4.695}\def\xC{7.315}\def\xD{9.935}\def\xE{12.555}
 
-    \vspace{0.5cm}
-    {\small\color{dexpiBlue}\textbf{CBOW}: o contexto entra, o modelo adivinha a palavra do meio}
+        %================ Skip-gram (linha y = 0)
+        \node[sub] at (6.54,1.62) {\textbf{Skip-gram}: a palavra do meio entra, o modelo adivinha o contexto};
+        \node[pilula, draw=dexpiBlue, fill=dexpiBlue, text=white, minimum height=0.55cm, rounded corners=0.275cm] (sc) at (0,0) {loves};
+        \node[box] (s1) at (\xA,0) {vetor de\\centro $\vv$};
+        \node[box] (s2) at (\xB,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
+        \node[soft] (s3) at (\xC,0) {\textbf{softmax}:\\probabilidades\\para todas\\as palavras};
+        \node[box] (s4) at (\xD,0) {confere com os\\vizinhos \textbf{reais}:\\\textit{the, man,}\\\textit{his, son}};
+        \node[box] (s5) at (\xE,0) {ajusta vetores\\via \textbf{gradiente}\\(sobe reais,\\desce outros)};
+        \draw[arr] (sc) -- (s1);
+        \foreach \a/\b in {s1/s2, s2/s3, s3/s4, s4/s5} \draw[arr] (\a) -- (\b);
+        \foreach \i/\x in {1/\xA, 2/\xB, 3/\xC, 4/\xD, 5/\xE} \node[num] at (\x,1.175) {\i};
 
-    \vspace{0.1cm}
-    \begin{tikzpicture}[
-        ctx/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, minimum width=1.2cm, minimum height=0.5cm, font=\scriptsize},
-        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.8cm},
-        num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt},
-        arr/.style={-{Stealth}, thick, dexpiBlue}]
-        % passo 1
+        %================ CBOW (linha y = -3.45)
+        \node[sub] at (6.54,-1.83) {\textbf{CBOW}: o contexto entra, o modelo adivinha a palavra do meio};
         \foreach \t [count=\i from 0] in {the, man, his, son} {
-            \node[ctx] (c\i) at (0, 0.9-\i*0.6) {\t};
-            \node[box, minimum height=0.5cm, right=0.4cm of c\i] (v\i) {vetor};
+            \node[pilula, draw=dexpiGreenDark, fill=dexpiGreenLight, text=dexpiGreenDark] (c\i) at (0,-2.73-\i*0.48) {\t};
+            \node[vet] (v\i) at (\xA,-2.73-\i*0.48) {vetor};
             \draw[arr] (c\i) -- (v\i);
         }
-        % passo 2
-        \node[box, fill=dexpiLightBlue, minimum width=2.0cm] (m) at (5.2,0) {\textbf{média}\\``resumo do\\contexto''};
-        \foreach \i in {0,...,3} { \draw[arr] (v\i.east) -- (m.west); }
-        % passo 3
-        \node[box, minimum width=2.4cm] (s) at (8.6,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
-        \draw[arr] (m) -- (s);
-        % passo 4
-        \node[box, fill=dexpiGreenLight, draw=dexpiGreenDark, minimum width=2.2cm] (p) at (12.0,0) {\textbf{softmax}\\probabilidades\\$\Rightarrow$ ``loves''};
-        \draw[arr] (s) -- (p);
-        % números
-        \node[num] at (1.4,1.45) {1};
-        \node[num] at ($(m.north)+(0,0.3)$) {2};
-        \node[num] at ($(s.north)+(0,0.3)$) {3};
-        \node[num] at ($(p.north)+(0,0.3)$) {4};
+        \node[box] (m) at (\xB,-3.45) {\textbf{média}\\``resumo do\\contexto''};
+        \foreach \i/\dy in {0/0.39, 1/0.13, 2/-0.13, 3/-0.39} \draw[arr] (v\i.east) -- ($(m.west)+(0,\dy)$);
+        \node[box] (k3) at (\xC,-3.45) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
+        \node[soft] (k4) at (\xD,-3.45) {\textbf{softmax}:\\probabilidades\\para todas\\as palavras};
+        \node[box] (k5) at (\xE,-3.45) {confere com a\\palavra central\\real (``loves'') e\\ajusta via\\\textbf{gradiente}};
+        \draw[arr] (m) -- (k3);
+        \draw[arr] (k3) -- (k4);
+        \draw[arr] (k4) -- (k5);
+        \foreach \i/\x in {1/\xA, 2/\xB, 3/\xC, 4/\xD, 5/\xE} \node[num] at (\x,-2.275) {\i};
     \end{tikzpicture}
+
+    \note{
+        Para fechar o word2vec, este slide junta tudo num fluxo só. Os dois modelos treinam em cinco passos, e vale separar três coisas que costumam se misturar: a softmax, que só normaliza; a conferência com o gabarito, que é o próprio texto; e o ajuste, que é o gradiente.
+        Skip-gram: a palavra do meio entra e o modelo adivinha o contexto. Passo 1: buscamos o vetor de centro $\vv$ de ``loves''. Passo 2: comparamos esse vetor com cada palavra do vocabulário por produto escalar; cada produto é um escore. Passo 3: a softmax transforma os escores em probabilidades para todas as palavras. Passo 4: conferimos com os vizinhos reais, the, man, his e son. Passo 5: o gradiente ajusta os vetores, subindo a probabilidade dos vizinhos reais e descendo a das outras: o observado menos esperado.
+        CBOW: o contexto entra e o modelo adivinha a palavra do meio. Passo 1: buscamos o vetor de cada palavra do contexto. Passo 2: tiramos a média, o resumo do contexto. Passos 3 e 4: comparação com o vocabulário e softmax, como no skip-gram. Passo 5: conferimos com a palavra central real, ``loves'', e ajustamos via gradiente, com a correção repartida entre as palavras do contexto.
+        O caro são a comparação e a softmax: para cada exemplo, percorremos o vocabulário inteiro. É isso que a próxima parte vai atacar.
+    }
 \end{frame}
