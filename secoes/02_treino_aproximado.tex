@@ -99,11 +99,11 @@
     \begin{columns}[T]
         \begin{column}{0.47\textwidth}
             {\color{dexpiRedDark}\small\textbf{1. Sem negativos: o modelo colapsa}\par\vspace{2pt}\hrule height 0.8pt}
-            \vspace{4pt}
+            \vspace{2pt}
             \footnotesize
-            Se todos os vetores ficarem iguais a $(10,\,0)$, todo par tem escore $100$: o modelo diz ``sim'' para \textbf{qualquer} par.
+            Sem o teto da softmax nem punição para pares falsos, o treino empurra todos os vetores para uma mesma direção grande (ex.: $(10,\,0)$): todo par ganha escore $100$ e o modelo diz \textbf{``sim''} para \textbf{qualquer} par.
 
-            \vspace{0.15cm}
+            \vspace{0.05cm}
             {\centering
             \begin{tabular}{@{}lcc@{}}
                 \toprule
@@ -114,7 +114,7 @@
                 \bottomrule
             \end{tabular}\par}
 
-            \vspace{0.15cm}
+            \vspace{0.05cm}
             \begin{alertblock}{Perda zero, utilidade zero}
                 \footnotesize
                 O modelo diz ``sim'' para \textbf{tudo}: os vetores ficam iguais e não distinguem nada.
