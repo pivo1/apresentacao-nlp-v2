@@ -61,14 +61,14 @@
 
 
 \begin{frame}{Mudança 1: prever log(contagem) em vez de probabilidades}
-    \vspace{-4pt}
+    \vspace{-0.7}
     \begin{columns}[T]
         \begin{column}{0.485\textwidth}
             \begin{block}{Antes (word2vec $+$ softmax)}
                 \scriptsize
                 \begin{itemize}\setlength{\itemsep}{1pt}
                     \item Prever a probabilidade $P(j \mid i)$ exige \textbf{somar sobre todo o vocabulário} (normalização).
-                    \item Custo por par: {\color{dexpiRedDark}$\boldsymbol{O(\vert\V\vert)}$} (lento).
+                    \item \textbf{Menos Eficiente}
                 \end{itemize}
             \end{block}
         \end{column}
@@ -77,13 +77,13 @@
                 \scriptsize
                 \begin{itemize}\setlength{\itemsep}{1pt}
                     \item Iguala o produto escalar \textbf{diretamente} ao logaritmo da contagem de coocorrências ($x_{ij}$).
-                    \item Custo por par: {\color{dexpiGreenDark}$\boldsymbol{O(1)}$} (eficiente).
+                    \item \textbf{Mais Eficiente}.
                 \end{itemize}
             \end{block}
         \end{column}
     \end{columns}
 
-    \vspace{-2pt}
+    \vspace{0.2cm}
     {\centering
         \begin{tikzpicture}
             \node[draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=3pt, thick, inner sep=4pt, anchor=base, font=\small] (obj) at (0,0) {$\text{Objetivo: }\ \uu_j^\top \vv_i \approx \log x_{ij}$};
@@ -95,18 +95,6 @@
                 \Big)^2$};
             \draw[-{Stealth[length=2.4mm]}, line width=1.4pt, dexpiBlue] ($(obj.east)+(0.12,0)$) -- node[above, font=\tiny, text=dexpiBlue] {medir o desvio} ($(obj.east)+(1.63,0)$);
         \end{tikzpicture}\par}
-
-    \vspace{-6pt}
-    \begin{columns}[T]
-        \begin{column}{0.485\textwidth}
-            \scriptsize
-            {\color{dexpiBlue}\textbullet}~\textbf{\color{dexpiBlue}Por que o log?} Comprime contagens gigantescas de pares muito comuns (ex.: ``de'', ``o''), evitando que dominem o erro.
-        \end{column}
-        \begin{column}{0.485\textwidth}
-            \scriptsize
-            {\color{dexpiBlue}\textbullet}~\textbf{\color{dexpiBlue}Por que o quadrado?} Evita que erros positivos e negativos se cancelem, pune desvios grandes e gera gradientes suaves.
-        \end{column}
-    \end{columns}
 
     \vspace{-4pt}
     \begin{block}{Ganho computacional}
