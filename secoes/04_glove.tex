@@ -63,8 +63,8 @@
 \end{frame}
 
 
-\begin{frame}{Mudança 1: prever log(contagem) em vez de probabilidades}
-    \vspace{-0.7}
+\begin{frame}{Função de Perda - GloVe}
+    \vspace{-0.9pt}
     \begin{columns}[T]
         \begin{column}{0.485\textwidth}
             \begin{block}{Antes (word2vec $+$ softmax)}
@@ -102,7 +102,7 @@
     \vspace{-4pt}
     \begin{block}{Ganho computacional}
         \footnotesize
-        Ao eliminar a softmax, o custo por par cai de {\color{dexpiRedDark}$\boldsymbol{O(\vert\V\vert)}$} \textbf{para} {\color{dexpiGreenDark}$\boldsymbol{O(1)}$}: o erro depende \textbf{exclusivamente} dos dois vetores envolvidos ($\vv_i$ e $\uu_j$), sem consultar o restante do vocabulário $\V$.
+  O erro depende \textbf{exclusivamente} dos dois vetores envolvidos ($\vv_i$ e $\uu_j$), sem consultar o restante do vocabulário $\V$.
     \end{block}
 
     \note{
@@ -117,11 +117,11 @@
     }
 \end{frame}
 
-\begin{frame}{Mudanças 2 e 3: os vieses e a função de peso}
+\begin{frame}{Função de Perda - GloVe: os vieses e a função de peso}
     \footnotesize
     \begin{columns}[t]
         \begin{column}{0.48\textwidth}
-            \begin{block}{Mudança 2: vieses $b_i$ e $c_j$}
+            \begin{block}{Vieses $b_i$ e $c_j$}
                 \scriptsize
                 O GloVe soma um viés à palavra central, $b_i$, e outro à de contexto, $c_j$:
                 \begin{equation*}
@@ -133,7 +133,7 @@
             \end{block}
         \end{column}
         \begin{column}{0.48\textwidth}
-            \begin{block}{Mudança 3: função de peso $h(x_{ij})$}
+            \begin{block}{Função de peso $h(x_{ij})$}
                 \scriptsize
                 Um peso define a importância de cada par de palavras:
                 \begin{equation*}
