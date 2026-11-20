@@ -579,32 +579,32 @@
     \centering
     \resizebox{0.96\textwidth}{!}{%
     \begin{tikzpicture}[
-        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=flush center, font=\scriptsize, minimum width=2.2cm, text width=1.99cm, minimum height=1.75cm, inner sep=3pt},
+        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=flush center, font=\footnotesize, minimum width=3.2cm, text width=2.99cm, minimum height=1.8cm, inner sep=3pt},
         simples/.style={box, minimum width=1.85cm, text width=1.64cm},
-        soft/.style={box, draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=3.25cm, text width=3.04cm},
+        % softmax: no mínimo 3,1 cm e cresce com a fração, que fica numa linha só
+        soft/.style={draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, align=center, font=\footnotesize, minimum width=3.1cm, minimum height=1.8cm, inner sep=3pt},
         vet/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, font=\scriptsize, minimum width=1.2cm, minimum height=0.31cm, inner sep=1pt},
         pilula/.style={rounded corners=0.155cm, font=\scriptsize\bfseries, minimum width=1.1cm, minimum height=0.31cm, inner sep=1pt},
         num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt, minimum size=0.36cm},
         sub/.style={font=\small, text=dexpiBlue},
         arr/.style={-{Stealth[length=1.8mm]}, thick, dexpiBlue}]
-        % colunas dos passos 1 a 5 (as mesmas nos dois fluxos); cada coluna tem a largura da
-        % sua caixa mais larga (1,85 / 2,2 / 3,25 / 3,25 / 2,2 cm), com 0,32 cm entre caixas
-        \def\xA{1.795}\def\xB{4.14}\def\xC{7.185}\def\xD{10.755}\def\xE{13.8}
+        % colunas dos passos 1 a 4 (as mesmas nos dois fluxos); cada coluna tem a largura da
+        % sua caixa mais larga (1,85 / 3,25 / 3,25 / 3,2 cm), com 0,4 cm entre caixas
+        \def\xA{1.875}\def\xB{4.825}\def\xC{8.475}\def\xD{12.1}
 
         %================ Skip-gram (linha y = 0)
-        \node[sub] at (7.175,1.62) {\textbf{Skip-gram}: a palavra do meio entra, o modelo adivinha o contexto};
+        \node[sub] at (6.575,1.62) {\textbf{Skip-gram}: a palavra do meio entra, o modelo adivinha o contexto};
         \node[pilula, draw=dexpiBlue, fill=dexpiBlue, text=white, minimum height=0.55cm, rounded corners=0.275cm] (sc) at (0,0) {loves};
         \node[simples] (s1) at (\xA,0) {vetor de\\centro $\vv$};
-        \node[box] (s2) at (\xB,0) {Produto interno\\com cada $w \in \V$:\\[4pt]$s_w = \uu_w^\top \vv$};
-        \node[soft] (s3) at (\xC,0) {Softmax sobre todo $\V$:\\[3pt]$P(w \,|\, c) = \dfrac{e^{\uu_w^\top \vv}}{\sum_{j=1}^{|\V|} e^{\uu_j^\top \vv}}$};
-        \node[box] (s4) at (\xD,0) {confere com os\\vizinhos \textbf{reais}:\\\textit{the, man,}\\\textit{his, son}};
-        \node[box] (s5) at (\xE,0) {ajusta vetores\\via \textbf{gradiente}\\(sobe reais,\\desce outros)};
+        \node[soft] (s2) at (\xB,0) {\textbf{Softmax} em todo $\V$:\\[3pt]{\scriptsize $\displaystyle P(w \mid c) = \frac{e^{\uu_w^\top \vv}}{\sum_{j=1}^{|\V|} e^{\uu_j^\top \vv}}$}};
+        \node[box] (s3) at (\xC,0) {confere com os\\vizinhos \textbf{reais}:\\\textit{the, man, his, son}};
+        \node[box] (s4) at (\xD,0) {ajusta vetores\\via \textbf{gradiente}\\(sobe reais,\\desce outros)};
         \draw[arr] (sc) -- (s1);
-        \foreach \a/\b in {s1/s2, s2/s3, s3/s4, s4/s5} \draw[arr] (\a) -- (\b);
-        \foreach \i/\x in {1/\xA, 2/\xB, 3/\xC, 4/\xD, 5/\xE} \node[num] at (\x,1.175) {\i};
+        \foreach \a/\b in {s1/s2, s2/s3, s3/s4} \draw[arr] (\a) -- (\b);
+        \foreach \i/\x in {1/\xA, 2/\xB, 3/\xC, 4/\xD} \node[num] at (\x,1.175) {\i};
 
         %================ CBOW (linha y = -3.45)
-        \node[sub] at (7.175,-1.83) {\textbf{CBOW}: o contexto entra, o modelo adivinha a palavra do meio};
+        \node[sub] at (6.575,-1.83) {\textbf{CBOW}: o contexto entra, o modelo adivinha a palavra do meio};
         \foreach \t [count=\i from 0] in {the, man, his, son} {
             \node[pilula, draw=dexpiGreenDark, fill=dexpiGreenLight, text=dexpiGreenDark] (c\i) at (0,-2.73-\i*0.48) {\t};
             \node[vet] (v\i) at (\xA,-2.73-\i*0.48) {vetor};
@@ -612,20 +612,18 @@
         }
         \node[simples] (m) at (\xB,-3.45) {\textbf{média} $\bar{\vv}$\\[2pt]``resumo do\\contexto''};
         \foreach \i/\dy in {0/0.39, 1/0.13, 2/-0.13, 3/-0.39} \draw[arr] (v\i.east) -- ($(m.west)+(0,\dy)$);
-        \node[box] (k3) at (\xC,-3.45) {Produto interno\\com cada $w \in \V$:\\[4pt]$s_w = \uu_w^\top \bar{\vv}$};
-        \node[soft] (k4) at (\xD,-3.45) {Softmax sobre todo $\V$:\\[3pt]$P(w \,|\, C) = \dfrac{e^{\uu_w^\top \bar{\vv}}}{\sum_{j=1}^{|\V|} e^{\uu_j^\top \bar{\vv}}}$};
-        \node[box] (k5) at (\xE,-3.45) {confere com a\\palavra central\\real (``loves'') e\\ajusta via\\\textbf{gradiente}};
+        \node[soft] (k3) at (\xC,-3.45) {\textbf{Softmax} em todo $\V$:\\[3pt]{\scriptsize $\displaystyle P(w \mid C) = \frac{e^{\uu_w^\top \bar{\vv}}}{\sum_{j=1}^{|\V|} e^{\uu_j^\top \bar{\vv}}}$}};
+        \node[box] (k4) at (\xD,-3.45) {confere com a\\palavra central\\real (``loves'') e\\ajusta via \textbf{gradiente}};
         \draw[arr] (m) -- (k3);
         \draw[arr] (k3) -- (k4);
-        \draw[arr] (k4) -- (k5);
-        \foreach \i/\x in {1/\xA, 2/\xB, 3/\xC, 4/\xD, 5/\xE} \node[num] at (\x,-2.275) {\i};
+        \foreach \i/\x in {1/\xA, 2/\xB, 3/\xC, 4/\xD} \node[num] at (\x,-2.275) {\i};
     \end{tikzpicture}%
     }
 
     \note{
-        Para fechar o word2vec, este slide junta tudo num fluxo só. Os dois modelos treinam em cinco passos, e vale separar três coisas que costumam se misturar: a softmax, que só normaliza; a conferência com o gabarito, que é o próprio texto; e o ajuste, que é o gradiente.
-        Skip-gram: a palavra do meio entra e o modelo adivinha o contexto. Passo 1: buscamos o vetor de centro $\vv$ de ``loves''. Passo 2: comparamos esse vetor com cada palavra do vocabulário por produto escalar; cada produto é um escore. Passo 3: a softmax transforma os escores em probabilidades para todas as palavras. Passo 4: conferimos com os vizinhos reais, the, man, his e son. Passo 5: o gradiente ajusta os vetores, subindo a probabilidade dos vizinhos reais e descendo a das outras: o observado menos esperado.
-        CBOW: o contexto entra e o modelo adivinha a palavra do meio. Passo 1: buscamos o vetor de cada palavra do contexto. Passo 2: tiramos a média, o resumo do contexto. Passos 3 e 4: comparação com o vocabulário e softmax, como no skip-gram. Passo 5: conferimos com a palavra central real, ``loves'', e ajustamos via gradiente, com a correção repartida entre as palavras do contexto.
-        O caro são a comparação e a softmax: para cada exemplo, percorremos o vocabulário inteiro. É isso que a próxima parte vai atacar.
+        Para fechar o word2vec, este slide junta tudo num fluxo só. Os dois modelos treinam em quatro passos, e vale separar três coisas que costumam se misturar: a softmax, que só normaliza; a conferência com o gabarito, que é o próprio texto; e o ajuste, que é o gradiente.
+        Skip-gram: a palavra do meio entra e o modelo adivinha o contexto. Passo 1: buscamos o vetor de centro $\vv$ de ``loves''. Passo 2: a softmax; no expoente está o produto interno $\uu_w^\top \vv$ com cada palavra do vocabulário, um escore, e a divisão pela soma transforma os escores em probabilidades. Passo 3: conferimos com os vizinhos reais, the, man, his e son. Passo 4: o gradiente ajusta os vetores, subindo a probabilidade dos vizinhos reais e descendo a das outras: o observado menos esperado.
+        CBOW: o contexto entra e o modelo adivinha a palavra do meio. Passo 1: buscamos o vetor de cada palavra do contexto. Passo 2: tiramos a média $\bar{\vv}$, o resumo do contexto. Passo 3: a mesma softmax, com $\bar{\vv}$ no lugar de $\vv$. Passo 4: conferimos com a palavra central real, ``loves'', e ajustamos via gradiente, com a correção repartida entre as palavras do contexto.
+        O caro é a softmax: o denominador percorre o vocabulário inteiro, para cada exemplo. É isso que a próxima parte vai atacar.
     }
 \end{frame}

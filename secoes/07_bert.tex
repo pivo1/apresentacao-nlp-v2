@@ -354,3 +354,46 @@ def forward(self, tokens, segments, valid_lens=None,
         No treino, a perda total é a soma das duas perdas: a do MLM mais a da NSP. O modelo é otimizado para as duas tarefas ao mesmo tempo, e o encoder, que é compartilhado, aprende com as duas.
     }
 \end{frame}
+
+\begin{frame}{A função de perda do BERT: MLM + NSP}
+    \centering
+    \small
+    As duas perdas são \destaque{entropia cruzada}: $-\log$ da probabilidade dada à resposta certa.
+
+    \vspace{0.25cm}
+    \begin{tikzpicture}[
+        tit/.style={font=\small\bfseries},
+        lin/.style={font=\scriptsize, text width=6.6cm, align=flush center, inner sep=0pt},
+        seta/.style={-{Stealth[length=2.2mm]}, line width=1pt}]
+        % caixas de fundo, com as linhas na mesma altura nas duas: MLM (vermelho) e NSP (verde)
+        \draw[dexpiRedDark, fill=dexpiRedLight, line width=0.8pt, rounded corners=4pt] (-7.05,0.4) rectangle (-0.25,-2.85);
+        \draw[dexpiGreenDark, fill=dexpiGreenLight, line width=0.8pt, rounded corners=4pt] (0.25,0.4) rectangle (7.05,-2.85);
+        % MLM
+        \node[tit, text=dexpiRedDark] at (-3.65,0.07) {MLM: qual palavra foi escondida?};
+        \node[font=\footnotesize] at (-3.65,-0.72) {$\displaystyle \mathcal{L}_{\text{MLM}} = -\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}} \log P\big(x_i \mid \tilde{\xx}\big)$};
+        \node[lin] at (-3.65,-1.52) {$P = \operatorname{softmax}\big(\mathrm{MLP}(\mathbf{h}_i)\big)$ sobre \textbf{todo} o $\V$};
+        \node[lin] at (-3.65,-2.0) {$\mathcal{M}$: posições sorteadas; \ $\tilde{\xx}$: entrada mascarada};
+        \node[lin] at (-3.65,-2.45) {\textit{ex.:} alvo \textbf{great} na posição do \texttt{<mask>}};
+        % NSP
+        \node[tit, text=dexpiGreenDark] at (3.65,0.07) {NSP: B é a continuação de A?};
+        \node[font=\footnotesize] at (3.65,-0.72) {$\displaystyle \vphantom{\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}}} \mathcal{L}_{\text{NSP}} = -\log P\big(y \mid \mathbf{h}_{\texttt{<cls>}}\big)$};
+        \node[lin] at (3.65,-1.52) {$P = \operatorname{softmax}\big(\mathbf{W}\tanh(\mathbf{W}_h\,\mathbf{h}_{\texttt{<cls>}})\big)$ sobre \textbf{2} classes};
+        \node[lin] at (3.65,-2.0) {$y$: rótulo do par, \textit{IsNext} ou \textit{NotNext}};
+        \node[lin] at (3.65,-2.45) {\textit{ex.:} alvo \textit{IsNext}: ``i like it'' segue ``this movie is great''};
+        % perda total
+        \node[draw=dexpiBlue, fill=dexpiBlueLight, line width=0.8pt, rounded corners=4pt, align=flush center, inner sep=5pt, minimum width=9.4cm] (tot) at (0,-4.05) {%
+            {\normalsize $\mathcal{L} = \mathcal{L}_{\text{MLM}} + \mathcal{L}_{\text{NSP}}$}\\[2pt]
+            {\scriptsize soma simples: o gradiente das duas perdas atualiza o \textbf{mesmo} \textit{encoder}}\\[1pt]
+            {\scriptsize \textit{ex.:} $P(\text{great}) = 0{,}6$ e $P(\textit{IsNext}) = 0{,}9$ \;$\Rightarrow$\; $\mathcal{L} = -\log 0{,}6 - \log 0{,}9 \approx 0{,}51 + 0{,}11 = 0{,}62$}};
+        \draw[seta, dexpiRedDark] (-3.65,-2.85) -- (-3.65,0 |- tot.north);
+        \draw[seta, dexpiGreenDark] (3.65,-2.85) -- (3.65,0 |- tot.north);
+    \end{tikzpicture}
+
+    \note{
+        Vamos olhar com calma para essa perda. As duas tarefas usam a mesma ideia que já vimos no word2vec: a entropia cruzada, que é menos o log da probabilidade que o modelo dá à resposta certa. Se o modelo dá probabilidade perto de 1 à resposta certa, a perda fica perto de zero; se dá perto de zero, a perda cresce muito.
+        À esquerda, em vermelho, a perda do MLM. Para cada posição sorteada, o vetor de saída do encoder naquela posição, $\mathbf{h}_i$, passa pela cabeça \texttt{MaskLM}, que é uma MLP, e por uma softmax sobre o vocabulário inteiro. A perda é menos o log da probabilidade da palavra original, $x_i$, dado o texto com as máscaras, $\tilde{\xx}$, com a média sobre o conjunto $\mathcal{M}$ das posições sorteadas, os 15\%. No exemplo, o alvo é ``great'', na posição da máscara.
+        À direita, em verde, a perda da NSP. Agora a softmax é só sobre duas classes, \textit{IsNext} ou \textit{NotNext}, e usa só o vetor do \texttt{<cls>}, que passa pela camada oculta com tangente hiperbólica (\texttt{self.hidden}) e pela camada de saída. A perda é menos o log da probabilidade do rótulo certo, $y$.
+        Embaixo, a perda total: a soma simples das duas, sem pesos. Como o encoder é o mesmo, o gradiente das duas perdas atualiza os mesmos parâmetros. Exemplo com números: se o modelo dá 0,6 a ``great'' e 0,9 a \textit{IsNext}, as perdas são cerca de 0,51 e 0,11, e a total, cerca de 0,62.
+        No código do livro, a conta fica em \texttt{\_get\_batch\_loss\_bert}: as duas perdas são \texttt{CrossEntropyLoss}, e os pesos \texttt{mlm\_weights}, 1 nas posições reais e 0 no preenchimento, fazem a média do MLM ignorar o \textit{padding}: \texttt{mlm\_l.sum() / mlm\_weights.sum()}. No fim, \texttt{l = mlm\_l + nsp\_l}.
+    }
+\end{frame}
