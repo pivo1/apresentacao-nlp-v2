@@ -198,43 +198,6 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{O código da BiRNN}
-\vspace{-0.2cm}
-\begin{lstlisting}[basicstyle=\ttfamily\fontsize{6.4}{7.6}\selectfont]
-class BiRNN(nn.Module):
-    def __init__(self, vocab_size, embed_size, num_hiddens, num_layers, **kwargs):
-        super(BiRNN, self).__init__(**kwargs)
-        self.embedding = nn.Embedding(vocab_size, embed_size)
-        self.encoder = nn.LSTM(embed_size, num_hiddens, num_layers=num_layers,
-                               bidirectional=True)              # LSTM bidirecional
-        self.decoder = nn.Linear(4 * num_hiddens, 2)            # 2 passos x 2 direcoes
-
-    def forward(self, inputs):                                  # inputs: (B, T)
-        embeddings = self.embedding(inputs.T)                   # (T, B, 100): tempo primeiro
-        self.encoder.flatten_parameters()
-        outputs, _ = self.encoder(embeddings)                   # (T, B, 200): so a ultima camada
-        encoding = torch.cat((outputs[0], outputs[-1]), dim=1)  # (B, 400): 1o e ultimo passos
-        outs = self.decoder(encoding)                           # (B, 2): logits pos./neg.
-        return outs
-
-embed_size, num_hiddens, num_layers = 100, 100, 2
-net = BiRNN(len(vocab), embed_size, num_hiddens, num_layers)
-\end{lstlisting}
-\vspace{-0.15cm}
-\footnotesize
-Os pesos das camadas lineares e da LSTM começam com a inicialização de \textbf{Xavier} (\texttt{init\_weights} no D2L).
-
-\note{
-    Este é o código do livro, com comentários dos formatos.
-    No construtor, as três camadas: o embedding, a LSTM com \texttt{bidirectional=True}, e a camada linear de 4 vezes \texttt{num\_hiddens} para 2.
-    No forward: a entrada chega como B por T e é transposta, porque a LSTM do PyTorch quer o tempo primeiro. O embedding dá T por B por 100. A LSTM devolve \texttt{outputs}, com formato T por B por 200, só da última camada. A chamada \texttt{flatten\_parameters} é só uma otimização de memória para GPU.
-    Depois vem a concatenação do primeiro e do último passo, que dá B por 400, e a camada linear, que dá B por 2: os logits de positivo e de negativo.
-    Os hiperparâmetros são embedding de dimensão 100, 100 unidades ocultas e 2 camadas. E os pesos começam com a inicialização de Xavier, a mesma que usamos no word2vec.
-}
-\end{frame}
-
-
-
 \begin{frame}{Treino e resultados}
     \begin{columns}[c]
         \begin{column}{0.46\textwidth}
