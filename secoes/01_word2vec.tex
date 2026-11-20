@@ -536,7 +536,7 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{O gradiente do CBOW: o mesmo, dividido por $2m$}
+\begin{frame}{O gradiente do CBOW}
     \small
     \begin{itemize}\setlength{\itemsep}{1pt}
         \item O log do CBOW é o do skip-gram trocando $\vv_c$ por $\bar{\vv}_o$; então a derivada também é a mesma. A novidade é derivar a \textbf{média} (aqui $C$ é o contexto da posição).
@@ -571,7 +571,7 @@
     \vspace{0.15cm}
     \begin{exampleblock}{O que isso muda na prática}
         \footnotesize
-        Todas as palavras do contexto são puxadas \textbf{na mesma direção}, com um passo menor. É por isso que o CBOW dilui palavras raras: elas aparecem poucas vezes e sempre dentro de uma média.
+        Todas as palavras do contexto são puxadas \textbf{na mesma direção}, com um passo menor. 
     \end{exampleblock}
 \end{frame}
 
