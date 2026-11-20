@@ -8,34 +8,78 @@
 %------------------------------------------------
 
 \begin{frame}{Por que estudar Processamento de Linguagem Natural?}
-    \begin{center}
-        {\large\color{dexpiBlue}\textbf{Grande parte dos dados do mundo está em forma de texto.}}
-    \end{center}
+    \centering
+    \begin{tikzpicture}[
+        etapa/.style={draw=dexpiBlue!40, fill=dexpiBlue!6, rounded corners=6pt, line width=0.8pt, minimum width=4.5cm, minimum height=2.9cm},
+        rotulo/.style={fill=dexpiBlue, draw=white, line width=1pt, text=white, rounded corners=0.22cm, font=\scriptsize\bfseries, minimum height=0.44cm, inner xsep=8pt},
+        seta/.style={single arrow, fill=dexpiBlue!40, minimum width=0.62cm, minimum height=0.85cm, single arrow head extend=0.14cm, inner sep=0},
+        icones/.style={text=dexpiBlue, font=\Large},
+        texto/.style={align=flush center, text width=4.2cm, inner sep=1pt},
+        painel/.style={fill=white, draw=dexpiBlue!30, rounded corners=3pt, font=\scriptsize, inner sep=3pt},
+        simbolo/.style={text=dexpiBlue!80, font=\small},
+        cartao/.style={draw=dexpiBlue!25, fill=white, rounded corners=4pt, minimum width=3.29cm, minimum height=1.3cm},
+        ico/.style={circle, fill=dexpiBlue!10, text=dexpiBlue, font=\large, minimum size=0.74cm, inner sep=0},
+        letra/.style={circle, fill=dexpiBlue, draw=white, line width=0.8pt, text=white, font=\tiny\bfseries, minimum size=0.34cm, inner sep=0}]
 
-    \begin{columns}[c]
-        \begin{column}{0.52\textwidth}
-            \begin{itemize}
-                \item Pessoas se comunicam por \destaque{linguagem natural}: e-mails, redes sociais, avaliações, notícias.
-                \item Esse texto é \destaque{não estruturado}: o computador não o analisa diretamente.
-                \item O \textbf{PLN} \destaque{processa a linguagem natural} para \destaque{obter dados} e \destaque{fazer análises}.
-                \item Aplicações (D2L): análise de sentimento, inferência, resposta a perguntas, tradução.
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.44\textwidth}
-            \centering
-            \begin{tikzpicture}[
-                box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum width=3.6cm, minimum height=0.7cm, align=center, font=\small},
-                arr/.style={-{Stealth}, thick, dexpiBlue}]
-                \node[box] (t) {Texto\\{\scriptsize ``I loved this movie!''}};
-                \node[box, below=0.35cm of t, fill=dexpiLightBlue, very thick] (p) {\textbf{PLN}\\{\scriptsize processar a linguagem}};
-                \node[box, below=0.35cm of p] (d) {Dados estruturados\\{\scriptsize números, rótulos, vetores}};
-                \node[box, below=0.35cm of d] (a) {Análises\\{\scriptsize ex.: sentimento = positivo}};
-                \draw[arr] (t) -- (p);
-                \draw[arr] (p) -- (d);
-                \draw[arr] (d) -- (a);
-            \end{tikzpicture}
-        \end{column}
-    \end{columns}
+        %================ frase de destaque
+        \node[fill=dexpiBlue!10, rounded corners=0.28cm, text=dexpiBlue, font=\small, inner xsep=12pt, minimum height=0.56cm] at (7,2.2)
+            {\faGlobeAmericas\enspace Grande parte dos dados do mundo está em forma de \textbf{texto não estruturado}.};
+
+        %================ 1. Entrada
+        \node[etapa] (e1) at (2.25,0) {};
+        \node[icones] (i1) at (2.25,0.9) {\faEnvelope\hspace{9pt}\faComments\hspace{9pt}\faNewspaper\hspace{9pt}\faStar};
+        \node[texto, below=1pt of i1] (t1) {{\footnotesize\bfseries\color{dexpiBlue}Texto não estruturado\par}{\scriptsize (e-mails, redes sociais, notícias, avaliações)\par}};
+        \node[painel, font=\scriptsize\itshape, below=4pt of t1] {``I loved this movie!''};
+        \node[rotulo] at (e1.north) {1. Entrada};
+
+        %================ 2. Processamento: robô sorrindo, cercado de símbolos
+        \fill[dexpiBlue!12] (7,0) circle (1.66);
+        \node[circle, minimum size=2.84cm, inner color=dexpiBlue!85, outer color=dexpiBlueDark, draw=white, line width=1.5pt] (pln) at (7,0) {};
+        \draw[white, line width=1.2pt] (7,0.86) -- (7,1.0);                                  % antena
+        \fill[white] (7,1.03) circle (0.065);
+        \fill[white] (6.48,0.42) rectangle (6.56,0.66);                                         % orelhas
+        \fill[white] (7.44,0.42) rectangle (7.52,0.66);
+        \fill[white, rounded corners=0.13cm] (6.55,0.22) rectangle (7.45,0.86);                 % cabeça
+        \fill[dexpiBlue] (6.8,0.62) circle (0.075);                                             % olhos
+        \fill[dexpiBlue] (7.2,0.62) circle (0.075);
+        \draw[dexpiBlue, line width=1.2pt, line cap=round] (6.82,0.45) arc[start angle=200, end angle=340, radius=0.19]; % sorriso
+        \node[text=white, font=\small\bfseries] at (7,-0.12) {PLN Engine};
+        \node[text=white!85!dexpiBlue, font=\tiny, align=flush center] at (7,-0.56) {Transforma linguagem\\humana em matemática};
+        \foreach \s/\a in {{$\alpha$}/150, {$\mu$}/30, {$\gamma$}/210, {$[x,y]$}/330}
+            \node[simbolo] at ($(7,0)+(\a:1.98)$) {\s};
+        \node[rotulo] at (7,1.45) {2. Processamento};
+
+        %================ 3. Saída
+        \node[etapa] (e3) at (11.75,0) {};
+        \node[icones] (i3) at (11.75,0.9) {\faChartBar\hspace{14pt}\faDatabase};
+        \node[texto, below=1pt of i3] (t3) {{\footnotesize\bfseries\color{dexpiBlue}Dados estruturados\par}{\scriptsize (Números, Vetores, Rótulos)\par}};
+        \node[painel, align=flush left, below=4pt of t3] {\textbf{Vetor:} \texttt{[0.82, -0.14, 0.91]}\\\textbf{Análise:} Sentimento = {\color{dexpiGreenDark}\textbf{Positivo}}};
+        \node[rotulo] at (e3.north) {3. Saída};
+
+        %================ setas largas
+        \node[seta] at (4.95,0) {};
+        \node[seta] at (9.05,0) {};
+
+        %================ aplicações
+        \node[draw=dexpiBlue!30, fill=dexpiBlue!6, rounded corners=6pt, minimum width=14cm, minimum height=1.68cm] (apl) at (7,-2.86) {};
+        \node[rotulo, anchor=west] at ($(apl.north west)+(0.3,0)$) {Principais aplicações (D2L)};
+        \foreach \x/\l/\ic/\tit/\des in {
+            1.825/A/\faSmile/Análise de Sentimento/Classificar opiniões e avaliações.,
+            5.275/B/\faBalanceScale/Inferência/Relação lógica entre duas frases.,
+            8.725/C/\faQuestionCircle/Resposta a Perguntas/Encontrar respostas em textos.,
+            12.175/D/\faLanguage/Tradução/Converter texto entre idiomas.} {
+            \node[cartao] (c) at (\x,-2.97) {};
+            \node[ico] (k) at ($(c.west)+(0.52,0)$) {\ic};
+            \node[letra] at ($(k.north west)+(0.04,-0.04)$) {\l};
+            \node[anchor=west, text width=2.25cm, align=flush left, inner sep=0] at ($(c.west)+(0.98,0)$) {{\scriptsize\bfseries\color{dexpiBlue}\tit\par}{\tiny \des\par}};
+        }
+    \end{tikzpicture}
+
+    \note{
+        Grande parte dos dados do mundo está em forma de texto, e esse texto é não estruturado: e-mails, redes sociais, notícias, avaliações. O computador não consegue analisá-lo diretamente.
+        O PLN é a etapa do meio: transforma a linguagem humana em matemática. Entra ``I loved this movie!'' e sai um dado estruturado, um vetor de números e um rótulo, sentimento positivo.
+        O livro cobre quatro aplicações: análise de sentimento, inferência, resposta a perguntas e tradução. Hoje vamos ver as duas primeiras de perto.
+    }
 \end{frame}
 
 \begin{frame}{Resumo: do word2vec ao BERT}
