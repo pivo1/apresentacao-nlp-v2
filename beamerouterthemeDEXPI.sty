@@ -57,7 +57,8 @@
     \end{beamercolorbox}%
     
     \begin{beamercolorbox}[wd=0.53\paperwidth, ht=0.7cm,dp=0.3cm,left]{date}
-      \insertsection 
+      % subtopico (\subsection), se houver; senao o topico (\section)
+      \ifnum\value{subsection}>0 \insertsubsection\else\insertsection\fi
     \end{beamercolorbox}%
 
     \begin{beamercolorbox}[wd=0.15\paperwidth,ht=0.5cm,dp=0.2cm,right]{logo in head/foot}
