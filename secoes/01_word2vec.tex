@@ -8,72 +8,34 @@
 %------------------------------------------------
 
 \begin{frame}{Por que estudar Processamento de Linguagem Natural?}
-    \centering
-    \begin{tikzpicture}[
-        linha/.style={text height=1.9ex, text depth=0.5ex},   % mesma altura com ou sem acento: as linhas alinham
-        etapa/.style={linha, text=dexpiBlue!65, font=\scriptsize\bfseries},
-        icones/.style={text=dexpiBlue, font=\Large},
-        titulo/.style={linha, text=dexpiBlue, font=\small\bfseries},
-        exemplo/.style={linha, text=black!60, font=\scriptsize},
-        seta/.style={-{Stealth[length=2.6mm, width=2.2mm]}, line width=1.1pt, dexpiBlue!40},
-        apl/.style={circle, fill=dexpiBlue!10, text=dexpiBlue, font=\large, minimum size=0.82cm, inner sep=0}]
-        % três colunas (entrada, PLN, saída) e três linhas (ícone, título, exemplo)
-        \def\xA{2.3}\def\xB{7}\def\xC{11.7}
+    \begin{center}
+        {\large\color{dexpiBlue}\textbf{Grande parte dos dados do mundo está em forma de texto.}}
+    \end{center}
 
-        %================ frase de destaque
-        \node[text=dexpiBlue, font=\small] at (\xB,2.5) {Grande parte dos dados do mundo está em forma de \textbf{texto não estruturado}.};
-
-        %================ rótulos das etapas
-        \node[etapa] at (\xA,1.75) {1. ENTRADA};
-        \node[etapa] at (\xB,1.75) {2. PROCESSAMENTO};
-        \node[etapa] at (\xC,1.75) {3. SAÍDA};
-
-        %================ linha dos ícones
-        \node[icones] at (\xA,0.95) {\faEnvelope\hspace{8pt}\faComments\hspace{8pt}\faNewspaper\hspace{8pt}\faStar};
-        \fill[dexpiBlue] (\xB,0.95) circle (0.6);
-        \begin{scope}[shift={(\xB,0.9)}, scale=0.62]                                     % robô sorrindo
-            \fill[white] (-0.52,-0.12) rectangle (-0.44,0.12);                            % orelhas
-            \fill[white] (0.44,-0.12) rectangle (0.52,0.12);
-            \fill[white, rounded corners=0.09cm] (-0.45,-0.32) rectangle (0.45,0.32);     % cabeça
-            \draw[white, line width=1pt] (0,0.32) -- (0,0.47);                            % antena
-            \fill[white] (0,0.5) circle (0.07);
-            \fill[dexpiBlue] (-0.2,0.08) circle (0.08);                                   % olhos
-            \fill[dexpiBlue] (0.2,0.08) circle (0.08);
-            \draw[dexpiBlue, line width=1pt, line cap=round] (-0.18,-0.09) arc[start angle=200, end angle=340, radius=0.19]; % sorriso
-        \end{scope}
-        \node[icones] at (\xC,0.95) {\faChartBar\hspace{12pt}\faDatabase};
-        \draw[seta] (4.4,0.95) -- (6.1,0.95);
-        \draw[seta] (7.9,0.95) -- (9.6,0.95);
-
-        %================ linha dos títulos
-        \node[titulo] at (\xA,0.0) {Texto não estruturado};
-        \node[titulo] at (\xB,0.0) {PLN};
-        \node[titulo] at (\xC,0.0) {Dados estruturados};
-
-        %================ linha dos exemplos
-        \node[exemplo, font=\scriptsize\itshape] at (\xA,-0.4) {``I loved this movie!''};
-        \node[exemplo] at (\xB,-0.4) {linguagem humana $\rightarrow$ matemática};
-        \node[exemplo] at (\xC,-0.4) {$[0.82,\ -0.14,\ 0.91]$ $\rightarrow$ {\color{dexpiGreenDark}\textbf{positivo}}};
-
-        %================ aplicações
-        \draw[dexpiBlue!20, line width=0.6pt] (0.3,-1.25) -- (13.7,-1.25);
-        \node[fill=white, inner xsep=8pt, etapa] at (\xB,-1.25) {PRINCIPAIS APLICAÇÕES (D2L)};
-        \foreach \x/\ic/\tit/\des in {
-            1.75/\faSmile/Análise de sentimento/opiniões e avaliações,
-            5.25/\faBalanceScale/Inferência/relação entre duas frases,
-            8.75/\faQuestionCircle/Resposta a perguntas/respostas em textos,
-            12.25/\faLanguage/Tradução/texto entre idiomas} {
-            \node[apl] at (\x,-2.08) {\ic};
-            \node[titulo, font=\footnotesize\bfseries] at (\x,-2.75) {\tit};
-            \node[exemplo] at (\x,-3.08) {\des};
-        }
-    \end{tikzpicture}
-
-    \note{
-        Grande parte dos dados do mundo está em forma de texto, e esse texto é não estruturado: e-mails, redes sociais, notícias, avaliações. O computador não consegue analisá-lo diretamente.
-        O PLN é a etapa do meio: transforma a linguagem humana em matemática. Entra ``I loved this movie!'' e sai um dado estruturado, um vetor de números e um rótulo, sentimento positivo.
-        O livro cobre quatro aplicações: análise de sentimento, inferência, resposta a perguntas e tradução. Hoje vamos ver as duas primeiras de perto.
-    }
+    \begin{columns}[c]
+        \begin{column}{0.52\textwidth}
+            \begin{itemize}
+                \item Pessoas se comunicam por \destaque{linguagem natural}: e-mails, redes sociais, avaliações, notícias.
+                \item Esse texto é \destaque{não estruturado}: o computador não o analisa diretamente.
+                \item O \textbf{PLN} \destaque{processa a linguagem natural} para \destaque{obter dados} e \destaque{fazer análises}.
+                \item Aplicações (D2L): análise de sentimento, inferência, resposta a perguntas, tradução.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.44\textwidth}
+            \centering
+            \begin{tikzpicture}[
+                box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, minimum width=3.6cm, minimum height=0.7cm, align=center, font=\small},
+                arr/.style={-{Stealth}, thick, dexpiBlue}]
+                \node[box] (t) {Texto\\{\scriptsize ``I loved this movie!''}};
+                \node[box, below=0.35cm of t, fill=dexpiLightBlue, very thick] (p) {\textbf{PLN}\\{\scriptsize processar a linguagem}};
+                \node[box, below=0.35cm of p] (d) {Dados estruturados\\{\scriptsize números, rótulos, vetores}};
+                \node[box, below=0.35cm of d] (a) {Análises\\{\scriptsize ex.: sentimento = positivo}};
+                \draw[arr] (t) -- (p);
+                \draw[arr] (p) -- (d);
+                \draw[arr] (d) -- (a);
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}{Resumo: do word2vec ao BERT}
@@ -615,23 +577,26 @@
 
 \begin{frame}{Treino do Skip-gram e CBOW}
     \centering
+    \resizebox{0.96\textwidth}{!}{%
     \begin{tikzpicture}[
-        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=center, font=\scriptsize, minimum width=2.2cm, text width=2.05cm, minimum height=1.75cm, inner sep=1pt},
-        soft/.style={box, draw=dexpiGreenDark, fill=dexpiGreenLight},
+        box/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, align=flush center, font=\scriptsize, minimum width=2.2cm, text width=1.99cm, minimum height=1.75cm, inner sep=3pt},
+        simples/.style={box, minimum width=1.85cm, text width=1.64cm},
+        soft/.style={box, draw=dexpiGreenDark, fill=dexpiGreenLight, minimum width=3.25cm, text width=3.04cm},
         vet/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, font=\scriptsize, minimum width=1.2cm, minimum height=0.31cm, inner sep=1pt},
         pilula/.style={rounded corners=0.155cm, font=\scriptsize\bfseries, minimum width=1.1cm, minimum height=0.31cm, inner sep=1pt},
         num/.style={circle, fill=dexpiBlue, text=white, font=\scriptsize\bfseries, inner sep=1.5pt, minimum size=0.36cm},
         sub/.style={font=\small, text=dexpiBlue},
         arr/.style={-{Stealth[length=1.8mm]}, thick, dexpiBlue}]
-        % colunas dos passos 1 a 5 (as mesmas nos dois fluxos)
-        \def\xA{2.075}\def\xB{4.695}\def\xC{7.315}\def\xD{9.935}\def\xE{12.555}
+        % colunas dos passos 1 a 5 (as mesmas nos dois fluxos); cada coluna tem a largura da
+        % sua caixa mais larga (1,85 / 2,2 / 3,25 / 3,25 / 2,2 cm), com 0,32 cm entre caixas
+        \def\xA{1.795}\def\xB{4.14}\def\xC{7.185}\def\xD{10.755}\def\xE{13.8}
 
         %================ Skip-gram (linha y = 0)
-        \node[sub] at (6.54,1.62) {\textbf{Skip-gram}: a palavra do meio entra, o modelo adivinha o contexto};
+        \node[sub] at (7.175,1.62) {\textbf{Skip-gram}: a palavra do meio entra, o modelo adivinha o contexto};
         \node[pilula, draw=dexpiBlue, fill=dexpiBlue, text=white, minimum height=0.55cm, rounded corners=0.275cm] (sc) at (0,0) {loves};
-        \node[box] (s1) at (\xA,0) {vetor de\\centro $\vv$};
-        \node[box] (s2) at (\xB,0) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
-        \node[soft] (s3) at (\xC,0) {\textbf{softmax}:\\probabilidades\\para todas\\as palavras};
+        \node[simples] (s1) at (\xA,0) {vetor de\\centro $\vv$};
+        \node[box] (s2) at (\xB,0) {Produto interno\\com cada $w \in \V$:\\[4pt]$s_w = \uu_w^\top \vv$};
+        \node[soft] (s3) at (\xC,0) {Softmax sobre todo $\V$:\\[3pt]$P(w \,|\, c) = \dfrac{e^{\uu_w^\top \vv}}{\sum_{j=1}^{|\V|} e^{\uu_j^\top \vv}}$};
         \node[box] (s4) at (\xD,0) {confere com os\\vizinhos \textbf{reais}:\\\textit{the, man,}\\\textit{his, son}};
         \node[box] (s5) at (\xE,0) {ajusta vetores\\via \textbf{gradiente}\\(sobe reais,\\desce outros)};
         \draw[arr] (sc) -- (s1);
@@ -639,22 +604,23 @@
         \foreach \i/\x in {1/\xA, 2/\xB, 3/\xC, 4/\xD, 5/\xE} \node[num] at (\x,1.175) {\i};
 
         %================ CBOW (linha y = -3.45)
-        \node[sub] at (6.54,-1.83) {\textbf{CBOW}: o contexto entra, o modelo adivinha a palavra do meio};
+        \node[sub] at (7.175,-1.83) {\textbf{CBOW}: o contexto entra, o modelo adivinha a palavra do meio};
         \foreach \t [count=\i from 0] in {the, man, his, son} {
             \node[pilula, draw=dexpiGreenDark, fill=dexpiGreenLight, text=dexpiGreenDark] (c\i) at (0,-2.73-\i*0.48) {\t};
             \node[vet] (v\i) at (\xA,-2.73-\i*0.48) {vetor};
             \draw[arr] (c\i) -- (v\i);
         }
-        \node[box] (m) at (\xB,-3.45) {\textbf{média}\\``resumo do\\contexto''};
+        \node[simples] (m) at (\xB,-3.45) {\textbf{média} $\bar{\vv}$\\[2pt]``resumo do\\contexto''};
         \foreach \i/\dy in {0/0.39, 1/0.13, 2/-0.13, 3/-0.39} \draw[arr] (v\i.east) -- ($(m.west)+(0,\dy)$);
-        \node[box] (k3) at (\xC,-3.45) {compara com\\\textbf{cada palavra}\\do vocabulário\\(escores)};
-        \node[soft] (k4) at (\xD,-3.45) {\textbf{softmax}:\\probabilidades\\para todas\\as palavras};
+        \node[box] (k3) at (\xC,-3.45) {Produto interno\\com cada $w \in \V$:\\[4pt]$s_w = \uu_w^\top \bar{\vv}$};
+        \node[soft] (k4) at (\xD,-3.45) {Softmax sobre todo $\V$:\\[3pt]$P(w \,|\, C) = \dfrac{e^{\uu_w^\top \bar{\vv}}}{\sum_{j=1}^{|\V|} e^{\uu_j^\top \bar{\vv}}}$};
         \node[box] (k5) at (\xE,-3.45) {confere com a\\palavra central\\real (``loves'') e\\ajusta via\\\textbf{gradiente}};
         \draw[arr] (m) -- (k3);
         \draw[arr] (k3) -- (k4);
         \draw[arr] (k4) -- (k5);
         \foreach \i/\x in {1/\xA, 2/\xB, 3/\xC, 4/\xD, 5/\xE} \node[num] at (\x,-2.275) {\i};
-    \end{tikzpicture}
+    \end{tikzpicture}%
+    }
 
     \note{
         Para fechar o word2vec, este slide junta tudo num fluxo só. Os dois modelos treinam em cinco passos, e vale separar três coisas que costumam se misturar: a softmax, que só normaliza; a conferência com o gabarito, que é o próprio texto; e o ajuste, que é o gradiente.
