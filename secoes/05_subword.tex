@@ -7,12 +7,15 @@
 \section{Subword embedding}
 %------------------------------------------------
 
-\begin{frame}{Subword Embedding: olhando para dentro das palavras}
+\begin{frame}{Subword Embedding}
     {\footnotesize\color{gray}(cada palavra possui uma estrutura morfológica)}
     \vspace{0.2cm}
     \begin{exampleblock}{Ideia Central (ex.: fastText)}
         \small
-        Representar palavras pela \textbf{soma dos vetores dos seus pedaços} (ex.: $\vec{\text{gat}} + \vec{\text{inho}} + \vec{\text{s}}$). Palavras parecidas ou inéditas reaproveitam o conhecimento das partes, permitindo criar representações mesmo para termos \textbf{nunca vistos antes} no treino.
+        \begin{itemize}
+            \item Representar palavras pela \textbf{soma dos vetores dos seus pedaços} (ex.: $\vec{\text{gat}} + \vec{\text{inho}} + \vec{\text{s}}$). \\[2pt] 
+            \item Permite criar representações mesmo para termos \textbf{nunca vistos antes} no treino.
+        \end{itemize}
     \end{exampleblock}
 
     \vspace{0.3cm}
@@ -20,13 +23,13 @@
         \begin{column}{0.49\textwidth}
             \begin{alertblock}{modelos anteriores (word2vec, GloVe)}
                 \small
-                Cada palavra recebe um vetor totalmente \textbf{independente}. Para o modelo, ``gato'' e ``gatinho'' são tão distantes quanto ``gato'' e ``avião''.
+                Cada palavra recebe um vetor totalmente \textbf{independente}. Então, ``gato'' e ``gatinho'' são tão distantes quanto ``gato'' e ``avião''.
             \end{alertblock}
         \end{column}
         \begin{column}{0.49\textwidth}
             \begin{alertblock}{consequência prática}
                 \small
-                Palavras raras têm vetores de baixa qualidade, e palavras \textbf{fora do vocabulário} (ex.: ``desajudar'') não possuem representação vetorial.
+                Palavras raras têm vetores de baixa qualidade, e palavras \textbf{fora do vocabulário}  não possuem representação vetorial.
             \end{alertblock}
         \end{column}
     \end{columns}
@@ -85,7 +88,7 @@
         \begin{column}{0.48\textwidth}
             \begin{exampleblock}{Ganho}
                 \scriptsize
-                ``gato'' e ``gatos'' compartilham \texttt{<ga}, \texttt{gat}, \texttt{ato}: treinar ``gatos'' melhora ``gato''. Palavra \textbf{nova} (``gatinhos''): soma de n-gramas já treinados.
+                Toda vez que o modelo treina e atualiza o vetor de "gato"  ele também melhora o de ['gatos","gatinhos"]
             \end{exampleblock}
         \end{column}
         \begin{column}{0.48\textwidth}
@@ -111,9 +114,7 @@
         \begin{column}{0.40\textwidth}
             \footnotesize
             \begin{itemize}
-                \item No fastText, os pedaços têm tamanho \textbf{fixo} (3 a 6) e todos entram no vocabulário.
-                \vspace{0.1em}
-                \item BPE [7]: deixa os \textbf{dados} decidirem quais pedaços valem a pena, com tamanhos \textbf{variáveis}.
+                \item BPE [7]: Começa juntando sempre dois símbolos vizinhos por vez e fazendo os pedaços crescerem conforme a frequência no texto.
             \end{itemize}
             
             \vspace{0.1em}
@@ -200,11 +201,6 @@
         \node[tok, right=0.1cm of a3] (a4) {t};
         \node[tok, right=0.1cm of a4] (a5) {\_};
 
-        \node[lab] at (-0.3,-1) {fatter\_ $\;\Rightarrow$};
-        \node[kn, anchor=west] (b1) at (0,-1) {fa};
-        \node[tok, right=0.1cm of b1] (b2) {t};
-        \node[tok, right=0.1cm of b2] (b3) {t};
-        \node[kn, right=0.1cm of b3] (b4) {er\_};
     \end{tikzpicture}
 
     \vspace{0.3cm}

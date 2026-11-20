@@ -4,34 +4,39 @@
 %========================================================================================
 
 %------------------------------------------------
-\section{Treinamento aproximado: Negative Sampling e Hierarchical Softmax}
+\section{Negative Sampling e Hierarchical Softmax}
 %------------------------------------------------
 
 \begin{frame}{Negative Sampling e Hierarchical Softmax}
-    \small
-    \begin{itemize}
-        \item São estratégias  para resolver problemas de lentidão no treinamento de word embeddings:
-    \end{itemize}
-    \vspace{-0.1cm}
+\begin{itemize}
+    \item São estratégias para evitar o custo de calcular a Softmax sobre todo o vocabulário a cada par de treino:
+\end{itemize}
 
+\vspace{0.3cm}
 
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Amostragem negativa}
-                \footnotesize
-         Compara a palavra certa \textbf{(exemplo positivo)} com apenas um pequeno grupo de palavras erradas sorteadas ao acaso \textbf{(exemplos negativos)}. \\\\\\
-               \vspace{0.1cm}
-\textbf{Exemplos Positivos D = 1 
-\\Exemplos Negativos D = 0.}
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Softmax hierárquica}
-                \footnotesize
-                Organiza todo o dicionário dentro de uma árvore binária, transformando o problema em uma sequência de escolhas de "sim ou não".
-            \end{block}
-        \end{column}
-    \end{columns}
+\begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+        \begin{block}{Amostragem negativa}
+            Em vez de olhar o dicionário inteiro, treina um classificador binário usando o par real e apenas $K$ palavras sorteadas ao acaso (ruído):
+            \vspace{4pt}
+            \begin{itemize}
+                \item \textbf{Par verdadeiro:} rótulo $D = 1$
+                \item \textbf{$K$ pares falsos:} rótulo $D = 0$
+            \end{itemize}
+        \end{block}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+        \begin{block}{Softmax hierárquica}
+            Organiza as palavras do dicionário nas folhas de uma árvore binária. Transforma em um problema de classificação (\textbf{esquerda ou direita}):
+            \vspace{4pt}
+            \begin{itemize}
+                \item \textbf{Folhas:} palavras do vocabulário
+                \item \textbf{Custo:} cai de $O(|\mathcal{V}|)$ para $O(\log_2 |\mathcal{V}|)$
+            \end{itemize}
+        \end{block}
+    \end{column}
+\end{columns}
 
     \note{
         Até aqui, o skip-gram e o CBOW usaram a softmax completa. Vamos olhar o custo dela com um exemplo: na janela ``o gato miou'', a palavra central é ``gato'' e as vizinhas são ``o'' e ``miou''.
@@ -95,13 +100,17 @@
     }
 \end{frame}
 
-\begin{frame}{Amostragem negativa: por que precisamos de exemplos falsos?}
+\begin{frame}{Amostragem negativa e exemplos falsos}
     \begin{columns}[T]
         \begin{column}{0.47\textwidth}
             {\color{dexpiRedDark}\small\textbf{1. Sem negativos: o modelo colapsa}\par\vspace{2pt}\hrule height 0.8pt}
             \vspace{2pt}
             \footnotesize
-            Sem o teto da softmax nem punição para pares falsos, o treino empurra todos os vetores para uma mesma direção grande (ex.: $(10,\,0)$): todo par ganha escore $100$ e o modelo diz \textbf{``sim''} para \textbf{qualquer} par.
+\begin{itemize}
+    \setlength{\itemsep}{2pt}
+    \item Sem pares falsos, o treino empurra todos os vetores para uma mesma direção grande (ex.: $(10,\,0)$).
+    \item Todo par ganha escore $100$ e o modelo diz \textbf{``sim''} para \textbf{qualquer} par.
+\end{itemize}
 
             \vspace{0.05cm}
             {\centering
@@ -121,7 +130,7 @@
             \end{alertblock}
         \end{column}
         \begin{column}{0.49\textwidth}
-            {\color{dexpiGreenDark}\small\textbf{2. Solução: sortear $K$ palavras de ruído ($w_k$)}\par\vspace{2pt}\hrule height 0.8pt}
+            {\color{dexpiGreenDark}\small\textbf{2. Solução: sortear palavras de ruído ($w_k$)}\par\vspace{2pt}\hrule height 0.8pt}
             \vspace{4pt}
             \footnotesize
             A probabilidade do vizinho vira um produto:
@@ -137,7 +146,7 @@
             \begin{itemize}\setlength{\itemsep}{1pt}
                 \item {\color{dexpiGreenDark}\textbf{Dizer ``sim'' ($D=1$)}} para pares reais: (\textit{gato}, \textit{miou}).
                 \item {\color{dexpiRedDark}\textbf{Dizer ``não'' ($D=0$)}} para ruídos sorteados: (\textit{gato}, \textit{avião}), (\textit{gato}, \textit{cloreto}).
-
+            
             \end{itemize}
         \end{column}
     \end{columns}
@@ -284,9 +293,9 @@
     \par}
 
     \vspace{0.15cm}
-    \begin{exampleblock}{O sinal está no escore, não na probabilidade}
+    \begin{exampleblock}{O sinal está no escore}
         \footnotesize
-        Se o escore do nó é $+0{,}4$ e a decisão é à \textbf{direita}, entra $\sigma(-0{,}4) = 0{,}40 = 1-\sigma(+0{,}4)$. A probabilidade é sempre positiva; quem troca de sinal é o escore.
+($+$ quando vai para a esquerda, $-$ quando vai para a direita)
     \end{exampleblock}
 
     \vspace{0.1cm}
@@ -307,7 +316,7 @@
 
 \begin{frame}{Softmax hierárquica: vantagens}
     \small
-    Cálculos \textbf{por par}, com $|\V| = 10^6$ e $K = 5$:
+    Cálculos \textbf{por par}, com $|\V| = 10^6$ e $K = 5$ (amostras negativas):
 
     \vspace{0.1cm}
     {\centering
@@ -316,22 +325,25 @@
                        text width=0.27\textwidth, minimum height=2.4cm, align=center, inner sep=4pt}]
         \node[cartao, draw=dexpiRedDark, fill=dexpiRedDark!8] (c1) {%
             {\color{dexpiRedDark}\Large\textbf{1.000.000}}\\[2pt]
-            {\small\textbf{softmax completa}}\\[3pt]
-            {\scriptsize $O(|\V|)$: olha o dicionário inteiro}};
+
+            {\scriptsize produtos escalares por (palavra central, palavra vizinha)
+            \\[2pt]
+            {\small\textbf{softmax completa}}}};
         \node[cartao, draw=dexpiBlue, fill=dexpiBlue!8, right=0.45cm of c1] (c2) {%
             {\color{dexpiBlue}\Large\textbf{6}}\\[2pt]
-            {\small\textbf{amostragem negativa}}\\[3pt]
-            {\scriptsize $O(K)$: 1 positivo $+$ 5 negativos}};
+            {\scriptsize 1 positivo $+$ 5 negativos} \\[2pt]
+            {\small\textbf{amostragem negativa}}\\[3pt]};
         \node[cartao, draw=dexpiGreenDark, fill=dexpiGreenDark!8, right=0.45cm of c2] (c3) {%
             {\color{dexpiGreenDark}\Large\textbf{$\approx$ 20}}\\[2pt]
-            {\small\textbf{softmax hierárquica}}\\[3pt]
-            {\scriptsize $O(\log_2|\V|)$: a altura da árvore}};
+            
+            {\scriptsize $O(\log_2|\V|)$: altura da árvore}\\[3pt]
+            {\small\textbf{softmax hierárquica}}};
     \end{tikzpicture}\par}
 
     \vspace{0.2cm}
     \begin{exampleblock}{Mesma pergunta, custos muito diferentes}
         \footnotesize
-        As três estimam a mesma coisa --- a chance de um par --- e a diferença é só o custo. A hierárquica ainda tem um bônus: continua sendo uma distribuição \textbf{exata} (as folhas somam 1), enquanto a amostragem negativa é uma \textbf{aproximação}.
+        As três estimam a mesma coisa e a diferença é só o custo. A hierárquica ainda tem um bônus: continua sendo uma distribuição \textbf{exata}, enquanto a amostragem negativa é uma \textbf{aproximação}.
     \end{exampleblock}
 
     \note{
