@@ -318,35 +318,39 @@ def forward(self, tokens, segments, valid_lens=None,
 \begin{frame}{A função de perda do BERT: MLM + NSP}
     \centering
     \small
-    As duas perdas são \destaque{entropia cruzada}: $-\log$ da probabilidade dada à resposta certa.
+    {\footnotesize O BERT é treinado para minimizar a \destaque{entropia cruzada}, penalizando respostas erradas ($-\log P$).\par}
 
-    \vspace{0.25cm}
+    \vspace{0.2cm}
     \begin{tikzpicture}[
         tit/.style={font=\small\bfseries},
-        lin/.style={font=\scriptsize, text width=6.6cm, align=flush center, inner sep=0pt},
+        lst/.style={font=\scriptsize, text width=6.4cm, align=flush left, inner sep=0pt, anchor=north,
+                    execute at begin node={\everypar{\hangindent=0.75em\hangafter=1}\parskip=1.5pt}},
         seta/.style={-{Stealth[length=2.2mm]}, line width=1pt}]
         % caixas de fundo, com as linhas na mesma altura nas duas: MLM (vermelho) e NSP (verde)
-        \draw[dexpiRedDark, fill=dexpiRedLight, line width=0.8pt, rounded corners=4pt] (-7.05,0.4) rectangle (-0.25,-2.85);
-        \draw[dexpiGreenDark, fill=dexpiGreenLight, line width=0.8pt, rounded corners=4pt] (0.25,0.4) rectangle (7.05,-2.85);
+        \draw[dexpiRedDark, fill=dexpiRedLight, line width=0.8pt, rounded corners=4pt] (-7.05,0.4) rectangle (-0.25,-3.95);
+        \draw[dexpiGreenDark, fill=dexpiGreenLight, line width=0.8pt, rounded corners=4pt] (0.25,0.4) rectangle (7.05,-3.95);
         % MLM
-        \node[tit, text=dexpiRedDark] at (-3.65,0.07) {MLM: qual palavra foi escondida?};
-        \node[font=\footnotesize] at (-3.65,-0.72) {$\displaystyle \mathcal{L}_{\text{MLM}} = -\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}} \log P\big(x_i \mid \tilde{\xx}\big)$};
-        \node[lin] at (-3.65,-1.52) {$P = \operatorname{softmax}\big(\mathrm{MLP}(\mathbf{h}_i)\big)$ sobre \textbf{todo} o $\V$};
-        \node[lin] at (-3.65,-2.0) {$\mathcal{M}$: posições sorteadas; \ $\tilde{\xx}$: entrada mascarada};
-        \node[lin] at (-3.65,-2.45) {\textit{ex.:} alvo \textbf{great} na posição do \texttt{<mask>}};
+        \node[tit, text=dexpiRedDark] at (-3.65,0.07) {MLM: adivinhar a palavra escondida};
+        \node[font=\footnotesize] at (-3.65,-0.68) {$\displaystyle \mathcal{L}_{\text{MLM}} = -\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}} \log P\big(x_i \mid \tilde{\xx}\big)$};
+        \node[lst] at (-3.65,-1.25) {%
+            \hangindent=0.75em\hangafter=1\textbullet~\textbf{Entrada:} frase mascarada $\tilde{\xx}$ (ex.: ``this movie is \texttt{<mask>}$_i$'')\par
+            \textbullet~\textbf{Aposta:} probabilidade sobre \textbf{todo} o vocabulário~$\V$\par
+            \textbullet~\textbf{Alvo:} a palavra correta $x_i$ (ex.: \textbf{great})\par
+            \textbullet~\textbf{Perda:} média das penalidades só nos buracos sorteados ($\mathcal{M}$)\par};
         % NSP
-        \node[tit, text=dexpiGreenDark] at (3.65,0.07) {NSP: B é a continuação de A?};
-        \node[font=\footnotesize] at (3.65,-0.72) {$\displaystyle \vphantom{\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}}} \mathcal{L}_{\text{NSP}} = -\log P\big(y \mid \mathbf{h}_{\texttt{<cls>}}\big)$};
-        \node[lin] at (3.65,-1.52) {$P = \operatorname{softmax}\big(\mathbf{W}\tanh(\mathbf{W}_h\,\mathbf{h}_{\texttt{<cls>}})\big)$ sobre \textbf{2} classes};
-        \node[lin] at (3.65,-2.0) {$y$: rótulo do par, \textit{IsNext} ou \textit{NotNext}};
-        \node[lin] at (3.65,-2.45) {\textit{ex.:} alvo \textit{IsNext}: ``i like it'' segue ``this movie is great''};
+        \node[tit, text=dexpiGreenDark] at (3.65,0.07) {NSP: B continua A?};
+        \node[font=\footnotesize] at (3.65,-0.68) {$\displaystyle \vphantom{\frac{1}{|\mathcal{M}|}\sum_{i \in \mathcal{M}}} \mathcal{L}_{\text{NSP}} = -\log P\big(y \mid \mathbf{h}_{\texttt{<cls>}}\big)$};
+        \node[lst] at (3.65,-1.25) {%
+            \hangindent=0.75em\hangafter=1\textbullet~\textbf{Entrada:} vetor resumo do token \texttt{<cls>} ($\mathbf{h}_{\texttt{<cls>}}$)\par
+            \textbullet~\textbf{Aposta:} classificação binária (\textbf{2} classes)\par
+            \textbullet~\textbf{Alvo:} o rótulo correto $y$ (ex.: \textit{IsNext}: ``i like it'' segue ``this movie is great'')\par
+            \textbullet~\textbf{Perda:} penalidade pela resposta dada ao par\par};
         % perda total
-        \node[draw=dexpiBlue, fill=dexpiBlueLight, line width=0.8pt, rounded corners=4pt, align=flush center, inner sep=5pt, minimum width=9.4cm] (tot) at (0,-4.05) {%
-            {\normalsize $\mathcal{L} = \mathcal{L}_{\text{MLM}} + \mathcal{L}_{\text{NSP}}$}\\[2pt]
-            {\scriptsize soma simples: o gradiente das duas perdas atualiza o \textbf{mesmo} \textit{encoder}}\\[1pt]
-            {\scriptsize \textit{ex.:} $P(\text{great}) = 0{,}6$ e $P(\textit{IsNext}) = 0{,}9$ \;$\Rightarrow$\; $\mathcal{L} = -\log 0{,}6 - \log 0{,}9 \approx 0{,}51 + 0{,}11 = 0{,}62$}};
-        \draw[seta, dexpiRedDark] (-3.65,-2.85) -- (-3.65,0 |- tot.north);
-        \draw[seta, dexpiGreenDark] (3.65,-2.85) -- (3.65,0 |- tot.north);
+        \node[draw=dexpiBlue, fill=dexpiBlueLight, line width=0.8pt, rounded corners=4pt, align=flush center, inner sep=4pt, minimum width=9.4cm] (tot) at (0,-4.8) {%
+            {\small\bfseries\color{dexpiBlue} Erro total de treinamento:}\quad{\normalsize $\mathcal{L} = \mathcal{L}_{\text{MLM}} + \mathcal{L}_{\text{NSP}}$}\\[1pt]
+            {\scriptsize O modelo ajusta seus pesos para reduzir os \textbf{dois} erros juntos.}};
+        \draw[seta, dexpiRedDark] (-3.65,-3.95) -- (-3.65,0 |- tot.north);
+        \draw[seta, dexpiGreenDark] (3.65,-3.95) -- (3.65,0 |- tot.north);
     \end{tikzpicture}
 
     \note{
