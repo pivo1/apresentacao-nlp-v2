@@ -164,8 +164,8 @@
             $\displaystyle \boldsymbol{\beta}_i = \sum_{j=1}^{n} \mathrm{softmax}_{\text{linha } i}(e_{ij})\; \mathbf{b}_j$};
         \node[form] (alfa) at (3.5,0) {%
             $\displaystyle \boldsymbol{\alpha}_j = \sum_{i=1}^{m} \mathrm{softmax}_{\text{coluna } j}(e_{ij})\; \mathbf{a}_i$};
-        \node[font=\scriptsize, text=dexpiGreenDark, anchor=north] at (beta.south) {``retrato falado'' da \textbf{Hipótese $B$} focado em $\mathbf{a}_i$};
-        \node[font=\scriptsize, text=dexpiBlue, anchor=north] at (alfa.south) {``retrato falado'' da \textbf{Premissa $A$} focado em $\mathbf{b}_j$};
+        \node[font=\scriptsize, text=dexpiGreenDark, anchor=north] at (beta.south) {``Resumo'' da \textbf{Hipótese $B$} focado em $\mathbf{a}_i$};
+        \node[font=\scriptsize, text=dexpiBlue, anchor=north] at (alfa.south) {``Resumo'' da \textbf{Premissa $A$} focado em $\mathbf{b}_j$};
 
         % --- Tabela de pesos (linha i = softmax sobre a hipótese) ---
         \node[font=\scriptsize\bfseries, text=dexpiBlueDark] at (-4.55,-1.75) {Pesos softmax \textmd{\textit{(valores ilustrativos)}}};
@@ -189,15 +189,14 @@
         \node[anchor=north west, font=\scriptsize, text width=6.1cm, align=left,
               execute at begin node={\everypar{\hangindent=0.75em\hangafter=1}\parskip=4pt}] at (0.8,-1.7) {%
             \hangindent=0em{\footnotesize\bfseries\color{dexpiGreenDark} Por que ``suave''?}\par
-            \hangindent=0.75em\hangafter=1\textbullet~\textbf{Escolha dura (argmax):} pega só a palavra de maior peso. Isso \textbf{bloqueia o gradiente}, e a rede não treina.\par
-            \textbullet~\textbf{Alinhamento suave (softmax):} uma \textbf{mistura ponderada}, totalmente diferenciável, treinável de ponta a ponta.\par};
+            \hangindent=0.75em\hangafter=1\textbullet~\textbf{Alinhamento suave (softmax):} uma \textbf{mistura ponderada}, totalmente diferenciável, treinável de ponta a ponta.\par};
     \end{tikzpicture}
 
     \note{
-        Agora transformamos as afinidades da matriz $E$ em pesos. Para cada palavra $i$ da premissa, aplicamos uma softmax ao longo da linha $i$, ou seja, sobre todas as palavras da hipótese. Os pesos ficam entre zero e um e somam 1. Com eles, fazemos a média ponderada dos vetores da hipótese: esse é o beta $i$, uma espécie de retrato falado da hipótese visto a partir da palavra $\mathbf{a}_i$.
-        Do outro lado é simétrico: para cada palavra $j$ da hipótese, a softmax corre ao longo da coluna $j$, e o alfa $j$ é o retrato falado da premissa visto a partir de $\mathbf{b}_j$.
+        Agora transformamos as afinidades da matriz $E$ em pesos. Para cada palavra $i$ da premissa, aplicamos uma softmax ao longo da linha $i$, ou seja, sobre todas as palavras da hipótese. Os pesos ficam entre zero e um e somam 1. Com eles, fazemos a média ponderada dos vetores da hipótese: esse é o beta $i$, um resumo da hipótese visto a partir da palavra $\mathbf{a}_i$.
+        Do outro lado é simétrico: para cada palavra $j$ da hipótese, a softmax corre ao longo da coluna $j$, e o alfa $j$ é o resumo da premissa visto a partir de $\mathbf{b}_j$.
         Na tabela, com valores ilustrativos, ``homem'' olha para ``alguém'', ``toca'' olha para ``fazendo'' e ``violão'' olha para ``música''. Por isso o beta de ``violão'' é quase só o vetor de ``música'': oitenta por cento dele, com um pouco de ``fazendo'' e de ``alguém''.
-        Por que suave? Se escolhêssemos só a palavra de maior peso, com um argmax, a escolha seria dura e o gradiente não passaria por ela: a rede não conseguiria aprender o alinhamento. Com a softmax, é uma mistura ponderada, tudo é diferenciável, e o modelo inteiro treina de ponta a ponta.
+        Por que suave? É uma mistura ponderada, então tudo é diferenciável, e o modelo inteiro treina de ponta a ponta.
     }
 \end{frame}
 
