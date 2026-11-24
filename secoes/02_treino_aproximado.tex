@@ -108,8 +108,8 @@
             \footnotesize
 \begin{itemize}
     \setlength{\itemsep}{2pt}
-    \item Sem pares falsos, o treino empurra todos os vetores para uma mesma direção grande (ex.: $(10,\,0)$).
-    \item Todo par ganha escore $100$ e o modelo diz \textbf{``sim''} para \textbf{qualquer} par.
+    \item Sem pares falsos, o modelo trapaceia. Ele apenas deixa o produto interno o maior possível.
+    \item Todo par ganha escore $(\mathbf{u}_o^\top \mathbf{v}_c) \approx 100$ e o modelo diz \textbf{``sim''} para \textbf{qualquer} par.
 \end{itemize}
 
             \vspace{0.05cm}
