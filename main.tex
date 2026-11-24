@@ -51,7 +51,7 @@
 %    Não entram na numeração, então os números do rodapé dos outros slides não mudam.
 %----------------------------------------------------------------------------------------
 
-\providecommand{\totaltopicos}{0} % o valor real vem do .aux (gravado antes do backup)
+\providecommand{\totaltopicos}{0} % o valor real vem do .aux (gravado no fim do documento)
 \AtBeginSection[]{%
     \begin{frame}[plain,noframenumbering]
         \begin{tikzpicture}[remember picture, overlay, shift={(current page.south west)}]
@@ -136,15 +136,10 @@
 \end{frame}
 
 %------------------------------------------------
-%  Backup: slides de detalhe, para usar só se perguntarem
-%------------------------------------------------
 
-% Total de tópicos para a barra de progresso dos slides de transição (o backup não conta)
+% Total de tópicos para a barra de progresso dos slides de transição
 \makeatletter
 \immediate\write\@auxout{\gdef\string\totaltopicos{\the\value{section}}}
 \makeatother
-\AtBeginSection[]{} % o backup não ganha slide de transição
-
-\input{secoes/10_backup}
 
 \end{document}
