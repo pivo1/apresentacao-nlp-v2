@@ -201,38 +201,61 @@
 \end{frame}
 
 \begin{frame}{Etapa 2 --- Comparing: o par concorda?}
-    \small
-    Concatenamos cada token com o seu \textbf{resumo alinhado} e passamos por uma MLP $g$:
-    \begin{equation*}
-        \boxed{\;\mathbf{v}_{1,i} = g\big([\mathbf{a}_i,\, \boldsymbol{\beta}_i]\big)\;}, \quad i = 1, \dots, m
-        \qquad\qquad
-        \boxed{\;\mathbf{v}_{2,j} = g\big([\mathbf{b}_j,\, \boldsymbol{\alpha}_j]\big)\;}, \quad j = 1, \dots, n
-    \end{equation*}
-    \begin{columns}[t]
-        \begin{column}{0.50\textwidth}
-            \begin{block}{Dimensões}
-                \footnotesize
-                $[\mathbf{a}_i, \boldsymbol{\beta}_i] \in \mathbb{R}^{2d}$ e $g: \mathbb{R}^{2d} \to \mathbb{R}^{H}$, logo $\mathbf{v}_{1,i}, \mathbf{v}_{2,j} \in \mathbb{R}^{H}$.
-                A mesma $g$ é aplicada a todos os pares, nos dois lados.
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{exampleblock}{Intuição}
-                \footnotesize
-                $\mathbf{v}_{1,i}$ é um \textbf{veredito local}: ``violão'' + ``música'' $\Rightarrow$ concordam. ``toca'' + ``dormindo'' $\Rightarrow$ conflito. A $g$ aprende a distinguir esses casos.
-            \end{exampleblock}
-        \end{column}
-    \end{columns}
-    \vspace{0.1cm}
-    \begin{alertblock}{Cuidado}
-        \footnotesize
-        A comparação é feita \textbf{token a token}, sem olhar a posição da palavra na frase.
-    \end{alertblock}
+    \centering
+    {\scriptsize Concatenamos cada token com o seu \destaque{resumo alinhado} e passamos por uma MLP $g$:\par}
+    \vspace{0.25cm}
+    \begin{tikzpicture}[
+        blA/.style={draw=dexpiBlue, fill=dexpiBlueLight, minimum width=1.5cm, minimum height=0.75cm, align=center, font=\scriptsize, inner sep=2pt},
+        blB/.style={draw=dexpiRedDark, fill=dexpiRedLight, minimum width=1.7cm, minimum height=0.75cm, align=center, font=\scriptsize, inner sep=2pt},
+        mlp/.style={draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, font=\scriptsize\bfseries, minimum width=2.6cm, minimum height=0.45cm},
+        seta/.style={-{Stealth[length=1.8mm]}, line width=0.8pt, dexpiBlue!70},
+        chave/.style={decorate, decoration={brace, amplitude=4pt}, line width=0.7pt, dexpiBlue}]
+
+        % ---------- Exemplo 1: concordância ----------
+        \node[blA] (a1) at (-5.9,0)  {\textbf{violão}\\$\mathbf{a}_i$};
+        \node[blB] (b1) at (-4.3,0)  {\textbf{$\approx$ música}\\$\boldsymbol{\beta}_i$};
+        \draw[chave] (-3.3,-0.38) -- (-3.3,0.38) node[midway, right=5pt, font=\scriptsize\bfseries, text=dexpiBlue] {$2d$};
+        \node[mlp] (g1) at (-5.05,-1.15) {MLP $g$ compartilhada};
+        \draw[seta] (-5.05,-0.4) -- (g1.north);
+        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize, minimum width=2.0cm, minimum height=0.45cm] (v1) at (-5.05,-2.2) {$\mathbf{v}_{1,i} \in \mathbb{R}^H$};
+        \draw[seta] (g1.south) -- (v1.north);
+        \node[font=\scriptsize\bfseries, text=dexpiGreenDark] at (-5.05,-2.75) {Veredito: Concordam};
+
+        % ---------- Exemplo 2: conflito ----------
+        \node[blA] (a2) at (-1.85,0)  {\textbf{toca}\\$\mathbf{a}_i$};
+        \node[blB] (b2) at (-0.25,0)  {\textbf{$\approx$ dormindo}\\$\boldsymbol{\beta}_i$};
+        \draw[chave] (0.75,-0.38) -- (0.75,0.38) node[midway, right=5pt, font=\scriptsize\bfseries, text=dexpiBlue] {$2d$};
+        \node[mlp] (g2) at (-1.0,-1.15) {MLP $g$ compartilhada};
+        \draw[seta] (-1.0,-0.4) -- (g2.north);
+        \node[draw=orange!80!red, fill=orange!20, rounded corners=2pt, font=\scriptsize, minimum width=2.0cm, minimum height=0.45cm] (v2) at (-1.0,-2.2) {$\mathbf{v}_{1,i} \in \mathbb{R}^H$};
+        \draw[seta] (g2.south) -- (v2.north);
+        \node[font=\scriptsize\bfseries, text=orange!70!red] at (-1.0,-2.75) {Veredito: Conflito};
+
+        % ---------- Equações ----------
+        \node[draw=dexpiBlue, fill=white, rounded corners=3pt, line width=0.8pt, anchor=west, align=center, inner sep=7pt]
+            at (1.6,-1.1) {%
+            {\scriptsize\bfseries\color{dexpiBlue} Os dois lados, com a mesma $g$:}\\[5pt]
+            $\mathbf{v}_{1,i} = g\big([\mathbf{a}_i,\, \boldsymbol{\beta}_i]\big),\quad i = 1, \dots, m$\\[5pt]
+            $\mathbf{v}_{2,j} = g\big([\mathbf{b}_j,\, \boldsymbol{\alpha}_j]\big),\quad j = 1, \dots, n$};
+
+        % ---------- Quadros inferiores ----------
+        \draw[dexpiBlueDark, fill=dexpiBlueLight, line width=0.8pt] (-7.0,-3.35) rectangle (-0.15,-4.8);
+        \fill[dexpiBlueDark] (-7.0,-3.35) rectangle (-0.15,-3.75);
+        \node[anchor=west, font=\scriptsize\bfseries, text=white] at (-6.85,-3.55) {MLP $g$};
+        \node[anchor=north west, font=\scriptsize, text width=6.5cm, align=left] at (-6.85,-3.82) {%
+            A MLP $g$ avalia a \textbf{relação lógica} entre uma palavra e o seu resumo alinhado da outra frase.};
+
+        \draw[dexpiRedDark, fill=dexpiRedLight, line width=0.8pt] (0.15,-3.35) rectangle (7.0,-4.8);
+        \fill[dexpiRedDark] (0.15,-3.35) rectangle (7.0,-3.75);
+        \node[anchor=west, font=\scriptsize\bfseries, text=white] at (0.3,-3.55) {Cuidado: sem ordem das palavras};
+        \node[anchor=north west, font=\scriptsize, text width=6.5cm, align=left] at (0.3,-3.82) {%
+            \textbullet~A comparação é feita \textbf{token a token}, sem olhar a posição nem a ordem sintática da palavra na frase.};
+    \end{tikzpicture}
 
     \note{
         Na etapa de comparação, pegamos cada token original e o resumo que foi alinhado a ele, concatenamos, e passamos por uma segunda MLP, a $g$. Para a premissa, concatenamos $\mathbf{a}_i$ com beta $i$. Para a hipótese, $\mathbf{b}_j$ com alfa $j$. A mesma $g$ serve aos dois lados.
-        Em termos de dimensão, a concatenação tem $2d$ componentes e $g$ a leva para uma dimensão oculta $H$.
-        A intuição: o vetor $\mathbf{v}_{1,i}$ é um veredito local sobre aquele pedaço. Se a palavra e o seu alinhamento concordam, como violão e música, o veredito é de concordância. Se há conflito, é de contradição. A rede aprende isso sozinha no treino.
+        Em termos de dimensão, a concatenação tem $2d$ componentes, as duas chaves no desenho, e $g$ a leva para uma dimensão oculta $H$.
+        A intuição: o vetor $\mathbf{v}_{1,i}$ é um veredito local sobre aquele pedaço. No primeiro exemplo, violão está alinhado a música: concordam. No segundo, toca está alinhado a dormindo: há conflito. A rede aprende isso sozinha no treino.
         Um cuidado: a comparação é por token, sem olhar a posição da palavra na frase. Voltamos a isso no resumo.
     }
 \end{frame}
