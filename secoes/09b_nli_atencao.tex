@@ -164,8 +164,8 @@
             $\displaystyle \boldsymbol{\beta}_i = \sum_{j=1}^{n} \mathrm{softmax}_{\text{linha } i}(e_{ij})\; \mathbf{b}_j$};
         \node[form] (alfa) at (3.5,0) {%
             $\displaystyle \boldsymbol{\alpha}_j = \sum_{i=1}^{m} \mathrm{softmax}_{\text{coluna } j}(e_{ij})\; \mathbf{a}_i$};
-        \node[font=\scriptsize, text=dexpiGreenDark, anchor=north] at (beta.south) {``retrato falado'' da \textbf{Hipótese $B$} focado em $\mathbf{a}_i$};
-        \node[font=\scriptsize, text=dexpiBlue, anchor=north] at (alfa.south) {``retrato falado'' da \textbf{Premissa $A$} focado em $\mathbf{b}_j$};
+        \node[font=\scriptsize, text=dexpiGreenDark, anchor=north] at (beta.south) {``Resumo'' da \textbf{Hipótese $B$} focado em $\mathbf{a}_i$};
+        \node[font=\scriptsize, text=dexpiBlue, anchor=north] at (alfa.south) {``Resumo'' da \textbf{Premissa $A$} focado em $\mathbf{b}_j$};
 
         % --- Tabela de pesos (linha i = softmax sobre a hipótese) ---
         \node[font=\scriptsize\bfseries, text=dexpiBlueDark] at (-4.55,-1.75) {Pesos softmax \textmd{\textit{(valores ilustrativos)}}};
@@ -188,8 +188,9 @@
         \draw[dexpiGreenDark, fill=dexpiGreenLight, rounded corners=3pt, line width=0.8pt] (0.6,-1.6) rectangle (7.0,-4.1);
         \node[anchor=north west, font=\scriptsize, text width=6.1cm, align=left,
               execute at begin node={\everypar{\hangindent=0.75em\hangafter=1}\parskip=4pt}] at (0.8,-1.7) {%
-            \hangindent=0em{\footnotesize\bfseries\color{dexpiGreenDark} Por que ``suave''?}\par
-            \hangindent=0.75em\hangafter=1\textbullet~\textbf{Escolha dura (argmax):} pega só a palavra de maior peso. Isso \textbf{bloqueia o gradiente}, e a rede não treina.\par
+            \hangindent=0em{\footnotesize\bfseries\color{dexpiGreenDark} Por que ``suave''?}\\ \\
+
+            \vspace{0.2cm}
             \textbullet~\textbf{Alinhamento suave (softmax):} uma \textbf{mistura ponderada}, totalmente diferenciável, treinável de ponta a ponta.\par};
     \end{tikzpicture}
 
