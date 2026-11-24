@@ -261,42 +261,62 @@
 \end{frame}
 
 \begin{frame}{Etapa 3 --- Aggregating: da comparação à classe}
-    \small
-    Somamos os vereditos locais de cada frase e classificamos:
-    \begin{equation*}
-        \mathbf{v}_1 = \sum_{i=1}^{m} \mathbf{v}_{1,i}, \qquad
-        \mathbf{v}_2 = \sum_{j=1}^{n} \mathbf{v}_{2,j}, \qquad
-        \boxed{\;\hat{\mathbf{y}} = h\big([\mathbf{v}_1,\, \mathbf{v}_2]\big)\;}
-    \end{equation*}
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Dimensões}
-                \footnotesize
-                $\mathbf{v}_1, \mathbf{v}_2 \in \mathbb{R}^{H}$; $[\mathbf{v}_1, \mathbf{v}_2] \in \mathbb{R}^{2H}$; $h: \mathbb{R}^{2H} \to \mathbb{R}^{3}$, uma pontuação para cada classe do SNLI.
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{exampleblock}{Por que somar?}
-                \footnotesize
-                A soma dá um vetor de tamanho \textbf{fixo} ($H$), qualquer que seja o comprimento da frase, e não depende da ordem dos tokens.
-            \end{exampleblock}
-        \end{column}
-    \end{columns}
-    \vspace{0.15cm}
     \centering
-    \footnotesize
-    \begin{tabular}{@{}lc@{}}
-        \toprule
-        Saída de $h$ (após softmax) & Classe \\
-        \midrule
-        \textbf{0,85}\; 0,05\; 0,10 & {\color{dexpiGreenDark}\textit{entailment}} \\
-        \bottomrule
-    \end{tabular}
-    \;{\scriptsize\textit{(ilustrativo, para ``alguém está fazendo música'')}}
+    {\scriptsize Somamos os \destaque{vereditos locais} de cada frase e classificamos:\par}
+    \vspace{0.25cm}
+    \begin{tikzpicture}[
+        vb/.style={draw=dexpiBlue, fill=dexpiBlueLight, rounded corners=2pt, font=\scriptsize, minimum width=1.5cm, minimum height=0.45cm},
+        seta/.style={-{Stealth[length=1.8mm]}, line width=0.8pt, dexpiBlue!70},
+        cel/.style={minimum height=0.36cm, font=\scriptsize, inner sep=0pt, minimum width=1.9cm}]
+
+        % --- Sequências de vereditos somadas ---
+        \node[font=\scriptsize] at (-5.7,0.35) {$\mathbf{v}_{1,1},\ \mathbf{v}_{1,2},\ \dots,\ \mathbf{v}_{1,m}$};
+        \draw[seta] (-4.25,0.35) -- node[above, font=\footnotesize, inner sep=1pt] {$\sum$} (-2.8,0.35);
+        \node[vb] (v1) at (-2.0,0.35) {$\mathbf{v}_1 \in \mathbb{R}^H$};
+        \node[font=\scriptsize] at (-5.7,-0.35) {$\mathbf{v}_{2,1},\ \mathbf{v}_{2,2},\ \dots,\ \mathbf{v}_{2,n}$};
+        \draw[seta] (-4.25,-0.35) -- node[above, font=\footnotesize, inner sep=1pt] {$\sum$} (-2.8,-0.35);
+        \node[vb] (v2) at (-2.0,-0.35) {$\mathbf{v}_2 \in \mathbb{R}^H$};
+
+        % --- Concatenação, MLP h e saída ---
+        \node[draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.9cm, minimum height=0.45cm, font=\scriptsize] (c1) at (0.15,0) {$\mathbf{v}_1$};
+        \node[draw=dexpiBlue, fill=dexpiBlueLight, minimum width=0.9cm, minimum height=0.45cm, font=\scriptsize] (c2) at (1.05,0) {$\mathbf{v}_2$};
+        \node[font=\tiny, text=dexpiBlueDark] at (0.6,-0.4) {$[\mathbf{v}_1,\mathbf{v}_2] \in \mathbb{R}^{2H}$};
+        \draw[seta] (v1.east) -- (c1.north west);
+        \draw[seta] (v2.east) -- (c1.south west);
+        \node[draw=dexpiBlue, fill=dexpiBlue, text=white, rounded corners=2pt, font=\scriptsize\bfseries, minimum width=1.2cm, minimum height=0.6cm] (h) at (2.95,0) {MLP $h$};
+        \draw[seta] (c2.east) -- (h.west);
+        \node[draw=dexpiGreenDark, fill=dexpiGreenLight, rounded corners=2pt, font=\scriptsize, minimum width=2.6cm, minimum height=0.6cm] (y) at (5.6,0) {$\hat{\mathbf{y}} = h([\mathbf{v}_1,\mathbf{v}_2]) \in \mathbb{R}^3$};
+        \draw[seta] (h.east) -- (y.west);
+
+        % --- Quadros ---
+        \draw[dexpiBlueDark, fill=dexpiBlueLight, line width=0.8pt] (-7.0,-1.1) rectangle (-0.15,-3.2);
+        \fill[dexpiBlueDark] (-7.0,-1.1) rectangle (-0.15,-1.5);
+        \node[anchor=west, font=\scriptsize\bfseries, text=white] at (-6.85,-1.3) {MLP $h$};
+        \node[anchor=north west, font=\scriptsize, text width=6.5cm, align=left] at (-6.85,-1.57) {%
+            A MLP $h$ (\emph{Multi-Layer Perceptron} $h$) é o \textbf{classificador final} do modelo: a última rede da arquitetura, que olha o balanço global das duas frases juntas e dá o veredito sobre a relação lógica entre elas.};
+
+        \draw[dexpiGreenDark, fill=dexpiGreenLight, line width=0.8pt] (0.15,-1.1) rectangle (7.0,-3.2);
+        \fill[dexpiGreenDark] (0.15,-1.1) rectangle (7.0,-1.5);
+        \node[anchor=west, font=\scriptsize\bfseries, text=white] at (0.3,-1.3) {Por que somar ($\sum$)?};
+        \node[anchor=north west, font=\scriptsize, text width=6.5cm, align=left,
+              execute at begin node={\everypar{\hangindent=0.75em\hangafter=1}\parskip=4pt}] at (0.3,-1.6) {%
+            \hangindent=0.75em\hangafter=1\textbullet~\textbf{Tamanho fixo ($H$):} qualquer comprimento de frase vira um vetor do mesmo tamanho $H$.\par
+            \textbullet~\textbf{Não depende da ordem} dos tokens (paralelizável).\par};
+
+        % --- Tabela de saída ---
+        \node[font=\scriptsize\bfseries, text=dexpiBlueDark, anchor=west] at (-6.6,-3.6) {Saída de $h$ (após softmax)};
+        \foreach \t/\x in {Entailment/-5.65, Neutral/-3.7, Contradiction/-1.75, {Decisão final}/0.2}
+            \node[cel, fill=dexpiBlueDark, text=white, font=\scriptsize\bfseries] at (\x,-4.0) {\t};
+        \node[cel, fill=dexpiBlueLight, font=\scriptsize\bfseries] at (-5.65,-4.36) {0,85};
+        \node[cel, fill=gray!12] at (-3.7,-4.36) {0,05};
+        \node[cel, fill=gray!12] at (-1.75,-4.36) {0,10};
+        \node[cel, fill=dexpiGreenLight, text=dexpiGreenDark, font=\scriptsize\bfseries\itshape] at (0.2,-4.36) {entailment};
+        \node[anchor=west, font=\scriptsize\itshape, text width=4.6cm, align=left, text=gray!70!black] at (1.4,-4.18) {(ilustrativo, para ``alguém está fazendo música'')};
+    \end{tikzpicture}
 
     \note{
-        Por fim, a agregação. Para cada frase, somamos os vetores de comparação de todos os tokens: $\mathbf{v}_1$ é a soma dos $\mathbf{v}_{1,i}$ e $\mathbf{v}_2$ é a soma dos $\mathbf{v}_{2,j}$. A soma tem uma vantagem: o resultado tem sempre tamanho $H$, não importa o comprimento da frase.
-        Concatenamos os dois resumos e passamos por uma terceira MLP, $h$, que devolve três pontuações, uma para cada classe do SNLI: implicação, contradição e neutro. Com uma softmax e a entropia cruzada, treinamos tudo em conjunto.
-        Na tabela, um exemplo ilustrativo: para ``alguém está fazendo música'', a maior probabilidade fica com \textit{entailment}.
+        Por fim, a agregação. Para cada frase, somamos os vetores de comparação de todos os tokens: $\mathbf{v}_1$ é a soma dos $\mathbf{v}_{1,i}$ e $\mathbf{v}_2$ é a soma dos $\mathbf{v}_{2,j}$. A soma tem duas vantagens: o resultado tem sempre tamanho $H$, não importa o comprimento da frase, e não depende da ordem dos tokens.
+        Concatenamos os dois resumos, num vetor de $2H$ componentes, e passamos por uma terceira MLP, $h$, o classificador final. Ela devolve três pontuações, uma para cada classe do SNLI: implicação, neutro e contradição. Com uma softmax e a entropia cruzada, treinamos tudo em conjunto.
+        Na tabela, um exemplo ilustrativo: para ``alguém está fazendo música'', a maior probabilidade, 0,85, fica com \textit{entailment}.
     }
 \end{frame}
